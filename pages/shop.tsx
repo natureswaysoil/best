@@ -195,11 +195,11 @@ export default function Shop({ products, categories }: ShopProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-baseline space-x-2">
                       <span className="text-2xl font-bold text-nature-green-600">
-                        ${product.price}
+                        ${product.price.toFixed(2)}
                       </span>
                       {product.originalPrice && (
                         <span className="text-lg text-gray-500 line-through">
-                          ${product.originalPrice}
+                          ${product.originalPrice.toFixed(2)}
                         </span>
                       )}
                     </div>

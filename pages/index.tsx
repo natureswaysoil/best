@@ -231,7 +231,7 @@ export default function Home({ featuredProducts }: HomeProps) {
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-2xl font-bold text-nature-green-600">
-                          ${product.price}
+                          ${product.price.toFixed(2)}
                         </span>
                         <span className="text-sm text-gray-500 block">
                           {product.category === 'Compost' ? 'Per 10lb bag' : 'Liquid concentrate'}
