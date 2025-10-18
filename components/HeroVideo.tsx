@@ -71,6 +71,7 @@ export default function HeroVideo() {
   muted
         playsInline
         preload="auto"
+           crossOrigin="anonymous"
         aria-label="Nature&apos;s Way Soil hero video"
         onLoadedMetadata={() => {
           if (videoRef.current) {

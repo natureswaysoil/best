@@ -120,6 +120,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     className="w-full h-full object-contain bg-black"
                     src={product.video}
                     muted={isVideoMuted}
+                    crossOrigin="anonymous"
                     onPlay={() => setIsVideoPlaying(true)}
                     onPause={() => setIsVideoPlaying(false)}
                     onEnded={() => setIsVideoPlaying(false)}
