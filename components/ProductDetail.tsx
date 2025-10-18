@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Play, Pause, Volume2, VolumeX, Truck, Shield, Leaf } from 'lucide-react';
 import Layout from '../components/Layout';
-import { appendQuantity, getStripePaymentLink } from '../config/paymentLinks';
+import { useRouter } from 'next/router';
+
 
 type SizeOption = { name: string; price: number; sku?: string };
 
@@ -32,8 +33,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const router = useRouter();
   const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
 
   // Use product sizes if available, otherwise determine based on category
@@ -88,20 +91,36 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const activeSize = sizes.find((size) => size.name === selectedSize);
   const currentPrice = activeSize?.price ?? product.price;
 
-  const handleBuyNow = () => {
-    const paymentLink = getStripePaymentLink({
-      productId: product.id,
-      sizeName: selectedSize,
-      sku: activeSize?.sku
-    });
-
-    if (!paymentLink) {
-      alert('Checkout link is not configured for this item yet. Please reach out to support.');
+  const handleBuyNow = async () => {
+    if (isSubmitting || !product.inStock) {
       return;
     }
 
-    const checkoutUrl = appendQuantity(paymentLink, quantity);
-    window.location.href = checkoutUrl;
+    setIsSubmitting(true);
+
+    try {
+      if (typeof window === 'undefined') {
+        throw new Error('Checkout is only available in the browser.');
+      }
+
+      const payload = {
+        productId: product.id,
+        productName: product.name,
+        productImage: galleryImages[0] ?? product.image,
+        sizeName: selectedSize,
+        quantity,
+        price: currentPrice,
+        sku: activeSize?.sku,
+      };
+
+      window.sessionStorage.setItem('nws-checkout-selection', JSON.stringify(payload));
+      await router.push('/checkout');
+    } catch (error) {
+      console.error('Unable to prepare checkout', error);
+      alert('Unable to prepare checkout. Please reach out to support.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -292,14 +311,14 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <div className="space-y-4">
               <button
                 onClick={handleBuyNow}
-                disabled={!product.inStock}
+                disabled={!product.inStock || isSubmitting}
                 className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-colors ${
                   product.inStock
-                    ? 'bg-nature-green-600 hover:bg-nature-green-700 text-white'
+                    ? 'bg-nature-green-600 hover:bg-nature-green-700 text-white disabled:hover:bg-nature-green-600'
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
+                } disabled:opacity-70 disabled:cursor-not-allowed`}
               >
-                {product.inStock ? 'Buy Now with Stripe' : 'Out of Stock'}
+                {!product.inStock ? 'Out of Stock' : isSubmitting ? 'Redirecting...' : 'Buy Now with Stripe'}
               </button>
               
               <div className="text-sm text-gray-600 space-y-1 bg-gray-50 p-4 rounded-lg">
