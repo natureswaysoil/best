@@ -253,6 +253,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Stripe secret key is not configured.' });
     }
 
-    return res.status(500).json({ error: 'Unable to create payment intent.' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return res.status(500).json({ 
+      error: 'Unable to create payment intent.',
+      details: errorMessage 
+    });
   }
 }
