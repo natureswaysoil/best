@@ -2,9 +2,9 @@ import { allProducts } from '../data/products';
 
 // Product analysis script
 const analyzeProducts = () => {
-  const issues = [];
-  const imageUrls = new Set();
-  const duplicateImages = [];
+  const issues: string[] = [];
+  const imageUrls = new Set<string>();
+  const duplicateImages: string[] = [];
 
   allProducts.forEach((product) => {
     // Check for duplicate images
