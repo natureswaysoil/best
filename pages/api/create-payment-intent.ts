@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import { getServiceSupabase } from '../../lib/supabase';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -234,6 +235,70 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       description: sizeName ? `${productName} – ${sizeName}` : productName,
     });
+
+    // Save order to Supabase
+    try {
+      const supabase = getServiceSupabase();
+      
+      const orderData = {
+        pi_id: paymentIntent.id,
+        status: 'pending',
+        email: customer?.email || null,
+        name: customer?.name || null,
+        subtotal: Number((subtotalCents / 100).toFixed(2)),
+        tax: Number((taxCents / 100).toFixed(2)),
+        shipping: Number((shippingCents / 100).toFixed(2)),
+        total: Number((totalCents / 100).toFixed(2)),
+        billing: {
+          name: customer?.name,
+          email: customer?.email,
+          phone: customer?.phone,
+          address1: address.line1,
+          address2: address.line2,
+          city: address.city,
+          state: address.state,
+          zip: address.postal_code,
+        },
+        shipping_address: {
+          name: customer?.name,
+          address1: address.line1,
+          address2: address.line2,
+          city: address.city,
+          state: address.state,
+          zip: address.postal_code,
+          phone: address.phone || customer?.phone,
+        },
+      };
+
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select('id')
+        .single();
+
+      if (orderError) {
+        console.warn('Failed to save order to Supabase:', orderError);
+      } else if (order?.id) {
+        // Save order item
+        const orderItemData = {
+          order_id: order.id,
+          sku: sku || `${productId}-${sizeName || 'default'}`,
+          qty: sanitizedQuantity,
+          unit_price: Number((unitAmount / 100).toFixed(2)),
+        };
+
+        const { error: itemError } = await supabase
+          .from('order_items')
+          .insert(orderItemData);
+
+        if (itemError) {
+          console.warn('Failed to save order item to Supabase:', itemError);
+        }
+      }
+    } catch (supabaseError) {
+      console.warn('Supabase integration error:', supabaseError);
+      // Don't fail the payment intent creation if Supabase is down
+    }
 
     return res.status(200).json({
       clientSecret: paymentIntent.client_secret,
