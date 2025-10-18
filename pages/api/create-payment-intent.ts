@@ -243,31 +243,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const orderData = {
         pi_id: paymentIntent.id,
         status: 'pending',
-        email: customer?.email || null,
-        name: customer?.name || null,
-        subtotal: Number((subtotalCents / 100).toFixed(2)),
-        tax: Number((taxCents / 100).toFixed(2)),
-        shipping: Number((shippingCents / 100).toFixed(2)),
         total: Number((totalCents / 100).toFixed(2)),
-        billing: {
-          name: customer?.name,
-          email: customer?.email,
-          phone: customer?.phone,
-          address1: address.line1,
-          address2: address.line2,
-          city: address.city,
-          state: address.state,
-          zip: address.postal_code,
-        },
-        shipping_address: {
-          name: customer?.name,
-          address1: address.line1,
-          address2: address.line2,
-          city: address.city,
-          state: address.state,
-          zip: address.postal_code,
-          phone: address.phone || customer?.phone,
-        },
+        tax: Number((taxCents / 100).toFixed(2)),
+        shipping_state: address.state,
+        shipping_county: null, // You can add county field to your form if needed
+        shipping_zip: address.postal_code,
+        shipping_city: address.city,
+        shipping_address1: address.line1,
+        shipping_address2: address.line2 || null,
+        shipping_phone: address.phone || customer?.phone || null,
       };
 
       const { data: order, error: orderError } = await supabase
@@ -284,7 +268,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           order_id: order.id,
           sku: sku || `${productId}-${sizeName || 'default'}`,
           qty: sanitizedQuantity,
-          unit_price: Number((unitAmount / 100).toFixed(2)),
+          price: Number((unitAmount / 100).toFixed(2)),
         };
 
         const { error: itemError } = await supabase

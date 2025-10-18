@@ -38,14 +38,21 @@ export interface Order {
   customer_id?: string;
   status?: string;
   pi_id?: string; // Stripe PaymentIntent ID
-  subtotal: number;
+  subtotal?: number;
   tax: number;
-  shipping: number;
+  shipping?: number;
   total: number;
   email?: string;
   name?: string;
   billing?: Address;
   shipping_address?: Address;
+  shipping_state?: string;
+  shipping_county?: string;
+  shipping_zip?: string;
+  shipping_city?: string;
+  shipping_address1?: string;
+  shipping_address2?: string;
+  shipping_phone?: string;
   created_at?: string;
 }
 
@@ -54,6 +61,6 @@ export interface OrderItem {
   order_id: string;
   sku: string;
   qty: number;
-  unit_price: number;
+  price: number; // Your table uses 'price' instead of 'unit_price'
   created_at?: string;
 }
