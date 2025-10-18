@@ -122,7 +122,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_004',
     name: 'Soil Booster and Loosener',
     price: 29.99,
-    image: 'https://m.media-amazon.com/images/I/61qsUDP+WuL._AC_UL320_.jpg',
+    image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
     description: 'Organic formula to enhance soil health, improve aeration, and promote root growth. Ideal for gardens, lawns, and potted plants.',
     category: 'Soil Amendment',
     tags: ['soil-booster', 'aeration', 'organic', 'root-growth', 'gardens', 'lawns'],
@@ -137,11 +137,11 @@ export const allProducts: ProductData[] = [
       'Easy to apply with watering'
     ],
     images: [
-      'https://m.media-amazon.com/images/I/61qsUDP+WuL._AC_UL320_.jpg'
+      'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg'
     ],
     inStock: true,
     sizes: [
-      { name: '1 Gallon', price: 29.99, sku: '9P-CSA1-NC45' }
+      { name: 'Quart', price: 29.99, sku: '9P-CSA1-NC45' }
     ],
     usage: [
       'Shake thoroughly, then dilute 4 ounces with 1 gallon of water.',
@@ -322,7 +322,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_016',
     name: 'Organic Hydroponic Fertilizer Concentrate',
     price: 19.99,
-    image: 'https://m.media-amazon.com/images/I/61qsUDP+WuL._AC_UL320_.jpg',
+    image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
     description: 'Made fresh weekly - 32 oz makes 512 gallons of nutrient solution. Organic plant food for hydroponic systems and aquaponics.',
     category: 'Fertilizer',
     tags: ['hydroponic', 'aquaponic', 'organic', 'concentrate', 'indoor-growing', 'pet-safe'],
@@ -354,7 +354,7 @@ export const allProducts: ProductData[] = [
   {
     id: 'NWS_018',
     name: 'Seaweed & Humic Acid Lawn Treatment',
-    price: 19.99,
+    price: 11.99,
     image: 'https://m.media-amazon.com/images/I/61ZGd9iqYPL._AC_UL320_.jpg',
     description: '32 oz concentrate with 4.5% North Atlantic Seaweed and 4.5% Humic Acid. Liquid soil revitalizer for greener lawns and healthier plants.',
     category: 'Lawn Care',
@@ -375,14 +375,18 @@ export const allProducts: ProductData[] = [
     video: 'https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/7e73b697-52ad-4a55-b6e1-b25664378032/VIDEO/seaweed__humic_acid_lawn_treatment_product_video.m.mp4',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 19.99, sku: 'BH-NBDZ-TCRT' }
+      { name: '32 oz', price: 11.99, sku: 'BH-NBDZ-TCRT' },
+      { name: '1 Gallon', price: 19.99, sku: 'BH-NBDZ-1GAL' },
+      { name: '2.5 Gallon', price: 55.97, sku: 'BH-NBDZ-25GAL' }
     ],
     usage: [
       'Shake well before mixing to disperse seaweed and humic acid solids.',
       'Mix 2 ounces per gallon of water and apply evenly across 1,000 sq ft of lawn.',
       'For hose-end sprayers, set to 2 ounces per gallon and walk at a steady pace.',
       'Water in lightly after application to move microbes into the root zone.',
-      'Repeat every 3-4 weeks during the growing season or after heavy stress.'
+      'Repeat every 3-4 weeks during the growing season or after heavy stress.',
+      'Apply to established lawns during cool morning hours for best absorption.',
+      'Safe for all grass types including Bermuda, Zoysia, Fescue, and St. Augustine.'
     ]
   },
   {
