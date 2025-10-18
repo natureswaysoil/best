@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { getServiceSupabase } from '../../../lib/supabase';
+import { sendOrderConfirmation } from '../../../lib/resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
@@ -54,6 +55,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error('Failed to update order status:', error);
       } else {
         console.log(`Order updated to paid for PaymentIntent: ${paymentIntent.id}`);
+        
+        // Send order confirmation email
+        if (paymentIntent.receipt_email && paymentIntent.metadata) {
+          try {
+            const metadata = paymentIntent.metadata;
+            await sendOrderConfirmation(paymentIntent.receipt_email, {
+              orderId: paymentIntent.id,
+              name: metadata.customer_name || 'Customer',
+              items: [{
+                title: metadata.product_name || 'Product',
+                size: metadata.size_name || undefined,
+                qty: parseInt(metadata.quantity || '1'),
+                price: parseFloat(metadata.subtotal_cents || '0') / 100,
+                sku: metadata.sku || ''
+              }],
+              subtotal: parseFloat(metadata.subtotal_cents || '0') / 100,
+              tax: parseFloat(metadata.tax_cents || '0') / 100,
+              shipping: parseFloat(metadata.shipping_cents || '0') / 100,
+              total: paymentIntent.amount / 100
+            });
+            console.log(`Order confirmation email sent to ${paymentIntent.receipt_email}`);
+          } catch (emailError) {
+            console.error('Failed to send order confirmation email:', emailError);
+          }
+        }
       }
     } catch (err) {
       console.error('Webhook processing error:', err);
