@@ -136,3 +136,4 @@ To complete the website, add:
 7. Integrate with your payment system
 
 The website is now ready to deploy and fully functional with all the issues from the previous build resolved!# Force rebuild Sat Oct 18 14:57:09 UTC 2025
+# Trigger deployment Sat Oct 18 15:37:39 UTC 2025
