@@ -14,6 +14,7 @@ interface Product {
   description: string;
   features: string[];
   images: string[];
+  image: string;
   video?: string;
   inStock: boolean;
   category: string;
@@ -33,6 +34,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const [quantity, setQuantity] = useState(1);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
 
   // Use product sizes if available, otherwise determine based on category
   const isLiquid = product.category === 'Fertilizer' || product.category === 'Soil Amendment' || product.category === 'Lawn Care';
@@ -72,6 +74,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       video.muted = !video.muted;
       setIsVideoMuted(video.muted);
       if (!video.muted) {
+        video.volume = 1;
         const playPromise = video.play();
         if (playPromise && typeof playPromise.catch === 'function') {
           playPromise.catch(() => {
@@ -153,7 +156,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 </div>
               ) : (
                 <Image
-                  src={product.images[currentImageIndex]}
+                  src={galleryImages[currentImageIndex]}
                   alt={product.name}
                   fill
                   className="object-contain bg-white"
@@ -164,7 +167,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
             {/* Thumbnail Navigation */}
             <div className="flex space-x-3 overflow-x-auto pb-2">
-              {product.images.map((image, index) => (
+              {galleryImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => {
@@ -198,7 +201,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                   }`}
                 >
                   <Image
-                    src={product.images[0]}
+                    src={galleryImages[0]}
                     alt="Product video"
                     fill
                     className="object-contain bg-white"

@@ -11,6 +11,7 @@ interface Product {
   description: string;
   features: string[];
   images: string[];
+  image: string;
   video?: string;
   inStock: boolean;
   category: string;
@@ -88,7 +89,8 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     ...(productData.originalPrice !== undefined && { originalPrice: productData.originalPrice }),
     description: productData.description,
     features: productData.features,
-    images: productData.images,
+  images: productData.images,
+  image: productData.image,
     ...(productData.video && { video: productData.video }),
     inStock: productData.inStock,
     category: productData.category,

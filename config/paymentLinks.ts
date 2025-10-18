@@ -1,5 +1,22 @@
 const sanitizeKey = (value: string) => value.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
 
+const buildKeyVariants = (value?: string): string[] => {
+  if (!value) return [];
+
+  const variants = new Set<string>();
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+
+  const upper = trimmed.toUpperCase();
+  variants.add(trimmed);
+  variants.add(upper);
+  variants.add(sanitizeKey(trimmed));
+  variants.add(sanitizeKey(upper));
+  variants.add(trimmed.replace(/[^a-zA-Z0-9]/g, '_'));
+
+  return Array.from(variants).filter(Boolean);
+};
+
 interface StripeLinkLookupParams {
   productId: string;
   sizeName: string;
@@ -7,22 +24,22 @@ interface StripeLinkLookupParams {
 }
 
 export function getStripePaymentLink({ productId, sizeName, sku }: StripeLinkLookupParams): string | null {
-  const candidates: Array<string | undefined> = [];
+  const candidateKeys = [
+    ...buildKeyVariants(sku).map(key => `NEXT_PUBLIC_STRIPE_LINK_${key}`),
+    ...buildKeyVariants(`${productId}_${sizeName}`).map(key => `NEXT_PUBLIC_STRIPE_LINK_${key}`),
+    ...buildKeyVariants(productId).map(key => `NEXT_PUBLIC_STRIPE_LINK_${key}`)
+  ];
 
-  if (sku) {
-    candidates.push(process.env[`NEXT_PUBLIC_STRIPE_LINK_${sanitizeKey(sku)}`]);
+  for (const envKey of candidateKeys) {
+    const value = process.env[envKey as keyof NodeJS.ProcessEnv];
+    if (value && value.startsWith('https://')) {
+      return value;
+    }
   }
 
-  candidates.push(
-    process.env[`NEXT_PUBLIC_STRIPE_LINK_${sanitizeKey(`${productId}_${sizeName}`)}`],
-    process.env[`NEXT_PUBLIC_STRIPE_LINK_${sanitizeKey(productId)}`],
-    process.env.NEXT_PUBLIC_STRIPE_DEFAULT_LINK
-  );
-
-  for (const candidate of candidates) {
-    if (candidate && candidate.startsWith('https://')) {
-      return candidate;
-    }
+  const fallback = process.env.NEXT_PUBLIC_STRIPE_DEFAULT_LINK;
+  if (fallback && fallback.startsWith('https://')) {
+    return fallback;
   }
 
   console.warn(`Stripe payment link missing for ${productId} (${sizeName}${sku ? `, ${sku}` : ''})`);

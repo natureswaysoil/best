@@ -47,6 +47,7 @@ export default function HeroVideo() {
       vid.muted = !vid.muted;
       setMuted(vid.muted);
       if (!vid.muted) {
+        vid.volume = 1;
         setCookie("soundHintSeen", "1");
         setShowHint(false);
         const playPromise = vid.play();
