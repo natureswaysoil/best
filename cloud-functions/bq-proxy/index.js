@@ -7,9 +7,10 @@
 const { BigQuery } = require('@google-cloud/bigquery');
 
 // Allow from your GitHub Pages origin
-const ALLOWED_ORIGINS = [
-  'https://natureswaysoil.github.io',
-];
+const DEFAULT_ALLOWED = ['https://natureswaysoil.github.io'];
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : DEFAULT_ALLOWED;
 
 exports.query = async (req, res) => {
   const origin = req.headers.origin || '';
