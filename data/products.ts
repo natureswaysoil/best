@@ -1,6 +1,7 @@
 // Shared product data for Nature's Way Soil
 export interface ProductData {
   id: string;
+  asin?: string;
   name: string;
   price: number;
   originalPrice?: number;
@@ -23,6 +24,7 @@ export interface ProductData {
 export const allProducts: ProductData[] = [
   {
     id: 'NWS_001',
+    asin: 'B0822RH5L3',
     name: 'Natural Liquid Fertilizer for Garden and House Plants',
     price: 20.99,
     image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
@@ -56,6 +58,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_002',
+    asin: 'B0D52CQNGN',
     name: 'Horticultural Activated Charcoal - 4 Quarts',
     price: 29.99,
     image: 'https://m.media-amazon.com/images/I/61GZu8zOBpL._AC_UL320_.jpg',
@@ -89,6 +92,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_003',
+    asin: 'B0D6886G54',
     name: 'Organic Tomato Liquid Fertilizer',
     price: 29.99,
     image: 'https://m.media-amazon.com/images/I/61wHJGK8PqL._AC_UL320_.jpg',
@@ -122,6 +126,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_004',
+    asin: 'B0D69LNC5T',
     name: 'Soil Booster and Loosener',
     price: 29.99,
     image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
@@ -155,6 +160,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_006',
+    asin: 'B0F97893PD',
     name: 'Liquid Kelp Fertilizer - Organic Seaweed Extract',
     price: 34.99,
     image: 'https://m.media-amazon.com/images/I/71PYCZfZ2BL._AC_UL320_.jpg',
@@ -190,6 +196,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_011',
+    asin: 'B0F9V46JPP',
     name: 'Liquid Humic & Fulvic Acid with Kelp',
     price: 39.99,
     image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
@@ -225,6 +232,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_012',
+    asin: 'B0F9W7B3NL',
     name: 'Liquid Bone Meal Fertilizer',
     price: 19.99,
     image: 'https://m.media-amazon.com/images/I/7151rsGhpkL._AC_UL320_.jpg',
@@ -259,6 +267,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_013',
+    asin: 'B0DDCPYLG1',
     name: 'Enhanced Living Compost with Fermented Duckweed',
     price: 29.99,
     image: 'https://m.media-amazon.com/images/I/718tWBNNfkL._AC_UL320_.jpg',
@@ -292,6 +301,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_014',
+    asin: 'B0FG38PQQX',
     name: 'Dog Urine Neutralizer & Lawn Repair',
     price: 29.99,
     image: 'https://m.media-amazon.com/images/I/61PNqp+9RcL._AC_UL320_.jpg',
@@ -326,6 +336,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_016',
+    asin: 'B0D9HT7ND8',
     name: 'Organic Hydroponic Fertilizer Concentrate',
     price: 19.99,
     image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
@@ -359,6 +370,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_018',
+    asin: 'B0FGWSKGCY',
     name: 'Seaweed & Humic Acid Lawn Treatment',
     price: 11.99,
     image: 'https://m.media-amazon.com/images/I/61ZGd9iqYPL._AC_UL320_.jpg',
@@ -397,6 +409,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_021',
+    asin: 'B0DJ1JNQW4',
     name: 'Horse Safe Hay, Pasture & Lawn Fertilizer',
     price: 39.99,
     image: 'https://m.media-amazon.com/images/I/61ll2EiLAJL._AC_UL320_.jpg',

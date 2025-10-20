@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "videos": "node scripts/generate-product-videos.js",
+    "videos": "node scripts/generate-product-videos.mjs",
     "check:videos": "node scripts/check-videos.mjs"
   },
   "dependencies": {

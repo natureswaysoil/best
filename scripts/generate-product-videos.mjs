@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /**
  * Generate 30-second instructional videos for each product into public/videos.
- * Approach:
- * - Parse data/products.ts to extract id, name, and usage steps
- * - Build 6-slide, 5s-per-slide 1280x720 MP4 with text overlays
- * - Slides: Intro, 3 steps, Benefits/Notes, CTA
- * - Requires ffmpeg installed
+ * - Prefers ASIN-specific scripts when available (content/video-scripts/asin-scripts.json)
+ * - Otherwise, builds slides from product usage text
+ * - 6 slides × 5s each = ~30s, 1280x720, H.264
  */
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+import { spawnSync, execSync } from 'child_process';
 
-const fs = require('fs');
-const path = require('path');
-const { execSync, spawnSync } = require('child_process');
-const os = require('os');
-
-const ROOT = path.resolve(__dirname, '..');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
 const DATA_FILE = path.join(PROJECT, 'data', 'products.ts');
 const OUT_DIR = path.join(PROJECT, 'public', 'videos');
@@ -34,14 +33,8 @@ function ensureDir(p) {
 
 function loadProducts() {
   const ts = fs.readFileSync(DATA_FILE, 'utf8');
-
-  // Very lightweight parser for the array entries. Not a full TS parser.
   const entries = [];
-  const productBlocks = ts.split(/\n\s*},\s*\n\s*{\s*id:/).map((block, idx) => {
-    // Reattach 'id:' for all but first
-    if (idx === 0) return block; else return '{ id:' + block;
-  });
-
+  const productBlocks = ts.split(/\n\s*},\s*\n\s*{\s*id:/).map((block, idx) => (idx === 0 ? block : '{ id:' + block));
   for (const block of productBlocks) {
     const idMatch = block.match(/id:\s*'([^']+)'/);
     const nameMatch = block.match(/name:\s*'([^']+)'/);
@@ -60,13 +53,10 @@ function loadProducts() {
     }
     entries.push({ id, name, category, usage, asin });
   }
-
-  // Filter out any junk entries not having a valid ID format
   return entries.filter(e => /^NWS_\d{3}$/.test(e.id));
 }
 
 function sanitize(text) {
-  // Replace characters that ffmpeg drawtext might struggle with
   return text.replace(/:/g, '\u2236');
 }
 
@@ -85,12 +75,9 @@ function makeSlides(prod, asinMap) {
     tip,
     cta,
   ];
-
-  // If we have an ASIN-specific script, prefer it (4 slides). We'll pad to 6 slides @5s each.
   if (prod.asin && asinMap && asinMap[prod.asin]) {
     const s = asinMap[prod.asin];
     const custom = [s.title, ...s.slides];
-    // Pad to 6 slides for 30s total with a branded slide
     const brand = 'Nature’s Way Soil • Free shipping $50+\nNaturesWaySoil.com';
     while (custom.length < 6) custom.push(brand);
     slides = custom.slice(0, 6);
@@ -110,25 +97,13 @@ function buildVideoForProduct(prod, asinMap) {
     console.warn('Warning: DejaVu Sans font not found. drawtext may fail without fontfile.');
   }
 
-  const common = {
-    size: '1280x720',
-    bg: '#0d3b2a', // deep green
-    fontsize: 48,
-    lineSpacing: 10,
-    duration: 5, // seconds per slide
-  };
+  const common = { size: '1280x720', bg: '#0d3b2a', fontsize: 48, lineSpacing: 10, duration: 5 };
 
-  // Create slide videos
   const slideFiles = [];
   slides.forEach((text, idx) => {
     const slidePath = path.join(tmpDir, `slide_${idx + 1}.mp4`);
-    // Write text to file to avoid ffmpeg drawtext escaping issues
     const textFile = path.join(tmpDir, `slide_${idx + 1}.txt`);
-    // Normalize line breaks, remove problematic control chars
-    const safeText = String(text)
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      .replace(/[\t\u0000-\u001f\u007f]/g, ' ');
+    const safeText = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\t\u0000-\u001f\u007f]/g, ' ');
     fs.writeFileSync(textFile, safeText, 'utf8');
     const drawtext = [
       `fontcolor=white:fontsize=${common.fontsize}`,
@@ -137,15 +112,13 @@ function buildVideoForProduct(prod, asinMap) {
       'x=(w-text_w)/2',
       'y=(h-text_h)/2',
       `line_spacing=${common.lineSpacing}`,
-      `expansion=none`,
+      'expansion=none',
       `textfile=${textFile}`,
     ].filter(Boolean).join(':');
 
     const cmd = [
-      'ffmpeg', '-y',
-      '-f', 'lavfi', '-i', `color=c=${common.bg}:s=${common.size}:d=${common.duration}`,
-      '-vf', `drawtext=${drawtext}`,
-      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p', '-r', '30',
+      'ffmpeg','-y','-f','lavfi','-i',`color=c=${common.bg}:s=${common.size}:d=${common.duration}`,
+      '-vf',`drawtext=${drawtext}`,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',
       slidePath,
     ];
     const res = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
@@ -155,25 +128,13 @@ function buildVideoForProduct(prod, asinMap) {
     slideFiles.push(slidePath);
   });
 
-  // Create concat list
   const listPath = path.join(tmpDir, 'slides.txt');
   fs.writeFileSync(listPath, slideFiles.map(f => `file '${f.replace(/'/g, "'\\''")}'`).join('\n'));
-
   const outPath = path.join(OUT_DIR, `${prod.id}.mp4`);
-
-  // Concat and re-encode to ensure a single clean stream
-  const concatCmd = [
-    'ffmpeg', '-y',
-    '-f', 'concat', '-safe', '0', '-i', listPath,
-    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p', '-r', '30',
-    outPath,
-  ];
+  const concatCmd = ['ffmpeg','-y','-f','concat','-safe','0','-i',listPath,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',outPath];
   const cres = spawnSync(concatCmd[0], concatCmd.slice(1), { stdio: 'inherit' });
-  if (cres.status !== 0) {
-    throw new Error(`ffmpeg concat failed for ${prod.id}`);
-  }
+  if (cres.status !== 0) throw new Error(`ffmpeg concat failed for ${prod.id}`);
 
-  // Cleanup tmp (best-effort)
   try {
     slideFiles.forEach(f => fs.unlinkSync(f));
     fs.unlinkSync(listPath);
@@ -188,7 +149,6 @@ function main() {
     console.error('Error: ffmpeg is not installed. Please install ffmpeg and re-run.');
     process.exit(1);
   }
-
   ensureDir(OUT_DIR);
   const products = loadProducts();
   let asinMap = {};
@@ -214,7 +174,6 @@ function main() {
       console.error(`✖ Failed to build video for ${p.id}:`, e.message);
     }
   }
-
   console.log('\nDone. Generated files:');
   results.forEach(r => console.log(`- ${r.id}: ${path.relative(PROJECT, r.out)}`));
 }
