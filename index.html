@@ -62,6 +62,11 @@
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="service-account-key">Service Account Key (JSON):</label>
                     <textarea id="service-account-key" placeholder="Paste your service account JSON key here..."></textarea>
+                    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <input type="file" id="key-file" accept="application/json" />
+                        <button class="btn secondary" onclick="loadKeyFromFile()">Upload JSON</button>
+                        <button class="btn secondary" onclick="formatKeyTextarea()">Format Key</button>
+                    </div>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label for="proxy-url">Optional: BigQuery Proxy URL (Cloud Function/Run)</label>
@@ -472,6 +477,31 @@
             document.getElementById('connection-status').innerHTML = `<div class="error-message">❌ ${message}</div>`;
         }
 
+        async function loadKeyFromFile() {
+            try {
+                const input = document.getElementById('key-file');
+                if (!input || !input.files || !input.files[0]) { showError('No file selected'); return; }
+                const file = input.files[0];
+                const text = await file.text();
+                const parsed = parseServiceAccountKey(text);
+                document.getElementById('service-account-key').value = JSON.stringify(parsed, null, 2);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Key loaded and formatted</div>';
+            } catch (e) {
+                showError('Failed to load key: ' + (e?.message || e));
+            }
+        }
+
+        function formatKeyTextarea() {
+            try {
+                const el = document.getElementById('service-account-key');
+                const parsed = parseServiceAccountKey(el.value);
+                el.value = JSON.stringify(parsed, null, 2);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Key formatted</div>';
+            } catch (e) {
+                showError('Invalid key: ' + (e?.message || e));
+            }
+        }
+
         function saveProxyUrl() {
             var el = document.getElementById('proxy-url');
             var url = el && 'value' in el ? el.value : '';
@@ -542,9 +572,11 @@
             // Auto-connect if proxy is configured
             if (BIGQUERY_CONFIG.proxyEndpoint) {
                 setStatus('loading', 'Connecting via proxy...');
-                updateDashboardWithBigQuery()
+                // quick smoke test to produce clearer errors
+                executeBigQueryQuery('SELECT 1 AS ok')
+                    .then(() => updateDashboardWithBigQuery())
                     .then(() => setStatus('success', 'Live data loaded via proxy'))
-                    .catch(e => { showError('Proxy connection failed: ' + e.message); setStatus('error', 'Connection failed'); });
+                    .catch(e => { showError('Proxy connection failed: ' + (e?.message || e)); setStatus('error', 'Connection failed'); });
             }
         });
         setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
