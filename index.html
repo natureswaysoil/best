@@ -159,27 +159,57 @@
         }
 
         function parseServiceAccountKey(raw) {
-            // Normalize input: remove code fences and trim to JSON braces
-            var cleaned = String(raw || '').trim();
-            cleaned = cleaned.replace(/```+\s*json\s*|```+/gi, '');
-            var s = cleaned.indexOf('{');
-            var e = cleaned.lastIndexOf('}');
-            if (s !== -1 && e !== -1 && e > s) cleaned = cleaned.slice(s, e + 1);
+            // Normalize: string, trim, remove BOM and code fences
+            var text = String(raw || '').replace(/^\uFEFF/, '').trim();
+            text = text.replace(/```+\s*json\s*|```+/gi, '');
 
-            // First attempt: direct parse
-            try { return JSON.parse(cleaned); } catch (_) {}
+            // Trim to outermost JSON braces
+            var s = text.indexOf('{');
+            var e = text.lastIndexOf('}');
+            if (s !== -1 && e !== -1 && e > s) text = text.slice(s, e + 1);
 
-            // Fix common issues: trailing commas
-            var noTrailing = cleaned.replace(/,(\s*[}\]])/g, '$1');
-            try { return JSON.parse(noTrailing); } catch (_) {}
+            // Quick attempt
+            try { return JSON.parse(text); } catch (_) {}
 
-            // Fix private_key with raw newlines
-            var fixedKey = noTrailing.replace(/"private_key"\s*:\s*"([\s\S]*?)"/m, function(match, p1){
-                var val = p1.replace(/\r?\n/g, '\\n');
-                return '"private_key":"' + val + '"';
-            });
-            try { return JSON.parse(fixedKey); } catch (e) {
-                // Surface concise error
+            // Remove trailing commas before } or ]
+            text = text.replace(/,(\s*[}\]])/g, '$1');
+
+            // If private_key exists, explicitly escape its content
+            var pkField = '"private_key"';
+            var pkIdx = text.indexOf(pkField);
+            if (pkIdx !== -1) {
+                // Find colon then opening quote
+                var colon = text.indexOf(':', pkIdx);
+                if (colon !== -1) {
+                    var qStart = text.indexOf('"', colon + 1);
+                    if (qStart !== -1) {
+                        // Heuristic: find the PEM end marker first
+                        var endMarker = '-----END PRIVATE KEY-----';
+                        var endMarkerIdx = text.indexOf(endMarker, qStart + 1);
+                        var qEnd;
+                        if (endMarkerIdx !== -1) {
+                            qEnd = text.indexOf('"', endMarkerIdx + endMarker.length);
+                        } else {
+                            // Fallback: next quote (may fail if unescaped newlines are present)
+                            qEnd = text.indexOf('"', qStart + 1);
+                        }
+                        if (qEnd !== -1) {
+                            var rawVal = text.substring(qStart + 1, qEnd);
+                            // Escape backslashes and quotes, normalize newlines to \n
+                            var escVal = rawVal
+                                .replace(/\\/g, '\\\\')
+                                .replace(/\r?\n/g, '\\n')
+                                .replace(/\"/g, '"')
+                                .replace(/"/g, '\\"');
+                            text = text.substring(0, qStart + 1) + escVal + text.substring(qEnd);
+                        }
+                    }
+                }
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (e) {
                 throw new Error('Invalid service account JSON: ' + (e && e.message ? e.message : 'parse error'));
             }
         }
