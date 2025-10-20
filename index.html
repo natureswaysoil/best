@@ -64,6 +64,15 @@
                     <textarea id="service-account-key" placeholder="Paste your service account JSON key here..."></textarea>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="proxy-url">Optional: BigQuery Proxy URL (Cloud Function/Run)</label>
+                    <input id="proxy-url" type="url" placeholder="https://REGION-PROJECT.cloudfunctions.net/bq-proxy" />
+                    <small style="color:#718096">If provided, the dashboard will use your server-side proxy and won’t require the service account key in the browser.</small>
+                    <div style="margin-top:8px;">
+                        <button class="btn secondary" onclick="saveProxyUrl()">Save Proxy URL</button>
+                        <button class="btn secondary" onclick="clearProxyUrl()">Clear Proxy URL</button>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
                     <label>&nbsp;</label>
                     <div>
                         <button class="btn" onclick="connectBigQuery()">Connect to BigQuery</button>
@@ -123,13 +132,14 @@
 
     <script>
         let bigQueryAuthenticated = false;
-        let accessToken = null;
-        let tokenExpiry = null;
+        let accessToken = null; // not used if proxy is configured
+        let tokenExpiry = null; // not used if proxy is configured
 
         const BIGQUERY_CONFIG = {
             projectId: 'amazon-ppc-474902',
             datasetId: 'amazon_ppc',
-            apiEndpoint: 'https://bigquery.googleapis.com/v2'
+            apiEndpoint: 'https://bigquery.googleapis.com/v2',
+            proxyEndpoint: localStorage.getItem('bq_proxy_url') || ''
         };
 
         function initGoogleAPI() {
@@ -207,9 +217,21 @@
         }
 
         async function executeBigQueryQuery(query) {
+            // Prefer server-side proxy if configured
+            if (BIGQUERY_CONFIG.proxyEndpoint) {
+                const response = await fetch(BIGQUERY_CONFIG.proxyEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, location: 'US' })
+                });
+                const json = await response.json();
+                if (!response.ok) throw new Error(json.error || 'BigQuery proxy failed');
+                return json;
+            }
+
+            // Direct REST call (requires browser-held service account auth; may be blocked by CORS)
             if (!bigQueryAuthenticated || !accessToken) throw new Error('Not authenticated');
             if (Date.now() > tokenExpiry - 60000) throw new Error('Authentication token expired. Please reconnect.');
-
             const response = await fetch(`${BIGQUERY_CONFIG.apiEndpoint}/projects/${BIGQUERY_CONFIG.projectId}/queries`, {
                 method: 'POST',
                 headers: {
@@ -312,6 +334,21 @@
         }
 
         async function connectBigQuery() {
+            const proxy = BIGQUERY_CONFIG.proxyEndpoint;
+            if (proxy) {
+                // With proxy, no key is needed in browser
+                setStatus('loading', 'Connecting via proxy...');
+                try {
+                    document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Using proxy endpoint</div>';
+                    await updateDashboardWithBigQuery();
+                    return;
+                } catch (e) {
+                    showError('Proxy connection failed: ' + e.message);
+                    setStatus('error', 'Connection failed');
+                    return;
+                }
+            }
+
             const key = document.getElementById('service-account-key').value.trim();
             if (!key) { showError('Please enter your service account key JSON'); return; }
             setStatus('loading', 'Authenticating with BigQuery...');
@@ -369,7 +406,34 @@
             document.getElementById('connection-status').innerHTML = `<div class="error-message">❌ ${message}</div>`;
         }
 
-        document.addEventListener('DOMContentLoaded', () => { initGoogleAPI(); setStatus('ready', 'Ready to connect'); });
+        function saveProxyUrl() {
+            var el = document.getElementById('proxy-url');
+            var url = el && 'value' in el ? el.value : '';
+            if (url && !/^https?:\/\//.test(url)) {
+                showError('Proxy URL must start with http:// or https://');
+                return;
+            }
+            localStorage.setItem('bq_proxy_url', url || '');
+            BIGQUERY_CONFIG.proxyEndpoint = url || '';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL saved</div>';
+        }
+
+        function clearProxyUrl() {
+            localStorage.removeItem('bq_proxy_url');
+            BIGQUERY_CONFIG.proxyEndpoint = '';
+            var input = document.getElementById('proxy-url');
+            if (input) input.value = '';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL cleared</div>';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initGoogleAPI();
+            setStatus('ready', 'Ready to connect');
+            var saved = localStorage.getItem('bq_proxy_url') || '';
+            var input = document.getElementById('proxy-url');
+            if (input) input.value = saved;
+            BIGQUERY_CONFIG.proxyEndpoint = saved;
+        });
         setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
     </script>
 </body>
