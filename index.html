@@ -159,26 +159,28 @@
         }
 
         function parseServiceAccountKey(raw) {
-            try {
-                return JSON.parse(raw);
-            } catch (_) {
-                // Try to isolate JSON block
-                try {
-                    var start = raw.indexOf('{');
-                    var end = raw.lastIndexOf('}');
-                    if (start !== -1 && end !== -1 && end > start) {
-                        raw = raw.slice(start, end + 1);
-                    }
-                    // Escape actual newlines in private_key value to \n
-                    raw = raw.replace(/(\"private_key\"\s*:\s*\")( [\s\S]*? )(\")/gm, function(match, p1, p2, p3){
-                        // Remove leading/trailing whitespace inside value and escape newlines
-                        var cleaned = p2.replace(/\r?\n/g, '\\n');
-                        return p1 + cleaned + p3;
-                    });
-                    return JSON.parse(raw);
-                } catch (e2) {
-                    throw e2;
-                }
+            // Normalize input: remove code fences and trim to JSON braces
+            var cleaned = String(raw || '').trim();
+            cleaned = cleaned.replace(/```+\s*json\s*|```+/gi, '');
+            var s = cleaned.indexOf('{');
+            var e = cleaned.lastIndexOf('}');
+            if (s !== -1 && e !== -1 && e > s) cleaned = cleaned.slice(s, e + 1);
+
+            // First attempt: direct parse
+            try { return JSON.parse(cleaned); } catch (_) {}
+
+            // Fix common issues: trailing commas
+            var noTrailing = cleaned.replace(/,(\s*[}\]])/g, '$1');
+            try { return JSON.parse(noTrailing); } catch (_) {}
+
+            // Fix private_key with raw newlines
+            var fixedKey = noTrailing.replace(/"private_key"\s*:\s*"([\s\S]*?)"/m, function(match, p1){
+                var val = p1.replace(/\r?\n/g, '\\n');
+                return '"private_key":"' + val + '"';
+            });
+            try { return JSON.parse(fixedKey); } catch (e) {
+                // Surface concise error
+                throw new Error('Invalid service account JSON: ' + (e && e.message ? e.message : 'parse error'));
             }
         }
 
