@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
  * Generate 30-second instructional videos for each product into public/videos.
- * - Prefers ASIN-specific scripts when available (content/video-scripts/asin-scripts.json)
- * - Otherwise, builds slides from product usage text
- * - 6 slides × 5s each = ~30s, 1280x720, H.264
+ * - Uses ASIN-specific scripts when available (content/video-scripts/asin-scripts.json)
+ * - Produces a single continuous video timeline (no per-slide files)
+ * - Background: Ken Burns pan/zoom on the product's generated poster when available; fallback to brand color
+ * - Captions: Timed drawtext overlays from the script segments
+ * - Outputs MP4 (H.264) + WebM (VP9) and a poster JPG
  */
 import fs from 'fs';
 import path from 'path';
@@ -103,51 +105,107 @@ function buildVideoForProduct(prod, asinMap, cfg) {
     bg: (cfg && cfg.bg) || '#0d3b2a',
     fontsize: (cfg && cfg.fontsize) || 48,
     lineSpacing: (cfg && cfg.lineSpacing) || 10,
-    duration: (cfg && cfg.durationSeconds) || 5,
+    perSlide: (cfg && cfg.durationSeconds) || 5,
     fadeSeconds: (cfg && cfg.fadeSeconds) || 0.5,
   };
+  const [W, H] = common.size.split('x').map(n => parseInt(n, 10));
+  const totalDuration = Math.max(1, slides.length) * common.perSlide;
   const selectedFont = (cfg && cfg.fontFile && fs.existsSync(cfg.fontFile)) ? cfg.fontFile : fontPath;
 
-  const slideFiles = [];
-  slides.forEach((text, idx) => {
-    const slidePath = path.join(tmpDir, `slide_${idx + 1}.mp4`);
-    const textFile = path.join(tmpDir, `slide_${idx + 1}.txt`);
+  // Prepare textfiles for each caption segment
+  const textFiles = slides.map((text, idx) => {
+    const textFile = path.join(tmpDir, `seg_${idx + 1}.txt`);
     const safeText = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\t\u0000-\u001f\u007f]/g, ' ');
     fs.writeFileSync(textFile, safeText, 'utf8');
-    const drawtext = [
-      `fontcolor=white:fontsize=${common.fontsize}`,
-      selectedFont ? `fontfile=${selectedFont}` : '',
-      'box=1:boxcolor=#00000088:boxborderw=20',
-      'x=(w-text_w)/2',
-      'y=(h-text_h)/2',
-      `line_spacing=${common.lineSpacing}`,
-      'expansion=none',
-      `textfile=${textFile}`,
-    ].filter(Boolean).join(':');
-
-    const fadeIn = Math.max(0, Math.min(common.fadeSeconds, common.duration / 2));
-    const fadeOutStart = Math.max(0, common.duration - fadeIn);
-
-    const vfChain = `drawtext=${drawtext},fade=t=in:st=0:d=${fadeIn},fade=t=out:st=${fadeOutStart}:d=${fadeIn}`;
-
-    const cmd = [
-      'ffmpeg','-y','-f','lavfi','-i',`color=c=${common.bg}:s=${common.size}:d=${common.duration}`,
-      '-vf', vfChain,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',
-      slidePath,
-    ];
-    const res = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
-    if (res.status !== 0) {
-      throw new Error(`ffmpeg failed making slide ${idx + 1} for ${prod.id}`);
-    }
-    slideFiles.push(slidePath);
+    return textFile;
   });
 
-  const listPath = path.join(tmpDir, 'slides.txt');
-  fs.writeFileSync(listPath, slideFiles.map(f => `file '${f.replace(/'/g, "'\\''")}'`).join('\n'));
   const outPath = path.join(OUT_DIR, `${prod.id}.mp4`);
-  const concatCmd = ['ffmpeg','-y','-f','concat','-safe','0','-i',listPath,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',outPath];
-  const cres = spawnSync(concatCmd[0], concatCmd.slice(1), { stdio: 'inherit' });
-  if (cres.status !== 0) throw new Error(`ffmpeg concat failed for ${prod.id}`);
+  const posterPathCandidate = path.join(OUT_DIR, `${prod.id}.jpg`);
+  const havePoster = fs.existsSync(posterPathCandidate);
+
+  // Build filter_complex
+  const baseLabel = havePoster ? '[bgout]' : '[base]';
+  const chain = [];
+
+  if (havePoster) {
+    // Input 0: color base, Input 1: poster (looped)
+    chain.push(
+      `[1:v]scale=iw*max(${W}/iw\,${H}/ih):ih*max(${W}/iw\,${H}/ih),` +
+      `zoompan=z=min(zoom+0.0008\,1.12):d=1:s=${W}x${H}:fps=30,` +
+      `format=yuv420p[vbg]`,
+      `[0:v][vbg]overlay=shortest=1${baseLabel}`
+    );
+  } else {
+    // Only color base
+    chain.push(`[0:v]format=yuv420p${baseLabel}`);
+  }
+
+  // Add a subtle vignette for depth
+  chain.push(`${baseLabel}vignette=PI/6[v0]`);
+
+  // Brand bug (always on)
+  const brandTextFile = path.join(tmpDir, 'brand.txt');
+  fs.writeFileSync(brandTextFile, "Nature's Way Soil", 'utf8');
+  const brandArgs = [
+    `fontcolor=white:fontsize=${Math.round(common.fontsize * 0.6)}`,
+    selectedFont ? `fontfile=${selectedFont}` : '',
+    // Use color@alpha (avoid # which is a comment in filter_complex_script)
+    'box=1:boxcolor=black@0.40:boxborderw=12',
+  `x='w-tw-24'`,
+    `y=h-th-24`,
+    'expansion=none',
+    `textfile=${brandTextFile}`
+  ].filter(Boolean).join(':');
+  chain.push(`[v0]drawtext=${brandArgs}[v1]`);
+
+  // Timed captions for each segment
+  let lastLabel = '[v1]';
+  slides.forEach((_, idx) => {
+    const st = idx * common.perSlide;
+    const et = st + common.perSlide;
+    const tf = textFiles[idx];
+    const yExpr = `(h*0.78)-(30*between(t,${st.toFixed(2)},${(st+0.3).toFixed(2)}))`;
+    const captionArgs = [
+      `fontcolor=white:fontsize=${common.fontsize}`,
+      selectedFont ? `fontfile=${selectedFont}` : '',
+      // Use color@alpha to avoid # comment parsing in script file
+      'box=1:boxcolor=black@0.53:boxborderw=20',
+  `x='(w-text_w)/2'`,
+      // slight slide-up on first 0.3s of segment
+      `y='${yExpr}'`,
+      `line_spacing=${common.lineSpacing}`,
+      'expansion=none',
+      `textfile=${tf}`,
+      `enable='between(t,${st.toFixed(2)},${et.toFixed(2)})'`
+    ].filter(Boolean).join(':');
+    const nextLabel = idx === slides.length - 1 ? '[vout]' : `[v${idx + 2}]`;
+    chain.push(`${lastLabel}drawtext=${captionArgs}${nextLabel}`);
+    lastLabel = nextLabel;
+  });
+
+  // Assemble ffmpeg args
+  const graphFile = path.join(tmpDir, 'filtergraph.ffscript');
+  fs.writeFileSync(graphFile, chain.join(';'), 'utf8');
+
+  // For lavfi color, prefer named/rgba syntax; if cfg.bg is hex like #RRGGBB, convert to 0xRRGGBB format or named.
+  const lavfiBg = common.bg.startsWith('#') ? `0x${common.bg.slice(1)}` : common.bg;
+  const args = [
+    'ffmpeg','-y',
+    // Input 0: color base
+    '-f','lavfi','-i',`color=c=${lavfiBg}:s=${common.size}:d=${totalDuration}`,
+    // Input 1: poster (optional)
+    ...(havePoster ? ['-loop','1','-t', String(totalDuration), '-i', posterPathCandidate] : []),
+    '-filter_complex_script', graphFile,
+    '-map', slides.length ? '[vout]' : (havePoster ? '[bgout]' : '[base]'),
+    '-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',
+    outPath
+  ];
+
+  const res = spawnSync(args[0], args.slice(1), { stdio: 'inherit' });
+  if (res.status !== 0) {
+    throw new Error(`ffmpeg continuous render failed for ${prod.id}`);
+  }
 
   // Additionally output WebM (VP9) for broader browser coverage
   const outWebm = path.join(OUT_DIR, `${prod.id}.webm`);
@@ -160,13 +218,21 @@ function buildVideoForProduct(prod, asinMap, cfg) {
   const wres = spawnSync(webmCmd[0], webmCmd.slice(1), { stdio: 'inherit' });
   if (wres.status !== 0) throw new Error(`ffmpeg webm transcode failed for ${prod.id}`);
 
+  // Generate a poster image from the first frame for thumbnails/posters (if not already present or to refresh)
+  const outPosterJpg = path.join(OUT_DIR, `${prod.id}.jpg`);
+  const posterCmd = [
+    'ffmpeg','-y','-i', outPath,
+    '-frames:v','1','-q:v','3', outPosterJpg
+  ];
+  const pres = spawnSync(posterCmd[0], posterCmd.slice(1), { stdio: 'inherit' });
+  if (pres.status !== 0) throw new Error(`ffmpeg poster export failed for ${prod.id}`);
+
   try {
-    slideFiles.forEach(f => fs.unlinkSync(f));
-    fs.unlinkSync(listPath);
+    textFiles.forEach(f => fs.unlinkSync(f));
     fs.rmdirSync(tmpDir);
   } catch {}
 
-  return { mp4: outPath, webm: outWebm };
+  return { mp4: outPath, webm: outWebm, poster: outPosterJpg };
 }
 
 function main() {
@@ -196,19 +262,19 @@ function main() {
     console.error('No products found to generate videos for.');
     process.exit(1);
   }
-  console.log(`Generating 30s videos for ${products.length} products...`);
+  console.log(`Generating continuous 30s videos for ${products.length} products...`);
   const results = [];
   for (const p of products) {
     try {
       const out = buildVideoForProduct(p, asinMap, cfg);
       results.push({ id: p.id, out });
-      console.log(`✔ ${p.id} -> ${path.relative(PROJECT, out.mp4)} & ${path.relative(PROJECT, out.webm)}`);
+  console.log(`✔ ${p.id} -> ${path.relative(PROJECT, out.mp4)} | ${path.relative(PROJECT, out.webm)} | ${path.relative(PROJECT, out.poster)}`);
     } catch (e) {
       console.error(`✖ Failed to build video for ${p.id}:`, e.message);
     }
   }
   console.log('\nDone. Generated files:');
-  results.forEach(r => console.log(`- ${r.id}: ${path.relative(PROJECT, r.out.mp4)} | ${path.relative(PROJECT, r.out.webm)}`));
+  results.forEach(r => console.log(`- ${r.id}: ${path.relative(PROJECT, r.out.mp4)} | ${path.relative(PROJECT, r.out.webm)} | ${path.relative(PROJECT, r.out.poster)}`));
 }
 
 main();

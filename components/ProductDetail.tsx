@@ -18,6 +18,7 @@ interface Product {
   image: string;
   video?: string;
   videoWebm?: string;
+  videoPoster?: string;
   inStock: boolean;
   category: string;
   sizes?: SizeOption[];
@@ -39,6 +40,8 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
   const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
+  // Prefer the generated video poster as the first gallery image when available
+  const enrichedGallery = product.videoPoster ? [product.videoPoster, ...galleryImages] : galleryImages;
 
   // Use product sizes if available, otherwise determine based on category
   const isLiquid = product.category === 'Fertilizer' || product.category === 'Soil Amendment' || product.category === 'Lawn Care';
@@ -107,7 +110,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       const payload = {
         productId: product.id,
         productName: product.name,
-        productImage: galleryImages[0] ?? product.image,
+        productImage: (product.videoPoster ?? enrichedGallery[0] ?? product.image),
         sizeName: selectedSize,
         quantity,
         price: currentPrice,
@@ -131,15 +134,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           
           {/* Product Images & Video Section - Properly sized */}
           <div className="space-y-4">
-            {/* Main Image/Video Display - Limited height to prevent fullscreen issue */}
-            <div className="relative aspect-square bg-white rounded-2xl overflow-hidden max-h-[600px] border border-gray-200">
+            {/* Main Image/Video Display - Responsive aspect with max height for better fit */}
+            <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 
+                            aspect-[4/3] sm:aspect-[4/3] lg:aspect-[16/10] 2xl:aspect-[16/9] max-h-[70vh]">
               {showVideo && (product.video || product.videoWebm) ? (
                 <div className="relative w-full h-full">
                   <video
                     ref={videoRef}
-                    className="w-full h-full object-contain bg-black"
+                    className="w-full h-full object-contain lg:object-cover bg-black"
                     // Use multiple sources for better codec coverage
-                    poster={galleryImages[0] ?? product.image}
+                    poster={product.videoPoster ?? galleryImages[0] ?? product.image}
                     muted={isVideoMuted}
                     crossOrigin="anonymous"
                     onPlay={() => setIsVideoPlaying(true)}
@@ -184,10 +188,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                 </div>
               ) : (
                 <Image
-                  src={galleryImages[currentImageIndex]}
+                  src={enrichedGallery[currentImageIndex]}
                   alt={product.name}
                   fill
-                  className="object-contain bg-white"
+                  className="object-contain lg:object-cover bg-white"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               )}
@@ -195,7 +199,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
 
             {/* Thumbnail Navigation */}
             <div className="flex space-x-3 overflow-x-auto pb-2">
-              {galleryImages.map((image, index) => (
+              {enrichedGallery.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => {
@@ -229,7 +233,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                   }`}
                 >
                   <Image
-                    src={galleryImages[0]}
+                    src={product.videoPoster ?? enrichedGallery[0]}
                     alt="Product video"
                     fill
                     className="object-contain bg-white"

@@ -12,6 +12,8 @@ export interface ProductData {
   features: string[];
   images: string[];
   video?: string;
+  videoWebm?: string;
+  videoPoster?: string;
   inStock: boolean;
   sizes?: Array<{
     name: string;
@@ -27,7 +29,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0822RH5L3',
     name: 'Natural Liquid Fertilizer for Garden and House Plants',
     price: 20.99,
-    image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
     description: '100% Natural USDA Certified Biobased Product with B-1 Vitamin and Aloe Vera Juice to improve transplants. Made fresh weekly for maximum potency.',
     category: 'Fertilizer',
     tags: ['natural', 'liquid', 'b1-vitamin', 'aloe-vera', 'house-plants', 'garden', 'microbes'],
@@ -44,7 +46,9 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg'
     ],
-    video: '/videos/NWS_001.mp4',
+  video: '/videos/NWS_001.mp4',
+  videoWebm: '/videos/NWS_001.webm',
+  videoPoster: '/videos/NWS_001.jpg',
     inStock: true,
     sizes: [
       { name: '1 Gallon', price: 20.99, sku: '3L-3MPJ-6BQM' }
@@ -61,7 +65,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0D52CQNGN',
     name: 'Horticultural Activated Charcoal - 4 Quarts',
     price: 29.99,
-    image: 'https://m.media-amazon.com/images/I/61GZu8zOBpL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61GZu8zOBpL._AC_UL320_.jpg',
     description: 'Premium activated biochar for plants, terrariums, and soil conditioning. Improves drainage, filters toxins, and provides habitat for beneficial microbes.',
     category: 'Soil Amendment',
     tags: ['biochar', 'activated-charcoal', 'terrarium', 'drainage', 'soil-conditioning'],
@@ -95,7 +99,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0D6886G54',
     name: 'Organic Tomato Liquid Fertilizer',
     price: 29.99,
-    image: 'https://m.media-amazon.com/images/I/61wHJGK8PqL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61wHJGK8PqL._AC_UL320_.jpg',
     description: 'Made fresh weekly concentrate with Vitamin B-1 and Aloe Vera for faster root establishment, healthier transplants, and stops blossom end rot.',
     category: 'Fertilizer',
     tags: ['tomato', 'organic', 'b1-vitamin', 'aloe-vera', 'vegetables', 'blossom-end-rot'],
@@ -113,7 +117,9 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61wHJGK8PqL._AC_UL320_.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_003.mp4',
+  video: '/videos/NWS_003.mp4',
+  videoWebm: '/videos/NWS_003.webm',
+  videoPoster: '/videos/NWS_003.jpg',
     sizes: [
       { name: '1 Gallon', price: 29.99, sku: 'P5-NP0G-5SL7' }
     ],
@@ -129,7 +135,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0D69LNC5T',
     name: 'Soil Booster and Loosener',
     price: 29.99,
-    image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg',
     description: 'Organic formula to enhance soil health, improve aeration, and promote root growth. Ideal for gardens, lawns, and potted plants.',
     category: 'Soil Amendment',
     tags: ['soil-booster', 'aeration', 'organic', 'root-growth', 'gardens', 'lawns'],
@@ -163,7 +169,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0F97893PD',
     name: 'Liquid Kelp Fertilizer - Organic Seaweed Extract',
     price: 34.99,
-    image: 'https://m.media-amazon.com/images/I/71PYCZfZ2BL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/71PYCZfZ2BL._AC_UL320_.jpg',
     description: 'Premium liquid kelp fertilizer made fresh weekly with organic seaweed extract, Vitamin B-1, and aloe vera. Promotes stronger roots and prevents blossom end rot.',
     category: 'Fertilizer',
     tags: ['kelp', 'seaweed', 'organic', 'b1-vitamin', 'aloe-vera', 'root-development', 'transplant'],
@@ -180,7 +186,9 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/71PYCZfZ2BL._AC_UL320_.jpg'
     ],
-    video: '/videos/NWS_006.mp4',
+  video: '/videos/NWS_006.mp4',
+  videoWebm: '/videos/NWS_006.webm',
+  videoPoster: '/videos/NWS_006.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'XX-XBWB-DF03' },
@@ -199,7 +207,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0F9V46JPP',
     name: 'Liquid Humic & Fulvic Acid with Kelp',
     price: 39.99,
-    image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
     description: 'Professional-grade liquid humic and fulvic acid fertilizer enriched with organic kelp extract. Revives tired soil by enhancing nutrient uptake and microbial activity.',
     category: 'Soil Amendment',
     tags: ['humic-acid', 'fulvic-acid', 'kelp', 'soil-conditioner', 'organic', 'nutrient-uptake'],
@@ -217,7 +225,9 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_011.mp4',
+  video: '/videos/NWS_011.mp4',
+  videoWebm: '/videos/NWS_011.webm',
+  videoPoster: '/videos/NWS_011.jpg',
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'FP-AL1H-WYNQ' },
       { name: '1 Gallon', price: 39.99, sku: 'IT-ADBS-CXUC' },
@@ -235,7 +245,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0F9W7B3NL',
     name: 'Liquid Bone Meal Fertilizer',
     price: 19.99,
-    image: 'https://m.media-amazon.com/images/I/7151rsGhpkL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/7151rsGhpkL._AC_UL320_.jpg',
     description: 'Fast-absorbing liquid bone meal with 25% hydrolyzed bone meal, 5% calcium, and 10% phosphorus for immediate plant uptake and robust root development.',
     category: 'Fertilizer',
     tags: ['bone-meal', 'phosphorus', 'calcium', 'liquid', 'root-development', 'flowering'],
@@ -252,7 +262,9 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/7151rsGhpkL._AC_UL320_.jpg'
     ],
-    video: '/videos/NWS_012.mp4',
+  video: '/videos/NWS_012.mp4',
+  videoWebm: '/videos/NWS_012.webm',
+  videoPoster: '/videos/NWS_012.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'B5-G9JD-1K10' },
@@ -270,7 +282,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0DDCPYLG1',
     name: 'Enhanced Living Compost with Fermented Duckweed',
     price: 29.99,
-    image: 'https://m.media-amazon.com/images/I/718tWBNNfkL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/718tWBNNfkL._AC_UL320_.jpg',
     description: 'Superior living compost blend with 20% worm castings, 20% activated biochar, and 60% weed-free aged compost. Premium blend with fermented duckweed extract.',
     category: 'Compost',
     tags: ['compost', 'worm-castings', 'biochar', 'living-soil', 'microbes', 'duckweed'],
@@ -288,7 +300,9 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/718tWBNNfkL._AC_UL320_.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_013.mp4',
+  video: '/videos/NWS_013.mp4',
+  videoWebm: '/videos/NWS_013.webm',
+  videoPoster: '/videos/NWS_013.jpg',
     sizes: [
       { name: '10 lb', price: 29.99, sku: 'WK-558E-QZUL' }
     ],
@@ -304,7 +318,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0FG38PQQX',
     name: 'Dog Urine Neutralizer & Lawn Repair',
     price: 29.99,
-    image: 'https://m.media-amazon.com/images/I/61PNqp+9RcL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61PNqp+9RcL._AC_UL320_.jpg',
     description: 'Professional-strength dog urine neutralizer that eliminates yellow spots caused by pet urine burn. Pet-safe formula that neutralizes salts and revives grass.',
     category: 'Lawn Care',
     tags: ['dog-urine', 'lawn-repair', 'pet-safe', 'yellow-spots', 'odor-control'],
@@ -322,7 +336,9 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61PNqp+9RcL._AC_UL320_.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_014.mp4',
+  video: '/videos/NWS_014.mp4',
+  videoWebm: '/videos/NWS_014.webm',
+  videoPoster: '/videos/NWS_014.jpg',
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'EG-PJ13-DA9T' },
       { name: '1 Gallon', price: 59.99, sku: 'T0-MB9Q-JIKC' }
@@ -339,7 +355,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0D9HT7ND8',
     name: 'Organic Hydroponic Fertilizer Concentrate',
     price: 19.99,
-    image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg',
     description: 'Made fresh weekly - 32 oz makes 512 gallons of nutrient solution. Organic plant food for hydroponic systems and aquaponics.',
     category: 'Fertilizer',
     tags: ['hydroponic', 'aquaponic', 'organic', 'concentrate', 'indoor-growing', 'pet-safe'],
@@ -356,7 +372,9 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/61qsUDP+WuL._AC_UL320_.jpg'
     ],
-    video: '/videos/NWS_016.mp4',
+  video: '/videos/NWS_016.mp4',
+  videoWebm: '/videos/NWS_016.webm',
+  videoPoster: '/videos/NWS_016.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'FR-IJ8R-6LQK' }
@@ -373,7 +391,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0FGWSKGCY',
     name: 'Seaweed & Humic Acid Lawn Treatment',
     price: 11.99,
-    image: 'https://m.media-amazon.com/images/I/61ZGd9iqYPL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61ZGd9iqYPL._AC_UL320_.jpg',
     description: '32 oz concentrate with 4.5% North Atlantic Seaweed and 4.5% Humic Acid. Liquid soil revitalizer for greener lawns and healthier plants.',
     category: 'Lawn Care',
     tags: ['seaweed', 'humic-acid', 'lawn', 'kelp', 'organic', 'grass', 'soil-revitalizer'],
@@ -390,7 +408,9 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/61ZGd9iqYPL._AC_UL320_.jpg'
     ],
-    video: '/videos/NWS_018.mp4',
+  video: '/videos/NWS_018.mp4',
+  videoWebm: '/videos/NWS_018.webm',
+  videoPoster: '/videos/NWS_018.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 11.99, sku: 'BH-NBDZ-TCRT' },
@@ -412,7 +432,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0DJ1JNQW4',
     name: 'Horse Safe Hay, Pasture & Lawn Fertilizer',
     price: 39.99,
-    image: 'https://m.media-amazon.com/images/I/61ll2EiLAJL._AC_UL320_.jpg',
+  image: 'https://m.media-amazon.com/images/I/61ll2EiLAJL._AC_UL320_.jpg',
     description: 'Premium horse-safe microbial nitrogen fertilizer blend for hay fields, pastures, and lawns. Naturally feeds grass while supporting sustained growth and greener lawns.',
     category: 'Fertilizer',
     tags: ['hay', 'pasture', 'lawn', 'horse-safe', 'livestock', 'microbial', 'nitrogen'],
@@ -430,7 +450,9 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61ll2EiLAJL._AC_UL320_.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_021.mp4',
+  video: '/videos/NWS_021.mp4',
+  videoWebm: '/videos/NWS_021.webm',
+  videoPoster: '/videos/NWS_021.jpg',
     sizes: [
       { name: '1 Gallon', price: 39.99, sku: 'VY-T7ZM-760R' },
       { name: '2.5 Gallon', price: 99.99, sku: 'N4-E00Z-BB9W' }
