@@ -456,6 +456,24 @@
         document.addEventListener('DOMContentLoaded', () => {
             initGoogleAPI();
             setStatus('ready', 'Ready to connect');
+            // URL param overrides
+            var params = new URLSearchParams(window.location.search);
+            var urlProxy = params.get('proxy');
+            var urlLoc = params.get('location');
+
+            if (urlProxy) {
+                try {
+                    // Basic validation
+                    if (!/^https?:\/\//.test(urlProxy)) throw new Error('invalid proxy url');
+                    localStorage.setItem('bq_proxy_url', urlProxy);
+                    BIGQUERY_CONFIG.proxyEndpoint = urlProxy;
+                } catch (_) { /* ignore invalid */ }
+            }
+            if (urlLoc) {
+                localStorage.setItem('bq_location', urlLoc);
+                BIGQUERY_CONFIG.location = urlLoc;
+            }
+
             var saved = localStorage.getItem('bq_proxy_url') || '';
             var input = document.getElementById('proxy-url');
             if (input) input.value = saved;
@@ -464,6 +482,14 @@
             var locInput = document.getElementById('bq-location');
             if (locInput) locInput.value = savedLoc;
             BIGQUERY_CONFIG.location = savedLoc;
+
+            // Auto-connect if proxy is configured
+            if (BIGQUERY_CONFIG.proxyEndpoint) {
+                setStatus('loading', 'Connecting via proxy...');
+                updateDashboardWithBigQuery()
+                    .then(() => setStatus('success', 'Live data loaded via proxy'))
+                    .catch(e => { showError('Proxy connection failed: ' + e.message); setStatus('error', 'Connection failed'); });
+            }
         });
         setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
     </script>
