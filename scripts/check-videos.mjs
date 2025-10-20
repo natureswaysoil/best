@@ -35,6 +35,7 @@ function main() {
 
   let ok = true;
   const missingFiles = [];
+  const missingWebm = [];
   const badDataPointers = [];
 
   ids.forEach(id => {
@@ -43,6 +44,11 @@ function main() {
     if (!exists) {
       ok = false;
       missingFiles.push({ id, file });
+    }
+    const webm = path.join(VIDEOS_DIR, `${id}.webm`);
+    const hasWebm = fs.existsSync(webm);
+    if (!hasWebm) {
+      missingWebm.push({ id, webm });
     }
     const videoPath = videoMap[id];
     if (videoPath !== `/videos/${id}.mp4`) {
@@ -63,6 +69,13 @@ function main() {
     badDataPointers.forEach(b => console.log(`- ${b.id}: data has ${b.videoPath || 'undefined'} -> expected ${b.expected}`));
   } else {
     console.log('\nAll product.video entries point to local files.');
+  }
+
+  if (missingWebm.length) {
+    console.log(`\nNote: Missing WebM variants (${missingWebm.length}). MP4s will still play, but WebM provides broader coverage:`);
+    missingWebm.forEach(m => console.log(`- ${m.id}: ${m.webm}`));
+  } else {
+    console.log('\nAll WebM variants are present.');
   }
 
   process.exit(ok ? 0 : 1);

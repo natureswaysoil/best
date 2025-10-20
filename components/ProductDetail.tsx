@@ -17,6 +17,7 @@ interface Product {
   images: string[];
   image: string;
   video?: string;
+  videoWebm?: string;
   inStock: boolean;
   category: string;
   sizes?: SizeOption[];
@@ -132,12 +133,12 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <div className="space-y-4">
             {/* Main Image/Video Display - Limited height to prevent fullscreen issue */}
             <div className="relative aspect-square bg-white rounded-2xl overflow-hidden max-h-[600px] border border-gray-200">
-              {showVideo && product.video ? (
+              {showVideo && (product.video || product.videoWebm) ? (
                 <div className="relative w-full h-full">
                   <video
                     ref={videoRef}
                     className="w-full h-full object-contain bg-black"
-                    src={product.video}
+                    // Use multiple sources for better codec coverage
                     poster={galleryImages[0] ?? product.image}
                     muted={isVideoMuted}
                     crossOrigin="anonymous"
@@ -145,6 +146,12 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     onPause={() => setIsVideoPlaying(false)}
                     onEnded={() => setIsVideoPlaying(false)}
                   >
+                    {product.videoWebm && (
+                      <source src={product.videoWebm} type="video/webm" />
+                    )}
+                    {product.video && (
+                      <source src={product.video} type="video/mp4" />
+                    )}
                     Your browser does not support the video tag.
                   </video>
                   
@@ -212,7 +219,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               ))}
               
               {/* Video Thumbnail */}
-              {product.video && (
+              {(product.video || product.videoWebm) && (
                 <button
                   onClick={() => setShowVideo(true)}
                   className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${

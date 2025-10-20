@@ -15,6 +15,7 @@ interface Product {
   images: string[];
   image: string;
   video?: string;
+  videoWebm?: string;
   inStock: boolean;
   category: string;
   sizes?: Array<{ name: string; price: number; sku?: string }>;
@@ -87,7 +88,10 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
   // Prefer a locally generated video in public/videos/{id}.mp4 if present
   const localVideoPath = `/videos/${productId}.mp4`;
   const localVideoAbs = path.join(process.cwd(), 'public', 'videos', `${productId}.mp4`);
+  const localWebmPath = `/videos/${productId}.webm`;
+  const localWebmAbs = path.join(process.cwd(), 'public', 'videos', `${productId}.webm`);
   const hasLocalVideo = fs.existsSync(localVideoAbs);
+  const hasLocalWebm = fs.existsSync(localWebmAbs);
 
   const product: Product = {
     id: productData.id,
@@ -99,7 +103,8 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
   images: productData.images,
   image: productData.image,
     // If a local video exists, prefer that path (served from /videos/). Otherwise use any configured product.video.
-    ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
+  ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
+  ...(hasLocalWebm && { videoWebm: localWebmPath }),
     inStock: productData.inStock,
     category: productData.category,
     ...(productData.sizes && productData.sizes.length > 0 && { sizes: productData.sizes }),

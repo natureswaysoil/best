@@ -1,0 +1,10 @@
+{
+  "size": "1280x720",
+  "bg": "#0d3b2a",
+  "fontsize": 52,
+  "lineSpacing": 12,
+  "durationSeconds": 5,
+  "fadeSeconds": 0.5,
+  "vp9Crf": 33,
+  "vp9Speed": 4
+}

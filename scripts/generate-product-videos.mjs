@@ -17,6 +17,7 @@ const PROJECT = path.resolve(__dirname, '..');
 const DATA_FILE = path.join(PROJECT, 'data', 'products.ts');
 const OUT_DIR = path.join(PROJECT, 'public', 'videos');
 const ASIN_SCRIPTS = path.join(PROJECT, 'content', 'video-scripts', 'asin-scripts.json');
+const VIDEO_CONFIG = path.join(PROJECT, 'content', 'video-scripts', 'video-config.json');
 
 function hasFfmpeg() {
   try {
@@ -85,7 +86,7 @@ function makeSlides(prod, asinMap) {
   return slides;
 }
 
-function buildVideoForProduct(prod, asinMap) {
+function buildVideoForProduct(prod, asinMap, cfg) {
   const slides = makeSlides(prod, asinMap);
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `nws_${prod.id}_`));
   const fontPathCandidates = [
@@ -97,7 +98,15 @@ function buildVideoForProduct(prod, asinMap) {
     console.warn('Warning: DejaVu Sans font not found. drawtext may fail without fontfile.');
   }
 
-  const common = { size: '1280x720', bg: '#0d3b2a', fontsize: 48, lineSpacing: 10, duration: 5 };
+  const common = {
+    size: (cfg && cfg.size) || '1280x720',
+    bg: (cfg && cfg.bg) || '#0d3b2a',
+    fontsize: (cfg && cfg.fontsize) || 48,
+    lineSpacing: (cfg && cfg.lineSpacing) || 10,
+    duration: (cfg && cfg.durationSeconds) || 5,
+    fadeSeconds: (cfg && cfg.fadeSeconds) || 0.5,
+  };
+  const selectedFont = (cfg && cfg.fontFile && fs.existsSync(cfg.fontFile)) ? cfg.fontFile : fontPath;
 
   const slideFiles = [];
   slides.forEach((text, idx) => {
@@ -107,7 +116,7 @@ function buildVideoForProduct(prod, asinMap) {
     fs.writeFileSync(textFile, safeText, 'utf8');
     const drawtext = [
       `fontcolor=white:fontsize=${common.fontsize}`,
-      fontPath ? `fontfile=${fontPath}` : '',
+      selectedFont ? `fontfile=${selectedFont}` : '',
       'box=1:boxcolor=#00000088:boxborderw=20',
       'x=(w-text_w)/2',
       'y=(h-text_h)/2',
@@ -116,9 +125,14 @@ function buildVideoForProduct(prod, asinMap) {
       `textfile=${textFile}`,
     ].filter(Boolean).join(':');
 
+    const fadeIn = Math.max(0, Math.min(common.fadeSeconds, common.duration / 2));
+    const fadeOutStart = Math.max(0, common.duration - fadeIn);
+
+    const vfChain = `drawtext=${drawtext},fade=t=in:st=0:d=${fadeIn},fade=t=out:st=${fadeOutStart}:d=${fadeIn}`;
+
     const cmd = [
       'ffmpeg','-y','-f','lavfi','-i',`color=c=${common.bg}:s=${common.size}:d=${common.duration}`,
-      '-vf',`drawtext=${drawtext}`,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',
+      '-vf', vfChain,'-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',
       slidePath,
     ];
     const res = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
@@ -135,13 +149,24 @@ function buildVideoForProduct(prod, asinMap) {
   const cres = spawnSync(concatCmd[0], concatCmd.slice(1), { stdio: 'inherit' });
   if (cres.status !== 0) throw new Error(`ffmpeg concat failed for ${prod.id}`);
 
+  // Additionally output WebM (VP9) for broader browser coverage
+  const outWebm = path.join(OUT_DIR, `${prod.id}.webm`);
+  const webmCmd = [
+    'ffmpeg','-y','-i', outPath,
+    '-c:v','libvpx-vp9','-b:v','0','-crf', (cfg && cfg.vp9Crf ? String(cfg.vp9Crf) : '33'),
+    '-row-mt','1','-speed', (cfg && cfg.vp9Speed ? String(cfg.vp9Speed) : '4'),
+    '-pix_fmt','yuv420p','-r','30', outWebm
+  ];
+  const wres = spawnSync(webmCmd[0], webmCmd.slice(1), { stdio: 'inherit' });
+  if (wres.status !== 0) throw new Error(`ffmpeg webm transcode failed for ${prod.id}`);
+
   try {
     slideFiles.forEach(f => fs.unlinkSync(f));
     fs.unlinkSync(listPath);
     fs.rmdirSync(tmpDir);
   } catch {}
 
-  return outPath;
+  return { mp4: outPath, webm: outWebm };
 }
 
 function main() {
@@ -152,12 +177,20 @@ function main() {
   ensureDir(OUT_DIR);
   const products = loadProducts();
   let asinMap = {};
+  let cfg = {};
   try {
     if (fs.existsSync(ASIN_SCRIPTS)) {
       asinMap = JSON.parse(fs.readFileSync(ASIN_SCRIPTS, 'utf8'));
     }
   } catch (e) {
     console.warn('Warning: Failed to read asin-scripts.json:', e.message);
+  }
+  try {
+    if (fs.existsSync(VIDEO_CONFIG)) {
+      cfg = JSON.parse(fs.readFileSync(VIDEO_CONFIG, 'utf8'));
+    }
+  } catch (e) {
+    console.warn('Warning: Failed to read video-config.json:', e.message);
   }
   if (!products.length) {
     console.error('No products found to generate videos for.');
@@ -167,15 +200,15 @@ function main() {
   const results = [];
   for (const p of products) {
     try {
-      const out = buildVideoForProduct(p, asinMap);
+      const out = buildVideoForProduct(p, asinMap, cfg);
       results.push({ id: p.id, out });
-      console.log(`✔ ${p.id} -> ${path.relative(PROJECT, out)}`);
+      console.log(`✔ ${p.id} -> ${path.relative(PROJECT, out.mp4)} & ${path.relative(PROJECT, out.webm)}`);
     } catch (e) {
       console.error(`✖ Failed to build video for ${p.id}:`, e.message);
     }
   }
   console.log('\nDone. Generated files:');
-  results.forEach(r => console.log(`- ${r.id}: ${path.relative(PROJECT, r.out)}`));
+  results.forEach(r => console.log(`- ${r.id}: ${path.relative(PROJECT, r.out.mp4)} | ${path.relative(PROJECT, r.out.webm)}`));
 }
 
 main();
