@@ -413,7 +413,21 @@
         }
 
         async function connectBigQuery() {
-            const proxy = BIGQUERY_CONFIG.proxyEndpoint;
+            // Use saved proxy if present; otherwise, accept a typed (but unsaved) proxy URL
+            let proxy = BIGQUERY_CONFIG.proxyEndpoint;
+            if (!proxy) {
+                var typed = (document.getElementById('proxy-url') && document.getElementById('proxy-url').value || '').trim();
+                if (typed) {
+                    if (!/^https:\/\//.test(typed)) {
+                        showError('Proxy URL must start with https://');
+                        return;
+                    }
+                    proxy = typed;
+                    // persist so auto-connect works on refresh
+                    localStorage.setItem('bq_proxy_url', proxy);
+                    BIGQUERY_CONFIG.proxyEndpoint = proxy;
+                }
+            }
             if (proxy) {
                 // With proxy, no key is needed in browser
                 setStatus('loading', 'Connecting via proxy...');
