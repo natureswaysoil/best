@@ -7,7 +7,6 @@
     "start": "functions-framework --target=query"
   },
   "dependencies": {
-    "@google-cloud/bigquery": "7.10.0",
     "@google-cloud/functions-framework": "^3.4.0"
   }
 }

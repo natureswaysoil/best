@@ -1,6 +1,6 @@
 # BigQuery Proxy Cloud Function
 
-A minimal HTTP Cloud Function that executes a BigQuery SQL query server-side and returns results with CORS enabled for GitHub Pages.
+A minimal HTTP Cloud Function that executes a BigQuery SQL query server-side via the BigQuery REST API and returns results with CORS enabled for GitHub Pages.
 
 - Endpoint: POST /query
 - Body: { "query": string, "location"?: string }
