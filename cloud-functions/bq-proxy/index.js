@@ -28,14 +28,14 @@ exports.query = async (req, res) => {
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
-    const { query, location } = req.body || {};
+  const { query, location, projectId: projectFromBody } = req.body || {};
     if (!query || typeof query !== 'string') {
       return res.status(400).json({ error: 'Missing SQL query' });
     }
 
-    const projectId = process.env.GCP_PROJECT || process.env.GOOGLE_CLOUD_PROJECT;
+    const projectId = process.env.GCP_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || projectFromBody;
     if (!projectId) {
-      return res.status(500).json({ error: 'Project ID not found in environment' });
+      return res.status(400).json({ error: 'Project ID not provided. Set GOOGLE_CLOUD_PROJECT in the environment or include projectId in the request body.' });
     }
 
     // Get access token from metadata server
