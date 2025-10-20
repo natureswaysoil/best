@@ -63,33 +63,29 @@ function sanitize(text) {
   return text.replace(/:/g, '\u2236');
 }
 
-function makeSlides(prod, asinMap) {
+function makeSegments(prod, asinMap) {
+  if (prod.asin && asinMap && asinMap[prod.asin] && asinMap[prod.asin].segments) {
+    return asinMap[prod.asin].segments;
+  }
+  // Fallback: create default segments
   const title = prod.name;
   const steps = (prod.usage || []).slice(0, 3);
   const safeSteps = steps.map(sanitize);
   const intro = `${title}`;
   const tip = prod.category ? `${prod.category} • Pet-safe • Easy to use` : 'Pet-safe • Easy to use';
   const cta = 'Mix with water • Apply • See results\nLearn more at NaturesWaySoil.com';
-  let slides = [
-    intro,
-    safeSteps[0] || 'Shake well before use.\nMix with water as directed.',
-    safeSteps[1] || 'Apply to soil around roots\nor spray foliage as recommended.',
-    safeSteps[2] || 'Repeat on schedule for best results.',
-    tip,
-    cta,
+  return [
+    { start: 0, end: 5, text: intro },
+    { start: 5, end: 10, text: safeSteps[0] || 'Shake well before use.\nMix with water as directed.' },
+    { start: 10, end: 15, text: safeSteps[1] || 'Apply to soil around roots\nor spray foliage as recommended.' },
+    { start: 15, end: 20, text: safeSteps[2] || 'Repeat on schedule for best results.' },
+    { start: 20, end: 25, text: tip },
+    { start: 25, end: 30, text: cta },
   ];
-  if (prod.asin && asinMap && asinMap[prod.asin]) {
-    const s = asinMap[prod.asin];
-    const custom = [s.title, ...s.slides];
-    const brand = 'Nature’s Way Soil • Free shipping $50+\nNaturesWaySoil.com';
-    while (custom.length < 6) custom.push(brand);
-    slides = custom.slice(0, 6);
-  }
-  return slides;
 }
 
 function buildVideoForProduct(prod, asinMap, cfg) {
-  const slides = makeSlides(prod, asinMap);
+  const segments = makeSegments(prod, asinMap);
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `nws_${prod.id}_`));
   const fontPathCandidates = [
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
@@ -109,13 +105,13 @@ function buildVideoForProduct(prod, asinMap, cfg) {
     fadeSeconds: (cfg && cfg.fadeSeconds) || 0.5,
   };
   const [W, H] = common.size.split('x').map(n => parseInt(n, 10));
-  const totalDuration = Math.max(1, slides.length) * common.perSlide;
+  const totalDuration = (cfg && cfg.totalDuration) || 30;
   const selectedFont = (cfg && cfg.fontFile && fs.existsSync(cfg.fontFile)) ? cfg.fontFile : fontPath;
 
   // Prepare textfiles for each caption segment
-  const textFiles = slides.map((text, idx) => {
+  const textFiles = segments.map((seg, idx) => {
     const textFile = path.join(tmpDir, `seg_${idx + 1}.txt`);
-    const safeText = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\t\u0000-\u001f\u007f]/g, ' ');
+    const safeText = String(seg.text).replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/[\t\u0000-\u001f\u007f]/g, ' ');
     fs.writeFileSync(textFile, safeText, 'utf8');
     return textFile;
   });
@@ -131,8 +127,8 @@ function buildVideoForProduct(prod, asinMap, cfg) {
   if (havePoster) {
     // Input 0: color base, Input 1: poster (looped)
     chain.push(
-      `[1:v]scale=iw*max(${W}/iw\,${H}/ih):ih*max(${W}/iw\,${H}/ih),` +
-      `zoompan=z=min(zoom+0.0008\,1.12):d=1:s=${W}x${H}:fps=30,` +
+      `[1:v]scale='iw*max(${W}/iw,${H}/ih):ih*max(${W}/iw,${H}/ih)',` +
+      `zoompan=z='min(zoom+0.0008,1.12)':d=1:s=${W}x${H}:fps=30,` +
       `format=yuv420p[vbg]`,
       `[0:v][vbg]overlay=shortest=1${baseLabel}`
     );
@@ -161,9 +157,9 @@ function buildVideoForProduct(prod, asinMap, cfg) {
 
   // Timed captions for each segment
   let lastLabel = '[v1]';
-  slides.forEach((_, idx) => {
-    const st = idx * common.perSlide;
-    const et = st + common.perSlide;
+  segments.forEach((seg, idx) => {
+    const st = seg.start;
+    const et = seg.end;
     const tf = textFiles[idx];
     const yExpr = `(h*0.78)-(30*between(t,${st.toFixed(2)},${(st+0.3).toFixed(2)}))`;
     const captionArgs = [
@@ -179,7 +175,7 @@ function buildVideoForProduct(prod, asinMap, cfg) {
       `textfile=${tf}`,
       `enable='between(t,${st.toFixed(2)},${et.toFixed(2)})'`
     ].filter(Boolean).join(':');
-    const nextLabel = idx === slides.length - 1 ? '[vout]' : `[v${idx + 2}]`;
+    const nextLabel = idx === segments.length - 1 ? '[vout]' : `[v${idx + 2}]`;
     chain.push(`${lastLabel}drawtext=${captionArgs}${nextLabel}`);
     lastLabel = nextLabel;
   });
@@ -197,7 +193,7 @@ function buildVideoForProduct(prod, asinMap, cfg) {
     // Input 1: poster (optional)
     ...(havePoster ? ['-loop','1','-t', String(totalDuration), '-i', posterPathCandidate] : []),
     '-filter_complex_script', graphFile,
-    '-map', slides.length ? '[vout]' : (havePoster ? '[bgout]' : '[base]'),
+    '-map', segments.length ? '[vout]' : (havePoster ? '[bgout]' : '[base]'),
     '-c:v','libx264','-preset','veryfast','-crf','23','-pix_fmt','yuv420p','-r','30',
     outPath
   ];
