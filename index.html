@@ -72,6 +72,15 @@
                         <button class="btn secondary" onclick="clearProxyUrl()">Clear Proxy URL</button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="bq-location">Dataset Location</label>
+                    <input id="bq-location" type="text" placeholder="us-east4 (Eastern US)" />
+                    <small style="color:#718096">Use your dataset location (e.g., us, us-east4, eu). Defaults to us-east4.</small>
+                    <div style="margin-top:8px;">
+                        <button class="btn secondary" onclick="saveLocation()">Save Location</button>
+                        <button class="btn secondary" onclick="clearLocation()">Clear Location</button>
+                    </div>
+                </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <label>&nbsp;</label>
                     <div>
@@ -139,7 +148,8 @@
             projectId: 'amazon-ppc-474902',
             datasetId: 'amazon_ppc',
             apiEndpoint: 'https://bigquery.googleapis.com/v2',
-            proxyEndpoint: localStorage.getItem('bq_proxy_url') || ''
+            proxyEndpoint: localStorage.getItem('bq_proxy_url') || '',
+            location: localStorage.getItem('bq_location') || 'us-east4' // Eastern US default
         };
 
         function initGoogleAPI() {
@@ -222,7 +232,7 @@
                 const response = await fetch(BIGQUERY_CONFIG.proxyEndpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, location: 'US' })
+                    body: JSON.stringify({ query, location: BIGQUERY_CONFIG.location || 'US' })
                 });
                 const json = await response.json();
                 if (!response.ok) throw new Error(json.error || 'BigQuery proxy failed');
@@ -238,7 +248,7 @@
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ query, useLegacySql: false, maxResults: 1000 })
+                body: JSON.stringify({ query, useLegacySql: false, maxResults: 1000, location: BIGQUERY_CONFIG.location || 'US' })
             });
             const json = await response.json();
             if (!response.ok) throw new Error(json.error?.message || 'BigQuery query failed');
@@ -426,6 +436,23 @@
             document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL cleared</div>';
         }
 
+        function saveLocation() {
+            var el = document.getElementById('bq-location');
+            var loc = el && 'value' in el ? el.value.trim() : '';
+            if (!loc) loc = 'us-east4';
+            localStorage.setItem('bq_location', loc);
+            BIGQUERY_CONFIG.location = loc;
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location saved</div>';
+        }
+
+        function clearLocation() {
+            localStorage.removeItem('bq_location');
+            BIGQUERY_CONFIG.location = 'us-east4';
+            var el = document.getElementById('bq-location');
+            if (el) el.value = 'us-east4';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location reset to us-east4</div>';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             initGoogleAPI();
             setStatus('ready', 'Ready to connect');
@@ -433,6 +460,10 @@
             var input = document.getElementById('proxy-url');
             if (input) input.value = saved;
             BIGQUERY_CONFIG.proxyEndpoint = saved;
+            var savedLoc = localStorage.getItem('bq_location') || BIGQUERY_CONFIG.location;
+            var locInput = document.getElementById('bq-location');
+            if (locInput) locInput.value = savedLoc;
+            BIGQUERY_CONFIG.location = savedLoc;
         });
         setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
     </script>
