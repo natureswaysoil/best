@@ -75,6 +75,7 @@
                     <div style="margin-top:8px;">
                         <button class="btn secondary" onclick="saveProxyUrl()">Save Proxy URL</button>
                         <button class="btn secondary" onclick="clearProxyUrl()">Clear Proxy URL</button>
+                        <button class="btn secondary" onclick="testProxy()">Test Proxy</button>
                     </div>
                 </div>
                 <div class="form-group">
@@ -290,14 +291,21 @@
         async function executeBigQueryQuery(query) {
             // Prefer server-side proxy if configured
             if (BIGQUERY_CONFIG.proxyEndpoint) {
-                const response = await fetch(BIGQUERY_CONFIG.proxyEndpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, location: BIGQUERY_CONFIG.location || 'US' })
-                });
-                const json = await response.json();
-                if (!response.ok) throw new Error(json.error || 'BigQuery proxy failed');
-                return json;
+                try {
+                    const response = await fetch(BIGQUERY_CONFIG.proxyEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query, location: BIGQUERY_CONFIG.location || 'US' })
+                    });
+                    const text = await response.text();
+                    let json;
+                    try { json = text ? JSON.parse(text) : {}; } catch { json = { error: text || 'Invalid JSON from proxy' }; }
+                    if (!response.ok) throw new Error(json.error || text || 'BigQuery proxy failed');
+                    return json;
+                } catch (err) {
+                    // Likely CORS/network if fetch itself throws
+                    throw new Error('Failed to fetch (proxy). Ensure the proxy URL is correct, uses https, and allows origin https://natureswaysoil.github.io. Details: ' + (err?.message || err));
+                }
             }
 
             // Direct REST call (requires browser-held service account auth; may be blocked by CORS)
@@ -520,6 +528,30 @@
             var input = document.getElementById('proxy-url');
             if (input) input.value = '';
             document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL cleared</div>';
+        }
+
+        async function testProxy() {
+            const url = BIGQUERY_CONFIG.proxyEndpoint || (document.getElementById('proxy-url')?.value || '').trim();
+            if (!url) { showError('Set or save a Proxy URL first'); return; }
+            if (!/^https:\/\//.test(url)) { showError('Proxy URL must start with https://'); return; }
+            try {
+                setStatus('loading', 'Testing proxy…');
+                // Preflight
+                await fetch(url, { method: 'OPTIONS' });
+                // Tiny query
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: 'SELECT 1 AS ok', location: BIGQUERY_CONFIG.location || 'US' })
+                });
+                const txt = await r.text();
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy OK</div>';
+                setStatus('success', 'Proxy reachable');
+            } catch (e) {
+                showError('Proxy test failed: ' + (e?.message || e));
+                setStatus('error', 'Proxy test failed');
+            }
         }
 
         function saveLocation() {
