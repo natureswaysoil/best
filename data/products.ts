@@ -42,7 +42,7 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg'
     ],
-    video: 'https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/4e66a5bb-ec66-48e2-ab35-7f5746f15e6f/VIDEO/organic_liquid_fertilizer_for_garden_and_house_pla.mp4',
+    video: '/videos/NWS_001.mp4',
     inStock: true,
     sizes: [
       { name: '1 Gallon', price: 20.99, sku: '3L-3MPJ-6BQM' }
@@ -76,6 +76,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61GZu8zOBpL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_002.mp4',
     sizes: [
       { name: '4 Quarts', price: 29.99, sku: 'NWS-4q-ABC' }
     ],
@@ -108,6 +109,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61wHJGK8PqL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_003.mp4',
     sizes: [
       { name: '1 Gallon', price: 29.99, sku: 'P5-NP0G-5SL7' }
     ],
@@ -140,6 +142,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61OYwF7VEDL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_004.mp4',
     sizes: [
       { name: 'Quart', price: 29.99, sku: '9P-CSA1-NC45' }
     ],
@@ -171,7 +174,7 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/71PYCZfZ2BL._AC_UL320_.jpg'
     ],
-    video: 'https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/99e79e43-6242-4029-bcc3-18563dd1e2c3/VIDEO/natures_way_soil_liquid_kelp_fertilizer_product_vi.mp4',
+    video: '/videos/NWS_006.mp4',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'XX-XBWB-DF03' },
@@ -207,6 +210,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/615mJs9XccL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_011.mp4',
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'FP-AL1H-WYNQ' },
       { name: '1 Gallon', price: 39.99, sku: 'IT-ADBS-CXUC' },
@@ -240,7 +244,7 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/7151rsGhpkL._AC_UL320_.jpg'
     ],
-    video: 'https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/0bdaff8c-5ac2-4c9d-a16a-172d24b79f52/VIDEO/liquid_bone_meal_fertilizer_product_video.mp4',
+    video: '/videos/NWS_012.mp4',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'B5-G9JD-1K10' },
@@ -275,6 +279,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/718tWBNNfkL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_013.mp4',
     sizes: [
       { name: '10 lb', price: 29.99, sku: 'WK-558E-QZUL' }
     ],
@@ -307,6 +312,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61PNqp+9RcL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_014.mp4',
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'EG-PJ13-DA9T' },
       { name: '1 Gallon', price: 59.99, sku: 'T0-MB9Q-JIKC' }
@@ -339,7 +345,7 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/61qsUDP+WuL._AC_UL320_.jpg'
     ],
-    video: 'https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/22ddc732-5c9a-46eb-9f92-ff8a5dafb3c0/VIDEO/organic_hydroponic_fertilizer_concentrate_product_.mp4',
+    video: '/videos/NWS_016.mp4',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'FR-IJ8R-6LQK' }
@@ -372,7 +378,7 @@ export const allProducts: ProductData[] = [
     images: [
       'https://m.media-amazon.com/images/I/61ZGd9iqYPL._AC_UL320_.jpg'
     ],
-    video: 'https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/7e73b697-52ad-4a55-b6e1-b25664378032/VIDEO/seaweed__humic_acid_lawn_treatment_product_video.m.mp4',
+    video: '/videos/NWS_018.mp4',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 11.99, sku: 'BH-NBDZ-TCRT' },
@@ -411,6 +417,7 @@ export const allProducts: ProductData[] = [
       'https://m.media-amazon.com/images/I/61ll2EiLAJL._AC_UL320_.jpg'
     ],
     inStock: true,
+    video: '/videos/NWS_021.mp4',
     sizes: [
       { name: '1 Gallon', price: 39.99, sku: 'VY-T7ZM-760R' },
       { name: '2.5 Gallon', price: 99.99, sku: 'N4-E00Z-BB9W' }

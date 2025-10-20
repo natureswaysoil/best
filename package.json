@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "videos": "node scripts/generate-product-videos.js",
+    "check:videos": "node scripts/check-videos.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",

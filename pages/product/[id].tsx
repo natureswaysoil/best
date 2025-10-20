@@ -1,4 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
+import fs from 'fs';
+import path from 'path';
 import Head from 'next/head';
 import ProductDetail from '../../components/ProductDetail';
 import { getProductById, getAllProductIds } from '../../data/products';
@@ -82,6 +84,11 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
 
   // Convert to Product format for ProductDetail component
   // Only include optional fields if they have actual values (not undefined)
+  // Prefer a locally generated video in public/videos/{id}.mp4 if present
+  const localVideoPath = `/videos/${productId}.mp4`;
+  const localVideoAbs = path.join(process.cwd(), 'public', 'videos', `${productId}.mp4`);
+  const hasLocalVideo = fs.existsSync(localVideoAbs);
+
   const product: Product = {
     id: productData.id,
     name: productData.name,
@@ -91,7 +98,8 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     features: productData.features,
   images: productData.images,
   image: productData.image,
-    ...(productData.video && { video: productData.video }),
+    // If a local video exists, prefer that path (served from /videos/). Otherwise use any configured product.video.
+    ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
     inStock: productData.inStock,
     category: productData.category,
     ...(productData.sizes && productData.sizes.length > 0 && { sizes: productData.sizes }),

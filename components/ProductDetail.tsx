@@ -138,6 +138,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                     ref={videoRef}
                     className="w-full h-full object-contain bg-black"
                     src={product.video}
+                    poster={galleryImages[0] ?? product.image}
                     muted={isVideoMuted}
                     crossOrigin="anonymous"
                     onPlay={() => setIsVideoPlaying(true)}
