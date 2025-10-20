@@ -158,9 +158,33 @@
             }
         }
 
+        function parseServiceAccountKey(raw) {
+            try {
+                return JSON.parse(raw);
+            } catch (_) {
+                // Try to isolate JSON block
+                try {
+                    var start = raw.indexOf('{');
+                    var end = raw.lastIndexOf('}');
+                    if (start !== -1 && end !== -1 && end > start) {
+                        raw = raw.slice(start, end + 1);
+                    }
+                    // Escape actual newlines in private_key value to \n
+                    raw = raw.replace(/(\"private_key\"\s*:\s*\")( [\s\S]*? )(\")/gm, function(match, p1, p2, p3){
+                        // Remove leading/trailing whitespace inside value and escape newlines
+                        var cleaned = p2.replace(/\r?\n/g, '\\n');
+                        return p1 + cleaned + p3;
+                    });
+                    return JSON.parse(raw);
+                } catch (e2) {
+                    throw e2;
+                }
+            }
+        }
+
         async function authenticateBigQuery(serviceAccountKey) {
             try {
-                const keyData = JSON.parse(serviceAccountKey);
+                const keyData = parseServiceAccountKey(serviceAccountKey);
                 const jwt = await createJWT(keyData);
 
                 const response = await fetch('https://oauth2.googleapis.com/token', {
