@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Play, Pause, Volume2, VolumeX, Truck, Shield, Leaf } from 'lucide-react';
 import Layout from '../components/Layout';
@@ -30,8 +30,6 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ product }: ProductDetailProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showVideo, setShowVideo] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -42,6 +40,19 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
   // Prefer the generated video poster as the first gallery image when available
   const enrichedGallery = product.videoPoster ? [product.videoPoster, ...galleryImages] : galleryImages;
+
+  // Auto-play video when component mounts (muted for better UX)
+  useEffect(() => {
+    if (videoRef.current && (product.video || product.videoWebm)) {
+      const video = videoRef.current;
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          // Auto-play prevented, user will need to click play
+        });
+      }
+    }
+  }, [product.video, product.videoWebm]);
 
   // Use product sizes if available, otherwise determine based on category
   const isLiquid = product.category === 'Fertilizer' || product.category === 'Soil Amendment' || product.category === 'Lawn Care';
@@ -132,119 +143,76 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           
-          {/* Product Images & Video Section - Properly sized */}
+          {/* Product Video & Images Section - Video embedded directly */}
           <div className="space-y-4">
-            {/* Main Image/Video Display - Responsive aspect with max height for better fit */}
-            <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 
-                            aspect-[4/3] sm:aspect-[4/3] lg:aspect-[16/10] 2xl:aspect-[16/9] max-h-[70vh]">
-              {showVideo && (product.video || product.videoWebm) ? (
-                <div className="relative w-full h-full">
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full object-contain lg:object-cover bg-black"
-                    // Use multiple sources for better codec coverage
-                    poster={product.videoPoster ?? galleryImages[0] ?? product.image}
-                    muted={isVideoMuted}
-                    crossOrigin="anonymous"
-                    onPlay={() => setIsVideoPlaying(true)}
-                    onPause={() => setIsVideoPlaying(false)}
-                    onEnded={() => setIsVideoPlaying(false)}
+            {/* Main Video Display - Videos embedded directly when available */}
+            {(product.video || product.videoWebm) ? (
+              <div className="relative bg-black rounded-2xl overflow-hidden border border-gray-200 
+                              aspect-video max-h-[70vh]">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-contain bg-black"
+                  poster={product.videoPoster ?? galleryImages[0] ?? product.image}
+                  muted={isVideoMuted}
+                  crossOrigin="anonymous"
+                  onPlay={() => setIsVideoPlaying(true)}
+                  onPause={() => setIsVideoPlaying(false)}
+                  onEnded={() => setIsVideoPlaying(false)}
+                >
+                  {product.videoWebm && (
+                    <source src={product.videoWebm} type="video/webm" />
+                  )}
+                  {product.video && (
+                    <source src={product.video} type="video/mp4" />
+                  )}
+                  Your browser does not support the video tag.
+                </video>
+                
+                {/* Video Controls - Fully functional play/pause and mute controls */}
+                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                  <button
+                    onClick={toggleVideo}
+                    className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg"
+                    aria-label={isVideoPlaying ? 'Pause video' : 'Play video'}
                   >
-                    {product.videoWebm && (
-                      <source src={product.videoWebm} type="video/webm" />
+                    {isVideoPlaying ? (
+                      <Pause className="w-5 h-5" />
+                    ) : (
+                      <Play className="w-5 h-5 ml-0.5" />
                     )}
-                    {product.video && (
-                      <source src={product.video} type="video/mp4" />
-                    )}
-                    Your browser does not support the video tag.
-                  </video>
+                  </button>
                   
-                  {/* Video Controls - Ensuring they work properly */}
-                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                    <button
-                      onClick={toggleVideo}
-                      className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors"
-                      aria-label={isVideoPlaying ? 'Pause video' : 'Play video'}
-                    >
-                      {isVideoPlaying ? (
-                        <Pause className="w-5 h-5" />
-                      ) : (
-                        <Play className="w-5 h-5 ml-0.5" />
-                      )}
-                    </button>
-                    
-                    <button
-                      onClick={toggleMute}
-                      className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors"
-                      aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'}
-                    >
-                      {isVideoMuted ? (
-                        <VolumeX className="w-5 h-5" />
-                      ) : (
-                        <Volume2 className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    onClick={toggleMute}
+                    className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg"
+                    aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'}
+                  >
+                    {isVideoMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-              ) : (
+
+                {/* Video info badge */}
+                <div className="absolute top-4 left-4 bg-nature-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                  Product Video
+                </div>
+              </div>
+            ) : (
+              /* Fallback to image display when no video available */
+              <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 
+                              aspect-[4/3] sm:aspect-[4/3] lg:aspect-[16/10] 2xl:aspect-[16/9] max-h-[70vh]">
                 <Image
-                  src={enrichedGallery[currentImageIndex]}
+                  src={enrichedGallery[0]}
                   alt={product.name}
                   fill
                   className="object-contain lg:object-cover bg-white"
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
-              )}
-            </div>
-
-            {/* Thumbnail Navigation */}
-            <div className="flex space-x-3 overflow-x-auto pb-2">
-              {enrichedGallery.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setCurrentImageIndex(index);
-                    setShowVideo(false);
-                  }}
-                  className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                    currentImageIndex === index && !showVideo
-                      ? 'border-nature-green-500'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <Image
-                    src={image}
-                    alt={`${product.name} view ${index + 1}`}
-                    fill
-                    className="object-contain bg-white"
-                    sizes="80px"
-                  />
-                </button>
-              ))}
-              
-              {/* Video Thumbnail */}
-              {(product.video || product.videoWebm) && (
-                <button
-                  onClick={() => setShowVideo(true)}
-                  className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                    showVideo
-                      ? 'border-nature-green-500'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <Image
-                    src={product.videoPoster ?? enrichedGallery[0]}
-                    alt="Product video"
-                    fill
-                    className="object-contain bg-white"
-                    sizes="80px"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                    <Play className="w-6 h-6 text-white" />
-                  </div>
-                </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Product Information */}
