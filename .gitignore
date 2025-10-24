@@ -1,2 +1,22 @@
 bigquery-service-account-key.json
 amazon-credentials.json
+
+# General
+.DS_Store
+*.log
+*.tmp
+*.swp
+
+# Node/JS
+node_modules/
+dist/
+.cache/
+.vercel/
+
+# Env files (never commit secrets)
+.env
+.env.*
+
+# Packages/artifacts
+deployment-package/*.tar.gz
+*.tar.gz

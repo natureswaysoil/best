@@ -1,0 +1,3 @@
+[submodule "automation/video-system/upstream"]
+	path = automation/video-system/upstream
+	url = https://github.com/natureswaysoil/video
