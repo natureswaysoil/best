@@ -327,7 +327,18 @@
 
         async function loadCampaignData() {
             const q = `
-                SELECT campaign_name, SUM(impressions) total_impressions, SUM(clicks) total_clicks
+                SELECT 
+                    campaign_name, 
+                    SUM(impressions) total_impressions, 
+                    SUM(clicks) total_clicks,
+                    SUM(cost) total_cost,
+                    SUM(conversions) total_conversions,
+                    SUM(conversion_value) total_conversion_value,
+                    ROUND(AVG(acos), 2) avg_acos,
+                    ROUND(AVG(roas), 2) avg_roas,
+                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr,
+                    ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) cpc,
+                    ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) conversion_rate
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
                 GROUP BY campaign_name ORDER BY total_impressions DESC LIMIT 10`;
@@ -337,7 +348,16 @@
 
         async function loadTrendsData() {
             const q = `
-                SELECT date, SUM(impressions) impressions, SUM(clicks) clicks
+                SELECT 
+                    date, 
+                    SUM(impressions) impressions, 
+                    SUM(clicks) clicks,
+                    SUM(cost) cost,
+                    SUM(conversions) conversions,
+                    SUM(conversion_value) conversion_value,
+                    ROUND(AVG(acos), 2) acos,
+                    ROUND(AVG(roas), 2) roas,
+                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
                 GROUP BY date ORDER BY date`;
@@ -347,10 +367,18 @@
 
         async function loadSummaryMetrics() {
             const q = `
-                SELECT COUNT(DISTINCT campaign_name) total_campaigns,
-                       SUM(impressions) total_impressions,
-                       SUM(clicks) total_clicks,
-                       SUM(conversions) total_conversions
+                SELECT 
+                    COUNT(DISTINCT campaign_name) total_campaigns,
+                    SUM(impressions) total_impressions,
+                    SUM(clicks) total_clicks,
+                    SUM(conversions) total_conversions,
+                    SUM(cost) total_cost,
+                    SUM(conversion_value) total_conversion_value,
+                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) overall_ctr,
+                    ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) overall_cpc,
+                    ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) overall_conversion_rate,
+                    ROUND(SUM(cost)*100.0/NULLIF(SUM(conversion_value),0), 2) overall_acos,
+                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) overall_roas
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)`;
             const result = await executeBigQueryQuery(q);
