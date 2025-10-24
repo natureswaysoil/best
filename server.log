@@ -1,0 +1,14 @@
+nohup: ignoring input
+127.0.0.1 - - [24/Oct/2025 14:49:29] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 14:50:32] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 14:50:34] code 404, message File not found
+127.0.0.1 - - [24/Oct/2025 14:50:34] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [24/Oct/2025 15:05:11] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:13:19] "HEAD / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:27:32] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:37:27] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:46:50] "HEAD /policy/ HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:47:01] "HEAD /policy/privacy.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:47:14] "HEAD /policy/terms.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:47:20] "HEAD /policy/data-deletion.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2025 15:51:07] "HEAD / HTTP/1.1" 200 -

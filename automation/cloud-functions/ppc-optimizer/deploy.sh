@@ -54,7 +54,7 @@ gcloud functions deploy $FUNCTION_NAME \
     --region=$REGION \
     --source=. \
     --entry-point=optimizePPC \
-    --trigger=http \
+    --trigger-http \
     --service-account=$SERVICE_ACCOUNT \
     --memory=2GB \
     --timeout=540s \

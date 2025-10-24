@@ -4,15 +4,45 @@
 // - Calls BigQuery REST API and returns the raw JSON (includes rows: f[].v)
 // - CORS enabled for GitHub Pages origin
 
-// Allow from your GitHub Pages origin
-const DEFAULT_ALLOWED = ['https://natureswaysoil.github.io'];
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+// Allow from your GitHub Pages origin and localhost for testing
+const DEFAULT_ALLOWED = ['https://natureswaysoil.github.io', 'http://localhost:8086', 'http://localhost:8082', 'http://localhost:8080', 'http://localhost:8081', 'http://localhost:8083'];
+const RAW_ALLOWED = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
   : DEFAULT_ALLOWED;
 
+// Support simple wildcard subdomain patterns like:
+//   https://*.vercel.app
+// as well as exact origins.
+const ALLOWED = {
+  exact: [],
+  patterns: [] // { scheme: 'https://', suffix: '.vercel.app' }
+};
+
+for (const entry of RAW_ALLOWED) {
+  // Match scheme wildcard, e.g., https://*.domain.tld
+  const m = entry.match(/^(https?:\/)\/\*\.([^\s]+)$/i);
+  if (m) {
+    const scheme = m[1] + '/';
+    const suffix = '.' + m[2].replace(/\/$/, '');
+    ALLOWED.patterns.push({ scheme, suffix });
+  } else {
+    ALLOWED.exact.push(entry);
+  }
+}
+
+function originAllowed(origin) {
+  if (!origin) return false;
+  if (ALLOWED.exact.includes(origin)) return true;
+  // Check wildcard subdomain patterns
+  for (const p of ALLOWED.patterns) {
+    if (origin.startsWith(p.scheme) && origin.endsWith(p.suffix)) return true;
+  }
+  return false;
+}
+
 exports.query = async (req, res) => {
   const origin = req.headers.origin || '';
-  if (ALLOWED_ORIGINS.includes(origin)) {
+  if (originAllowed(origin)) {
     res.set('Access-Control-Allow-Origin', origin);
   }
   res.set('Vary', 'Origin');

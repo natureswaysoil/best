@@ -72,7 +72,7 @@ gcloud functions deploy $FUNCTION_NAME \
     --region=$REGION \
     --source=. \
     --entry-point=syncAmazonData \
-    --trigger=http \
+    --trigger-http \
     --service-account=$SERVICE_ACCOUNT \
     --memory=1GB \
     --timeout=540s \

@@ -58,6 +58,15 @@
         <div class="header">
             <h1>🌱 Amazon PPC Dashboard</h1>
             <p><span class="status-indicator" id="status-indicator"></span><span id="status-text">Ready to connect</span></p>
+            <p style="margin-top:8px; font-size:0.95rem;">
+                <a href="policy/" style="color:#667eea; text-decoration:none; font-weight:600;">Policy Center</a>
+                <span style="color:#a0aec0;"> • </span>
+                <a href="policy/privacy.html" style="color:#667eea; text-decoration:none;">Privacy</a>
+                <span style="color:#a0aec0;"> • </span>
+                <a href="policy/terms.html" style="color:#667eea; text-decoration:none;">Terms</a>
+                <span style="color:#a0aec0;"> • </span>
+                <a href="policy/data-deletion.html" style="color:#667eea; text-decoration:none;">Data Deletion</a>
+            </p>
         </div>
 
         <div class="config-section">
@@ -421,7 +430,7 @@
                     SUM(conversions) total_conversions,
                     SUM(conversion_value) total_conversion_value,
                     ROUND(AVG(acos), 2) avg_acos,
-                    ROUND(AVG(roas), 2) avg_roas,
+                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) avg_roas,
                     ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr,
                     ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) cpc,
                     ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) conversion_rate
@@ -442,7 +451,7 @@
                     SUM(conversions) conversions,
                     SUM(conversion_value) conversion_value,
                     ROUND(AVG(acos), 2) acos,
-                    ROUND(AVG(roas), 2) roas,
+                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) roas,
                     ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
@@ -665,9 +674,7 @@
             if (!/^https:\/\//.test(url)) { showError('Proxy URL must start with https://'); return; }
             try {
                 setStatus('loading', 'Testing proxy…');
-                // Preflight
-                await fetch(url, { method: 'OPTIONS' });
-                // Tiny query
+                // Tiny query (browser will handle preflight automatically)
                 const r = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

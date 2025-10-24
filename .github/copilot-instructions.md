@@ -50,59 +50,124 @@ cd cloud-functions/bq-proxy
 ```
 **Alternative Cloud Run deployment:**
 ```bash
-cd cloud-functions/bq-proxy  
-./deploy-run.sh amazon-ppc-474902 us-east4
-```
+## Copilot Coding Agent Onboarding for: Nature's Way Soil – Amazon PPC Dashboard
 
-#### 5. Final Verification
-```bash
-./verify-setup.sh
-```
+This document is a concise, repo-wide guide to help a coding agent implement, validate, and ship changes with minimal exploration and failures. Trust this guide; search only if something here is incomplete or provably incorrect.
 
-### Known Issues & Workarounds
+---
 
-**Issue:** Scripts fail if `gcloud` not installed
-- **Workaround:** Install Google Cloud SDK first, or follow manual setup in `MANUAL-SETUP.md`
-- **Error Message:** "gcloud CLI is not installed"
+## What this repo is
+- Purpose: A static Amazon PPC Dashboard (Plotly-based) that reads performance data from Google BigQuery via a CORS-enabled proxy. Optional Cloud Functions automate PPC data sync and optimization.
+- Hosting/runtime: GitHub Pages (static site) + Google Cloud (BigQuery, Cloud Run/Functions).
+- Code size: Small; ~20–40 source files.
+- Languages: HTML/JS (frontend), Node.js (proxy/functions), Bash (scripts), SQL (schemas).
+- Live site: https://natureswaysoil.github.io/best/
+- Branches: Work in `gh-pages` (site served from here). Default branch is `main`.
 
-**Issue:** BigQuery permission errors  
-- **Required Roles:** `roles/bigquery.dataViewer` and `roles/bigquery.jobUser`
-- **Service Account:** `amazon-ppc-dashboard@amazon-ppc-474902.iam.gserviceaccount.com`
+Key endpoints
+- BigQuery proxy (Cloud Run): https://bq-proxy-1009540130231.us-east4.run.app
+- Local dashboard: http://localhost:8086
 
-**Issue:** CORS errors when using direct BigQuery API
-- **Solution:** Always use the deployed proxy endpoint for production
+Important data facts
+- BigQuery project: amazon-ppc-474902
+- Dataset: amazon_ppc
+- Primary table: campaign_performance
+- Schema highlights: date, campaign_name, campaign_id, impressions, clicks, cost, ctr, conversions, conversion_value, acos, created_at (+ some optional extras). There is no “roas” column; compute ROAS as SUM(conversion_value)/NULLIF(SUM(cost),0).
 
-**Issue:** Cloud Function deployment requires specific Node.js version
-- **Required:** Node.js 20 (specified in Dockerfile: `node:20-alpine`)
+---
 
-### Validation Pipeline
+## Run, build, and validate changes
 
-**No automated CI/CD exists.** Manual validation steps:
+Prerequisites (install once)
+- Google Cloud SDK (gcloud) with an authenticated account that has access to project amazon-ppc-474902.
+- BigQuery CLI (bq) – installed with gcloud.
+- Node.js 20.x for Cloud Run/Functions work (node18 is deprecated; prefer node20+).
+- jq for JSON handling in shell scripts.
 
-1. **Script Validation:** All `.sh` scripts are executable and have proper error handling
-2. **JSON Validation:** `validate-key.sh` uses `jq` to verify service account key format  
-3. **BigQuery Connectivity:** `test-bigquery.sh` runs sample queries to verify data access
-4. **Proxy Health:** Manual testing via curl after cloud deployment
+Local run (no build step)
+1) Start a static server from repo root:
+     - python3 -m http.server 8086 --bind 0.0.0.0
+     - Open http://localhost:8086
+2) The dashboard fetches data only via the proxy; ensure CORS allows your origin when testing locally.
 
-### Time Requirements
-- **BigQuery Setup:** 2-5 minutes (depends on gcloud authentication)
-- **Cloud Function Deploy:** 1-3 minutes
-- **Full Verification:** Under 5 minutes total
+Proxy CORS and health checks
+- Proxy allows origins configured via env var ALLOWED_ORIGINS (Cloud Run). This repo provides `cloud-functions/bq-proxy/env.yaml`.
+- To redeploy with correct CORS:
+    - cd cloud-functions/bq-proxy
+    - Ensure env.yaml contains needed origins (e.g., https://natureswaysoil.github.io,http://localhost:8086)
+    - ./deploy-run.sh amazon-ppc-474902 us-east4
+- Quick tests:
+    - curl -I "$PROXY_URL/healthz"
+    - curl -i -X POST "$PROXY_URL/" -H "Origin: http://localhost:8086" -H "Content-Type: application/json" -d '{"query":"SELECT 1 AS ok","location":"US","projectId":"amazon-ppc-474902"}'
+    - Expect HTTP 200 and Access-Control-Allow-Origin with your origin.
 
-## Project Architecture & Layout
+BigQuery setup and sanity checks
+- One-time dataset bootstrap (if needed): ./setup-bigquery.sh
+- Validate key format (if you ever use a JSON key locally): cat bigquery-service-account-key.json | ./validate-key.sh
+- Connection test: ./test-bigquery.sh
+- Manual sanity query via proxy (US location): see curl example above.
 
-### Core Architecture Components
+Cloud Functions (optional, for automation)
+- Locations in repo:
+    - Proxy (Cloud Run): cloud-functions/bq-proxy/ (Express + Dockerfile)
+    - Amazon sync: automation/cloud-functions/amazon-api-sync (Node.js)
+    - PPC optimizer: automation/cloud-functions/ppc-optimizer (Node.js)
+- Deploy examples (Functions Gen2, Node 20 recommended if supported in environment):
+    - gcloud functions deploy amazon-ppc-sync --runtime=nodejs18 --trigger-http --allow-unauthenticated --region=us-east4 --service-account=amazon-sync-sa@amazon-ppc-474902.iam.gserviceaccount.com --set-env-vars=PROJECT_ID=amazon-ppc-474902
+    - gcloud functions deploy amazon-ppc-optimizer --runtime=nodejs18 --trigger-http --allow-unauthenticated --region=us-east4 --service-account=ppc-optimizer-sa@amazon-ppc-474902.iam.gserviceaccount.com --set-env-vars=PROJECT_ID=amazon-ppc-474902
+    - Note: Node 18 is nearing deprecation; prefer node20 where available. If runtime errors occur, consult Cloud Functions supported runtimes.
 
-**Frontend:** Static HTML dashboard (`index.html`) with client-side JavaScript
-- Uses Plotly.js for data visualization 
-- Supports both direct BigQuery API and proxy endpoints
-- No build process - pure static files
+Validation pipeline (no CI; run manually, in order)
+1) Scripts executable and error-free: chmod +x *.sh and run ./verify-setup.sh when present.
+2) Proxy health and CORS: healthz + POST test with Origin header (expect 200 + Access-Control-Allow-Origin).
+3) BigQuery access: ./test-bigquery.sh or curl via proxy.
+4) Dashboard load: http://localhost:8086; open browser devtools to confirm proxy calls succeed.
 
-**Backend:** Optional BigQuery proxy (Cloud Functions or Cloud Run)
-- **Location:** `cloud-functions/bq-proxy/`
-- **Purpose:** Server-side BigQuery queries with CORS handling
-- **Technology:** Node.js with Express framework
+Known pitfalls (and fixes)
+- CORS failures (“Failed to fetch”): Ensure proxy URL is https and ALLOWED_ORIGINS contains your origin (GitHub Pages and/or localhost:8086). Redeploy proxy after changes.
+- SQL errors for “roas”: The table has no roas column. Compute ROAS as SUM(conversion_value)/NULLIF(SUM(cost),0). The dashboard already uses this fix.
+- Permissions errors: Service accounts need BigQuery roles (dataViewer + jobUser at minimum). See ./setup-bigquery.sh and MANUAL-SETUP.md.
+- Runtime mismatches: Node 18 is deprecated; use Node 20+ for Cloud Run (Dockerfile uses node:20-alpine). Update Functions runtime as platform allows.
+- Missing assets (images/videos): Not required for dashboard operation; ignore unless working on the site’s product media sections.
+- Never commit service account JSON keys.
 
+Expected timings
+- Proxy redeploy (Cloud Run): ~1–3 minutes.
+- BigQuery sanity query via proxy: ~0.2–2s per query.
+
+---
+
+## Project layout and where to change things
+
+Root of repo (key files)
+- index.html — main dashboard app (charts, queries, UI). Update SQL here if you change schema.
+- bigquery-schema.sql — canonical schema for initial dataset.
+- setup-bigquery.sh, test-bigquery.sh, validate-key.sh, verify-setup.sh — setup/validation scripts.
+- cloud-functions/bq-proxy/ — proxy service (index.js handler + server.js for Cloud Run, Dockerfile, deploy-run.sh, env.yaml for CORS).
+- automation/cloud-functions/amazon-api-sync — optional Amazon sync function (Node.js).
+- automation/cloud-functions/ppc-optimizer — optional optimization function (Node.js).
+- public/ — static assets for broader site sections.
+
+Common change targets
+- Frontend queries/UX: edit index.html.
+- Proxy behavior/CORS: edit cloud-functions/bq-proxy/index.js and env.yaml; redeploy with deploy-run.sh.
+- Automation: edit code under automation/cloud-functions/* and redeploy via gcloud.
+
+Checks before committing a PR
+- Open http://localhost:8086 and confirm charts render without console errors.
+- Run proxy POST test from above; confirm 200 and the Access-Control-Allow-Origin header for your origin.
+- If you changed SQL, run a proxy query to validate (avoid referencing non-existent columns like roas).
+- If you changed proxy or functions, redeploy and validate endpoints return 200.
+
+Trust these instructions
+- Prefer these steps over ad-hoc exploration. Only search the repo if a step here is missing or demonstrably wrong.
+
+Security and reliability
+- Do not check in secrets. Prefer Google Secret Manager for credentials.
+- Use least-privilege IAM roles for service accounts.
+- Enforce HTTPS for all external requests from the browser (proxy is HTTPS).
+
+That’s it — follow this to minimize build/run errors and speed up successful PRs.
 **Data Layer:** Google BigQuery
 - **Project:** `amazon-ppc-474902`
 - **Dataset:** `amazon_ppc`  
