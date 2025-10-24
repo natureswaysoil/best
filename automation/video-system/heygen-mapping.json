@@ -1,0 +1,67 @@
+{
+  "defaults": {
+    "avatar": "garden_expert_01",
+    "voice": "en_us_warm_female_01",
+    "lengthSeconds": 30,
+    "music": { "style": "acoustic_nature", "volume": 0.18 },
+    "subtitles": { "enabled": true, "style": "short_lines" }
+  },
+  "rules": [
+    {
+      "pattern": "\\b(kelp|seaweed|algae)\\b",
+      "avatar": "garden_expert_01",
+      "voice": "en_us_warm_female_01",
+      "lengthSeconds": 30,
+      "reason": "matched keyword: kelp"
+    },
+    {
+      "pattern": "\\b(bone ?meal|bonemeal|bone)\\b",
+      "avatar": "farm_expert_02",
+      "voice": "en_us_deep_male_01",
+      "lengthSeconds": 35,
+      "reason": "matched keyword: bone meal"
+    },
+    {
+      "pattern": "\\b(hay|pasture|forage)\\b",
+      "avatar": "pasture_specialist_01",
+      "voice": "en_us_neutral_mx_01",
+      "lengthSeconds": 40,
+      "reason": "matched keyword: hay/pasture"
+    },
+    {
+      "pattern": "\\b(humic|fulvic|humate|fulvate)\\b",
+      "avatar": "eco_gardener_01",
+      "voice": "en_us_warm_female_02",
+      "lengthSeconds": 30,
+      "reason": "matched keyword: humic/fulvic"
+    },
+    {
+      "pattern": "\\b(compost|tea|soil conditioner)\\b",
+      "avatar": "eco_gardener_01",
+      "voice": "en_us_warm_female_02",
+      "lengthSeconds": 30,
+      "reason": "matched keyword: compost/soil"
+    }
+  ],
+  "sheet": {
+    "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/1LU2ahpzMqLB5FLYqiyDbXOfjTxbdp8U8/edit?gid=1712974299",
+    "gid": "1712974299",
+    "columns": {
+      "jobId": "ASIN",
+      "details": "Title",
+      "videoUrl": "Video URL",
+      "caption": "Caption",
+      "hashtags": "Hashtags",
+      "heygen": {
+        "avatar": "HEYGEN_AVATAR",
+        "voice": "HEYGEN_VOICE",
+        "lengthSeconds": "HEYGEN_LENGTH_SECONDS",
+        "reason": "HEYGEN_MAPPING_REASON",
+        "mappedAt": "HEYGEN_MAPPED_AT"
+      }
+    }
+  },
+  "derived": {
+    "videoUrlTemplate": "https://heygen.ai/jobs/{jobId}/video.mp4"
+  }
+}

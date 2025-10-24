@@ -41,6 +41,14 @@ We will prefer existing static videos when available, and only call HeyGen to ge
 
 CLI glue: a small wrapper will enumerate products, check for `public/videos/{ID}.mp4`, and either emit the static URL or invoke upstream generation. This will feed the “Video URL” back to the Sheet for Zapier.
 
+## HeyGen mapping file
+A single JSON config captures our avatar/voice/duration rules and sheet column mapping:
+
+- File: `automation/video-system/heygen-mapping.json`
+- Contents: defaults, regex-based rules, Google Sheet columns (ASIN/Title/Video URL) and HEYGEN_* writeback columns, and the video URL template.
+
+Note: The upstream adapter currently has built-in defaults and rules (`src/heygen-adapter.ts`). We’ll wire a thin wrapper to load `heygen-mapping.json` at runtime so non-developers can edit mappings without touching TypeScript.
+
 ## Zapier + Buffer
 Recommended flow (no Buffer keys needed in this repo):
 - Trigger: New (or Updated) Row in Google Sheets
