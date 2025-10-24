@@ -156,7 +156,7 @@
             apiEndpoint: 'https://bigquery.googleapis.com/v2',
             // Default to deployed Cloud Run proxy if none saved
             proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-1009540130231.us-east4.run.app',
-            location: localStorage.getItem('bq_location') || 'us-east4' // Eastern US default
+            location: localStorage.getItem('bq_location') || 'US' // Multi-region US (where our dataset is located)
         };
 
         function initGoogleAPI() {
