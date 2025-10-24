@@ -92,11 +92,10 @@
                 </div>
                 <div class="form-group">
                     <label for="bq-location">Dataset Location</label>
-                    <input id="bq-location" type="text" placeholder="us-east4 (Eastern US)" />
-                    <small style="color:#718096">Use your dataset location (e.g., us, us-east4, eu). Defaults to us-east4.</small>
+                    <input id="bq-location" type="text" placeholder="US (Multi-region)" readonly />
+                    <small style="color:#718096">Dataset location is set to US (multi-region). This is the correct location for the amazon_ppc dataset.</small>
                     <div style="margin-top:8px;">
-                        <button class="btn secondary" onclick="saveLocation()">Save Location</button>
-                        <button class="btn secondary" onclick="clearLocation()">Clear Location</button>
+                        <button class="btn secondary" onclick="resetLocation()">Reset to US</button>
                     </div>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
@@ -228,7 +227,7 @@
             apiEndpoint: 'https://bigquery.googleapis.com/v2',
             // Default to deployed Cloud Run proxy if none saved
             proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-1009540130231.us-east4.run.app',
-            location: localStorage.getItem('bq_location') || 'US' // Multi-region US (where our dataset is located)
+            location: 'US' // Force US location - dataset is in multi-region US
         };
 
         function initGoogleAPI() {
@@ -669,21 +668,12 @@
             }
         }
 
-        function saveLocation() {
-            var el = document.getElementById('bq-location');
-            var loc = el && 'value' in el ? el.value.trim() : '';
-            if (!loc) loc = 'us-east4';
-            localStorage.setItem('bq_location', loc);
-            BIGQUERY_CONFIG.location = loc;
-            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location saved</div>';
-        }
-
-        function clearLocation() {
-            localStorage.removeItem('bq_location');
-            BIGQUERY_CONFIG.location = 'us-east4';
-            var el = document.getElementById('bq-location');
-            if (el) el.value = 'us-east4';
-            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location reset to us-east4</div>';
+        function resetLocation() {
+            localStorage.setItem('bq_location', 'US');
+            BIGQUERY_CONFIG.location = 'US';
+            var locInput = document.getElementById('bq-location');
+            if (locInput) locInput.value = 'US';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location reset to US (multi-region)</div>';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -717,10 +707,12 @@
                 // Preserve the default proxy; reflect it in the input for visibility
                 if (input) input.value = BIGQUERY_CONFIG.proxyEndpoint || '';
             }
-            var savedLoc = localStorage.getItem('bq_location') || BIGQUERY_CONFIG.location;
+            var savedLoc = 'US'; // Force US location - dataset is in multi-region US
             var locInput = document.getElementById('bq-location');
             if (locInput) locInput.value = savedLoc;
             BIGQUERY_CONFIG.location = savedLoc;
+            // Clear any incorrect cached location
+            localStorage.setItem('bq_location', 'US');
 
             // Auto-connect if proxy is configured
             if (BIGQUERY_CONFIG.proxyEndpoint) {
