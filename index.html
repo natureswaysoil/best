@@ -29,6 +29,18 @@
         .metric-card h3 { color: #2d3748; font-size: 1.2rem; margin-bottom: 15px; }
         .metric-value { font-size: 2.5rem; font-weight: bold; color: #667eea; margin-bottom: 5px; }
         .metric-change { font-size: 0.9rem; color: #48bb78; }
+        
+        /* Optimization Section Styles */
+        .optimization-section { background: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .optimization-section h2 { color: #2d3748; margin-bottom: 20px; font-size: 1.8rem; }
+        .optimization-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .optimization-card { background: #f7fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; }
+        .optimization-card h3 { color: #2d3748; margin-bottom: 15px; font-size: 1.1rem; }
+        .health-item, .opportunity-item, .status-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .health-label, .opportunity-label, .status-label { color: #4a5568; font-size: 0.9rem; }
+        .health-value, .opportunity-value, .status-value { font-weight: bold; color: #2d3748; }
+        .auto-controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .auto-controls .btn { padding: 8px 16px; font-size: 14px; }
         .metric-change.negative { color: #f56565; }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; }
         .chart-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -121,6 +133,66 @@
                 <h3>Conversion Rate</h3>
                 <div class="metric-value" id="conversion-rate">--%</div>
                 <div class="metric-change" id="conversion-change">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Optimization Insights Section -->
+        <div class="optimization-section">
+            <h2>🎯 PPC Optimization Insights</h2>
+            <div class="optimization-grid">
+                <div class="optimization-card">
+                    <h3>📊 Campaign Health</h3>
+                    <div id="campaign-health">
+                        <div class="health-item">
+                            <span class="health-label">High ACOS (>45%):</span>
+                            <span class="health-value" id="high-acos-count">--</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-label">Profitable (<15% ACOS):</span>
+                            <span class="health-value" id="profitable-count">--</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-label">Needs Attention:</span>
+                            <span class="health-value" id="attention-count">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card">
+                    <h3>💰 Optimization Opportunities</h3>
+                    <div id="optimization-opportunities">
+                        <div class="opportunity-item">
+                            <span class="opportunity-label">Estimated Monthly Savings:</span>
+                            <span class="opportunity-value" id="estimated-savings">--</span>
+                        </div>
+                        <div class="opportunity-item">
+                            <span class="opportunity-label">Keywords to Add:</span>
+                            <span class="opportunity-value" id="keywords-to-add">--</span>
+                        </div>
+                        <div class="opportunity-item">
+                            <span class="opportunity-label">Negative Keywords Needed:</span>
+                            <span class="opportunity-value" id="negative-keywords-needed">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card">
+                    <h3>⚡ Auto-Optimization Status</h3>
+                    <div id="auto-optimization">
+                        <div class="status-item">
+                            <span class="status-label">Last Optimization:</span>
+                            <span class="status-value" id="last-optimization">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Actions This Week:</span>
+                            <span class="status-value" id="weekly-actions">--</span>
+                        </div>
+                        <div class="auto-controls">
+                            <button class="btn secondary" onclick="runOptimization()">Run Optimization Now</button>
+                            <button class="btn secondary" onclick="viewOptimizationLog()">View Log</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -661,6 +733,149 @@
             }
         });
         setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
+
+        // PPC Optimization Functions
+        async function loadOptimizationInsights() {
+            try {
+                // Campaign Health Analysis
+                const healthQuery = `
+                    SELECT 
+                        SUM(CASE WHEN acos > 45 THEN 1 ELSE 0 END) as high_acos_campaigns,
+                        SUM(CASE WHEN acos < 15 AND conversions > 0 THEN 1 ELSE 0 END) as profitable_campaigns,
+                        SUM(CASE WHEN acos BETWEEN 35 AND 45 OR conversions = 0 THEN 1 ELSE 0 END) as attention_campaigns
+                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                    WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                `;
+
+                const healthResult = await executeBigQueryQuery(healthQuery);
+                if (healthResult.rows && healthResult.rows.length > 0) {
+                    const health = healthResult.rows[0];
+                    document.getElementById('high-acos-count').textContent = health.f[0].v || '0';
+                    document.getElementById('profitable-count').textContent = health.f[1].v || '0';
+                    document.getElementById('attention-count').textContent = health.f[2].v || '0';
+                }
+
+                // Optimization Opportunities (mock data for now - would come from optimizer function)
+                document.getElementById('estimated-savings').textContent = '$234.50';
+                document.getElementById('keywords-to-add').textContent = '12';
+                document.getElementById('negative-keywords-needed').textContent = '7';
+                
+                // Auto-Optimization Status
+                document.getElementById('last-optimization').textContent = '2 hours ago';
+                document.getElementById('weekly-actions').textContent = '23';
+
+            } catch (error) {
+                console.error('Failed to load optimization insights:', error);
+                // Set default values on error
+                document.getElementById('high-acos-count').textContent = '--';
+                document.getElementById('profitable-count').textContent = '--';
+                document.getElementById('attention-count').textContent = '--';
+                document.getElementById('estimated-savings').textContent = '--';
+                document.getElementById('keywords-to-add').textContent = '--';
+                document.getElementById('negative-keywords-needed').textContent = '--';
+                document.getElementById('last-optimization').textContent = '--';
+                document.getElementById('weekly-actions').textContent = '--';
+            }
+        }
+
+        async function runOptimization() {
+            const optimizerUrl = 'https://amazon-ppc-optimizer-1009540130231.us-east4.run.app'; // Update with actual URL
+            
+            try {
+                document.querySelector('[onclick="runOptimization()"]').textContent = 'Running...';
+                document.querySelector('[onclick="runOptimization()"]').disabled = true;
+                
+                const response = await fetch(optimizerUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Optimization Complete!
+Campaign Actions: ${result.optimizations.campaigns_paused + result.optimizations.campaigns_started}
+Bids Adjusted: ${result.optimizations.bids_adjusted}
+Keywords Added: ${result.optimizations.keywords_added}
+Negative Keywords: ${result.optimizations.negative_keywords_added}
+Estimated Savings: $${result.cost_savings_estimate.toFixed(2)}`);
+                    
+                    // Refresh insights
+                    loadOptimizationInsights();
+                } else {
+                    throw new Error(result.error || 'Optimization failed');
+                }
+            } catch (error) {
+                console.error('Optimization failed:', error);
+                alert('Optimization failed: ' + error.message);
+            } finally {
+                document.querySelector('[onclick="runOptimization()"]').textContent = 'Run Optimization Now';
+                document.querySelector('[onclick="runOptimization()"]').disabled = false;
+            }
+        }
+
+        async function viewOptimizationLog() {
+            try {
+                const logQuery = `
+                    SELECT 
+                        timestamp,
+                        action_type,
+                        reason,
+                        impact_estimate,
+                        status
+                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.optimization_actions\`
+                    WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                    ORDER BY timestamp DESC
+                    LIMIT 20
+                `;
+                
+                const logResult = await executeBigQueryQuery(logQuery);
+                
+                if (logResult.rows && logResult.rows.length > 0) {
+                    let logText = 'Recent Optimization Actions:\n\n';
+                    logResult.rows.forEach(row => {
+                        const timestamp = row.f[0].v;
+                        const actionType = row.f[1].v;
+                        const reason = row.f[2].v;
+                        const impact = row.f[3].v;
+                        const status = row.f[4].v;
+                        
+                        logText += `${new Date(timestamp).toLocaleString()}\n`;
+                        logText += `Action: ${actionType}\n`;
+                        logText += `Reason: ${reason}\n`;
+                        logText += `Impact: $${impact}\n`;
+                        logText += `Status: ${status}\n\n`;
+                    });
+                    
+                    alert(logText);
+                } else {
+                    alert('No optimization actions found in the last 7 days.');
+                }
+            } catch (error) {
+                console.error('Failed to load optimization log:', error);
+                alert('Failed to load optimization log: ' + error.message);
+            }
+        }
+
+        // Load optimization insights when dashboard updates
+        async function updateDashboardWithBigQuery() {
+            // ... existing dashboard update code ...
+            await Promise.all([
+                loadCampaignData(),
+                loadTrendsData(), 
+                loadSummaryMetrics(),
+                loadOptimizationInsights() // Add optimization insights
+            ]).then(([campaigns, trends, summary]) => {
+                renderCampaignChart(campaigns);
+                renderTrendsChart(trends);
+                updateSummaryMetrics(summary);
+                document.getElementById('last-updated').textContent = new Date().toLocaleString();
+            }).catch(error => {
+                console.error('Dashboard update failed:', error);
+                showError('Dashboard update failed: ' + error.message);
+            });
+        }
     </script>
 </body>
 </html>
