@@ -221,6 +221,16 @@
         let accessToken = null; // not used if proxy is configured
         let tokenExpiry = null; // not used if proxy is configured
 
+        // Allow clearing cached proxy via URL param for debugging: ?resetProxy=1
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('resetProxy') === '1') {
+                localStorage.removeItem('bq_proxy_url');
+            }
+        } catch (e) {
+            // ignore in environments without URL parsing
+        }
+
         const BIGQUERY_CONFIG = {
             projectId: 'amazon-ppc-474902',
             datasetId: 'amazon_ppc',
@@ -229,6 +239,11 @@
             proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-1009540130231.us-east4.run.app',
             location: 'US' // Force US location - dataset is in multi-region US
         };
+
+        // Automatically set proxy URL on page load for live data connection
+        if (!localStorage.getItem('bq_proxy_url')) {
+            localStorage.setItem('bq_proxy_url', 'https://bq-proxy-1009540130231.us-east4.run.app');
+        }
 
         function initGoogleAPI() {
             if (window.gapi) {
@@ -660,8 +675,20 @@
                 });
                 const txt = await r.text();
                 if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
-                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy OK</div>';
-                setStatus('success', 'Proxy reachable');
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy OK - Loading live data...</div>';
+                setStatus('success', 'Proxy connected - Loading dashboard');
+                
+                // Auto-load dashboard data if proxy test succeeds
+                setTimeout(async () => {
+                    try {
+                        await updateDashboardWithBigQuery();
+                        document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Live data loaded successfully!</div>';
+                    } catch (error) {
+                        console.error('Auto-load failed:', error);
+                        document.getElementById('connection-status').innerHTML = '<div style="color:#e53e3e;margin-top:10px;">⚠️ Proxy OK, but data loading failed. Click "Load Data with BigQuery" to retry.</div>';
+                    }
+                }, 500);
+                
             } catch (e) {
                 showError('Proxy test failed: ' + (e?.message || e));
                 setStatus('error', 'Proxy test failed');
@@ -679,6 +706,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             initGoogleAPI();
             setStatus('ready', 'Ready to connect');
+            
+            // Auto-connect to live data if proxy is available
+            if (BIGQUERY_CONFIG.proxyEndpoint) {
+                console.log('Auto-connecting to live data via proxy:', BIGQUERY_CONFIG.proxyEndpoint);
+                document.getElementById('proxy-url').value = BIGQUERY_CONFIG.proxyEndpoint;
+                // Auto-load live data after a short delay
+                setTimeout(() => {
+                    testProxy();
+                }, 1000);
+            }
+            
             // URL param overrides
             var params = new URLSearchParams(window.location.search);
             var urlProxy = params.get('proxy');
@@ -771,7 +809,7 @@
         }
 
         async function runOptimization() {
-            const optimizerUrl = 'https://amazon-ppc-optimizer-1009540130231.us-east4.run.app'; // Update with actual URL
+            const optimizerUrl = 'https://amazon-ppc-optimizer-nucguq3dba-uk.a.run.app';
             
             try {
                 document.querySelector('[onclick="runOptimization()"]').textContent = 'Running...';
