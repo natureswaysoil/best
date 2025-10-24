@@ -232,11 +232,19 @@ PARTITION BY date
 CLUSTER BY campaign_name
 ```
 
-### GitHub Pages Deployment
+### Deployment Options
 
+#### GitHub Pages (Primary)
 **Branch:** `gh-pages` (current branch for live site)
 **URL:** https://natureswaysoil.github.io/best/
 **No build step required** - direct HTML/JS/CSS files served statically
+
+#### Vercel (Alternative/Backup)
+**Configuration:** `vercel.json` in root directory
+**Deployment:** `vercel --prod` (requires authentication)
+**URL:** Generated automatically by Vercel
+**Features:** CDN, automatic SSL, custom domains
+**No build step required** - static site deployment
 
 ### File Structure Details
 

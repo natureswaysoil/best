@@ -245,13 +245,13 @@
             datasetId: 'amazon_ppc',
             apiEndpoint: 'https://bigquery.googleapis.com/v2',
             // Default to deployed Cloud Run proxy if none saved
-            proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-1009540130231.us-east4.run.app',
+            proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-nucguq3dba-uk.a.run.app',
             location: 'US' // Force US location - dataset is in multi-region US
         };
 
         // Automatically set proxy URL on page load for live data connection
         if (!localStorage.getItem('bq_proxy_url')) {
-            localStorage.setItem('bq_proxy_url', 'https://bq-proxy-1009540130231.us-east4.run.app');
+            localStorage.setItem('bq_proxy_url', 'https://bq-proxy-nucguq3dba-uk.a.run.app');
         }
 
         function initGoogleAPI() {
