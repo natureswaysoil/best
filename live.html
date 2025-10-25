@@ -98,6 +98,16 @@
                         <button class="btn secondary" onclick="testProxy()">Test Proxy</button>
                     </div>
                 </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="optimizer-url">Optional: Optimizer URL (Cloud Function/Run)</label>
+                    <input id="optimizer-url" type="url" placeholder="https://REGION-PROJECT.cloudfunctions.net/amazon-ppc-optimizer" />
+                    <small style="color:#718096">Set your optimizer endpoint; the Run Optimization button will POST here.</small>
+                    <div style="margin-top:8px;">
+                        <button class="btn secondary" onclick="saveOptimizerUrl()">Save Optimizer URL</button>
+                        <button class="btn secondary" onclick="clearOptimizerUrl()">Clear Optimizer URL</button>
+                        <button class="btn secondary" onclick="testOptimizer()">Test Optimizer</button>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label for="bq-location">Dataset Location</label>
                     <input id="bq-location" type="text" placeholder="US (Multi-region)" readonly />
@@ -718,6 +728,45 @@
             document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL cleared</div>';
         }
 
+        function saveOptimizerUrl() {
+            var el = document.getElementById('optimizer-url');
+            var url = el && 'value' in el ? el.value.trim() : '';
+            if (url && !/^https?:\/\//.test(url)) {
+                showError('Optimizer URL must start with http:// or https://');
+                return;
+            }
+            localStorage.setItem('optimizer_url', url || '');
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Optimizer URL saved</div>';
+        }
+
+        function clearOptimizerUrl() {
+            localStorage.removeItem('optimizer_url');
+            var input = document.getElementById('optimizer-url');
+            if (input) input.value = '';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Optimizer URL cleared</div>';
+        }
+
+        async function testOptimizer() {
+            const url = (document.getElementById('optimizer-url')?.value || localStorage.getItem('optimizer_url') || '').trim();
+            if (!url) { showError('Set or save an Optimizer URL first'); return; }
+            if (!/^https:\/\//.test(url)) { showError('Optimizer URL must start with https://'); return; }
+            try {
+                setStatus('loading', 'Testing optimizer…');
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ probe: true })
+                });
+                const txt = await r.text();
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Optimizer reachable</div>';
+                setStatus('success', 'Optimizer is reachable');
+            } catch (e) {
+                showError('Optimizer test failed: ' + (e?.message || e));
+                setStatus('error', 'Optimizer test failed');
+            }
+        }
+
         async function testProxy() {
             const url = BIGQUERY_CONFIG.proxyEndpoint || (document.getElementById('proxy-url')?.value || '').trim();
             if (!url) { showError('Set or save a Proxy URL first'); return; }
@@ -793,6 +842,10 @@
             if (locInput) locInput.value = savedLoc;
             BIGQUERY_CONFIG.location = savedLoc;
             localStorage.setItem('bq_location', 'US');
+            // Load saved optimizer URL if present
+            var optSaved = localStorage.getItem('optimizer_url');
+            var optInput = document.getElementById('optimizer-url');
+            if (optInput) optInput.value = (typeof optSaved === 'string') ? optSaved : '';
             if (BIGQUERY_CONFIG.proxyEndpoint) {
                 setStatus('loading', 'Connecting via proxy...');
                 executeBigQueryQuery('SELECT 1 AS ok')
@@ -905,7 +958,17 @@
         }
 
         async function runOptimization() {
-            const optimizerUrl = 'https://amazon-ppc-optimizer-nucguq3dba-uk.a.run.app';
+            let optimizerUrl = (localStorage.getItem('optimizer_url') || '').trim();
+            if (!optimizerUrl) {
+                optimizerUrl = (document.getElementById('optimizer-url')?.value || '').trim();
+            }
+            if (!optimizerUrl) {
+                optimizerUrl = 'https://amazon-ppc-optimizer-nucguq3dba-uk.a.run.app';
+            }
+            if (!/^https:\/\//.test(optimizerUrl)) {
+                showError('Optimizer URL must start with https://');
+                return;
+            }
             try {
                 document.querySelector('[onclick="runOptimization()"]').textContent = 'Running...';
                 document.querySelector('[onclick="runOptimization()"]').disabled = true;
