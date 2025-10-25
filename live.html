@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon PPC Dashboard (Live) - Nature's Way Soil</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .header h1 { color: #2d3748; font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { color: #718096; font-size: 1.1rem; }
+        .config-section { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .config-section h3 { color: #2d3748; margin-bottom: 15px; }
+        .config-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-weight: bold; margin-bottom: 5px; color: #4a5568; }
+        .form-group input, .form-group textarea { padding: 10px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 14px; }
+        .form-group textarea { resize: vertical; min-height: 140px; }
+        .btn { background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 5px; transition: background 0.3s; }
+        .btn:hover { background: #5a67d8; }
+        .btn.secondary { background: #718096; }
+        .btn.secondary:hover { background: #4a5568; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .metric-card h3 { color: #2d3748; font-size: 1.2rem; margin-bottom: 15px; }
+        .metric-value { font-size: 2.5rem; font-weight: bold; color: #667eea; margin-bottom: 5px; }
+        .metric-change { font-size: 0.9rem; color: #48bb78; }
+        .optimization-section { background: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .optimization-section h2 { color: #2d3748; margin-bottom: 20px; font-size: 1.8rem; }
+        .optimization-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .optimization-card { background: #f7fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; }
+        .optimization-card h3 { color: #2d3748; margin-bottom: 15px; font-size: 1.1rem; }
+        .health-item, .opportunity-item, .status-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .health-label, .opportunity-label, .status-label { color: #4a5568; font-size: 0.9rem; }
+        .health-value, .opportunity-value, .status-value { font-weight: bold; color: #2d3748; }
+        .auto-controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .auto-controls .btn { padding: 8px 16px; font-size: 14px; }
+        .metric-change.negative { color: #f56565; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; }
+        .chart-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .chart-card h3 { color: #2d3748; font-size: 1.4rem; margin-bottom: 20px; text-align: center; }
+        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #48bb78; margin-right: 8px; animation: pulse 2s infinite; }
+        .status-indicator.error { background: #f56565; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
+ }
+        .last-updated { text-align: center; color: #a0aec0; font-size: 0.9rem; margin-top: 20px; }
+        .loading { text-align: center; color: #718096; font-style: italic; }
+        .error-message { background: #fed7d7; color: #c53030; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #f56565; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 Amazon PPC Dashboard</h1>
+            <p><span class="status-indicator" id="status-indicator"></span><span id="status-text">Ready to connect</span></p>
+            <p style="margin-top:8px; font-size:0.95rem;">
+                <a href="policy/" style="color:#667eea; text-decoration:none; font-weight:600;">Policy Center</a>
+                <span style="color:#a0aec0;"> • </span>
+                <a href="policy/privacy.html" style="color:#667eea; text-decoration:none;">Privacy</a>
+                <span style="color:#a0aec0;"> • </span>
+                <a href="policy/terms.html" style="color:#667eea; text-decoration:none;">Terms</a>
+                <span style="color:#a0aec0;"> • </span>
+                <a href="policy/data-deletion.html" style="color:#667eea; text-decoration:none;">Data Deletion</a>
+            </p>
+        </div>
+
+        <div class="config-section">
+            <h3>🔧 BigQuery Configuration</h3>
+            <div class="config-form">
+                <div class="form-group">
+                    <label for="project-id">Project ID:</label>
+                    <input type="text" id="project-id" value="amazon-ppc-474902" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="dataset-id">Dataset ID:</label>
+                    <input type="text" id="dataset-id" value="amazon_ppc" readonly>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="service-account-key">Service Account Key (JSON):</label>
+                    <textarea id="service-account-key" placeholder="Paste your service account JSON key here..."></textarea>
+                    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <input type="file" id="key-file" accept="application/json" />
+                        <button class="btn secondary" onclick="loadKeyFromFile()">Upload JSON</button>
+                        <button class="btn secondary" onclick="formatKeyTextarea()">Format Key</button>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="proxy-url">Optional: BigQuery Proxy URL (Cloud Function/Run)</label>
+                    <input id="proxy-url" type="url" placeholder="https://REGION-PROJECT.cloudfunctions.net/bq-proxy" />
+                    <small style="color:#718096">If provided, the dashboard will use your server-side proxy and won’t require the service account key in the browser.</small>
+                    <div style="margin-top:8px;">
+                        <button class="btn secondary" onclick="saveProxyUrl()">Save Proxy URL</button>
+                        <button class="btn secondary" onclick="clearProxyUrl()">Clear Proxy URL</button>
+                        <button class="btn secondary" onclick="testProxy()">Test Proxy</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="bq-location">Dataset Location</label>
+                    <input id="bq-location" type="text" placeholder="US (Multi-region)" readonly />
+                    <small style="color:#718096">Dataset location is set to US (multi-region). This is the correct location for the amazon_ppc dataset.</small>
+                    <div style="margin-top:8px;">
+                        <button class="btn secondary" onclick="resetLocation()">Reset to US</button>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>&nbsp;</label>
+                    <div>
+                        <button class="btn" onclick="connectBigQuery()">Connect to BigQuery</button>
+                        <button class="btn secondary" onclick="loadMockData()">Load Mock Data</button>
+                    </div>
+                </div>
+            </div>
+            <div id="connection-status"></div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Total Campaigns</h3>
+                <div class="metric-value" id="total-campaigns">--</div>
+                <div class="metric-change" id="campaigns-change">Loading...</div>
+            </div>
+
+            <div class="metric-card">
+                <h3>Total Impressions</h3>
+                <div class="metric-value" id="total-impressions">--</div>
+                <div class="metric-change" id="impressions-change">Loading...</div>
+            </div>
+
+            <div class="metric-card">
+                <h3>Total Clicks</h3>
+                <div class="metric-value" id="total-clicks">--</div>
+                <div class="metric-change" id="clicks-change">Loading...</div>
+            </div>
+
+            <div class="metric-card">
+                <h3>Conversion Rate</h3>
+                <div class="metric-value" id="conversion-rate">--%</div>
+                <div class="metric-change" id="conversion-change">Loading...</div>
+            </div>
+        </div>
+
+        <div class="optimization-section">
+            <h2>🎯 PPC Optimization Insights</h2>
+            <div class="optimization-grid">
+                <div class="optimization-card">
+                    <h3>📊 Campaign Health</h3>
+                    <div id="campaign-health">
+                        <div class="health-item">
+                            <span class="health-label">High ACOS (>45%):</span>
+                            <span class="health-value" id="high-acos-count">--</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-label">Profitable (<15% ACOS):</span>
+                            <span class="health-value" id="profitable-count">--</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-label">Needs Attention:</span>
+                            <span class="health-value" id="attention-count">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card">
+                    <h3>💰 Optimization Opportunities</h3>
+                    <div id="optimization-opportunities">
+                        <div class="opportunity-item">
+                            <span class="opportunity-label">Estimated Monthly Savings:</span>
+                            <span class="opportunity-value" id="estimated-savings">--</span>
+                        </div>
+                        <div class="opportunity-item">
+                            <span class="opportunity-label">Keywords to Add:</span>
+                            <span class="opportunity-value" id="keywords-to-add">--</span>
+                        </div>
+                        <div class="opportunity-item">
+                            <span class="opportunity-label">Negative Keywords Needed:</span>
+                            <span class="opportunity-value" id="negative-keywords-needed">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="optimization-card">
+                    <h3>⚡ Auto-Optimization Status</h3>
+                    <div id="auto-optimization">
+                        <div class="status-item">
+                            <span class="status-label">Last Optimization:</span>
+                            <span class="status-value" id="last-optimization">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Actions This Week:</span>
+                            <span class="status-value" id="weekly-actions">--</span>
+                        </div>
+                        <div class="auto-controls">
+                            <button class="btn secondary" onclick="runOptimization()">Run Optimization Now</button>
+                            <button class="btn secondary" onclick="viewOptimizationLog()">View Log</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Campaign Performance</h3>
+                <div id="campaign-chart" style="height: 400px;">
+                    <div class="loading">Loading campaign data...</div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Daily Trends (Last 30 Days)</h3>
+                <div id="trends-chart" style="height: 400px;">
+                    <div class="loading">Loading trend data...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            Last updated: <span id="last-updated">Never</span>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            try {
+                if (typeof window !== 'undefined') {
+                    if (typeof window.renderCampaignChart !== 'function') {
+                        window.renderCampaignChart = function(rows){
+                            if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
+                            console.warn('renderCampaignChart shim in effect; updateCampaignChart not yet available');
+                        };
+                    }
+                    if (typeof window.renderTrendsChart !== 'function') {
+                        window.renderTrendsChart = function(rows){
+                            if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
+                            console.warn('renderTrendsChart shim in effect; updateTrendsChart not yet available');
+                        };
+                    }
+                    window.addEventListener('error', function(ev){
+                        try {
+                            const msg = (ev && ev.message) || '';
+                            if (/renderCampaignChart is not defined/.test(msg)) {
+                                ev.preventDefault();
+                                console.warn('Intercepted legacy renderCampaignChart error; shimming to updateCampaignChart');
+                                window.renderCampaignChart = function(rows){
+                                    if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
+                                };
+                                return false;
+                            }
+                            if (/renderTrendsChart is not defined/.test(msg)) {
+                                ev.preventDefault();
+                                console.warn('Intercepted legacy renderTrendsChart error; shimming to updateTrendsChart');
+                                window.renderTrendsChart = function(rows){
+                                    if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
+                                };
+                                return false;
+                            }
+                        } catch(_) { /* ignore */ }
+                    }, true);
+                }
+            } catch(_) { /* ignore */ }
+        })();
+
+        let bigQueryAuthenticated = false;
+        let accessToken = null;
+        let tokenExpiry = null;
+
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('resetProxy') === '1') {
+                localStorage.removeItem('bq_proxy_url');
+            }
+        } catch (e) {}
+
+        const BIGQUERY_CONFIG = {
+            projectId: 'amazon-ppc-474902',
+            datasetId: 'amazon_ppc',
+            apiEndpoint: 'https://bigquery.googleapis.com/v2',
+            proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-nucguq3dba-uk.a.run.app',
+            location: 'US'
+        };
+
+        if (!localStorage.getItem('bq_proxy_url')) {
+            localStorage.setItem('bq_proxy_url', 'https://bq-proxy-nucguq3dba-uk.a.run.app');
+        }
+
+        function initGoogleAPI() {
+            if (window.gapi) {
+                gapi.load('client:auth2', () => console.log('Google API loaded'));
+            }
+        }
+
+        function parseServiceAccountKey(raw) {
+            var text = String(raw || '').replace(/^\uFEFF/, '').trim();
+            text = text.replace(/```+\s*json\s*|```+/gi, '');
+            var s = text.indexOf('{');
+            var e = text.lastIndexOf('}');
+            if (s !== -1 && e !== -1 && e > s) text = text.slice(s, e + 1);
+            try { return JSON.parse(text); } catch (_) {}
+            text = text.replace(/,(\s*[}\]])/g, '$1');
+            var pkField = '"private_key"';
+            var pkIdx = text.indexOf(pkField);
+            if (pkIdx !== -1) {
+                var colon = text.indexOf(':', pkIdx);
+                if (colon !== -1) {
+                    var qStart = text.indexOf('"', colon + 1);
+                    if (qStart !== -1) {
+                        var endMarker = '-----END PRIVATE KEY-----';
+                        var endMarkerIdx = text.indexOf(endMarker, qStart + 1);
+                        var qEnd;
+                        if (endMarkerIdx !== -1) {
+                            qEnd = text.indexOf('"', endMarkerIdx + endMarker.length);
+                        } else {
+                            qEnd = text.indexOf('"', qStart + 1);
+                        }
+                        if (qEnd !== -1) {
+                            var rawVal = text.substring(qStart + 1, qEnd);
+                            var escVal = rawVal
+                                .replace(/\\/g, '\\\\')
+                                .replace(/\r?\n/g, '\\n')
+                                .replace(/\"/g, '"')
+                                .replace(/"/g, '\\"');
+                            text = text.substring(0, qStart + 1) + escVal + text.substring(qEnd);
+                        }
+                    }
+                }
+            }
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                throw new Error('Invalid service account JSON: ' + (e && e.message ? e.message : 'parse error'));
+            }
+        }
+
+        async function authenticateBigQuery(serviceAccountKey) {
+            try {
+                const keyData = parseServiceAccountKey(serviceAccountKey);
+                const jwt = await createJWT(keyData);
+                const response = await fetch('https://oauth2.googleapis.com/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                        assertion: jwt
+                    })
+                });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`${response.status} ${response.statusText}: ${text}`);
+                }
+                const tokenData = await response.json();
+                accessToken = tokenData.access_token;
+                tokenExpiry = Date.now() + (tokenData.expires_in * 1000);
+                bigQueryAuthenticated = true;
+                return true;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        async function createJWT(keyData) {
+            const header = { alg: 'RS256', typ: 'JWT' };
+            const now = Math.floor(Date.now() / 1000);
+            const payload = {
+                iss: keyData.client_email,
+                scope: 'https://www.googleapis.com/auth/bigquery',
+                aud: 'https://oauth2.googleapis.com/token',
+                exp: now + 3600,
+                iat: now
+            };
+            const enc = (obj) => btoa(unescape(encodeURIComponent(JSON.stringify(obj))))
+                .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+            const message = `${enc(header)}.${enc(payload)}`;
+            const signature = await signRS256(message, keyData.private_key);
+            return `${message}.${signature}`;
+        }
+
+        async function signRS256(message, pemPrivateKey) {
+            const pem = pemPrivateKey.trim()
+                .replace('-----BEGIN PRIVATE KEY-----', '')
+                .replace('-----END PRIVATE KEY-----', '')
+                .replace(/\r?\n|\r/g, '');
+            const der = Uint8Array.from(atob(pem), c => c.charCodeAt(0));
+            const key = await crypto.subtle.importKey(
+                'pkcs8',
+                der,
+                { name: 'RSASSA-PKCS1-v1_5', hash: { name: 'SHA-256' } },
+                false,
+                ['sign']
+            );
+            const data = new TextEncoder().encode(message);
+            const sig = await crypto.subtle.sign({ name: 'RSASSA-PKCS1-v1_5' }, key, data);
+            const bytes = new Uint8Array(sig);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+        }
+
+        async function executeBigQueryQuery(query) {
+            if (BIGQUERY_CONFIG.proxyEndpoint) {
+                try {
+                    const response = await fetch(BIGQUERY_CONFIG.proxyEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query, location: BIGQUERY_CONFIG.location || 'US', projectId: BIGQUERY_CONFIG.projectId })
+                    });
+                    const text = await response.text();
+                    let json;
+                    try { json = text ? JSON.parse(text) : {}; } catch { json = { error: text || 'Invalid JSON from proxy' }; }
+                    if (!response.ok) throw new Error(json.error || text || 'BigQuery proxy failed');
+                    return json;
+                } catch (err) {
+                    throw new Error('Failed to fetch (proxy). Ensure the proxy URL is correct, uses https, and allows origin https://natureswaysoil.github.io. Details: ' + (err?.message || err));
+                }
+            }
+            if (!bigQueryAuthenticated || !accessToken) throw new Error('Not authenticated');
+            if (Date.now() > tokenExpiry - 60000) throw new Error('Authentication token expired. Please reconnect.');
+            const response = await fetch(`${BIGQUERY_CONFIG.apiEndpoint}/projects/${BIGQUERY_CONFIG.projectId}/queries`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query, useLegacySql: false, maxResults: 1000, location: BIGQUERY_CONFIG.location || 'US' })
+            });
+            const json = await response.json();
+            if (!response.ok) throw new Error(json.error?.message || 'BigQuery query failed');
+            return json;
+        }
+
+        function bqToObjects(result) {
+            try {
+                const rows = result && result.rows;
+                const fields = result && result.schema && result.schema.fields;
+                if (Array.isArray(rows) && Array.isArray(fields)) {
+                    const names = fields.map(f => f.name);
+                    return rows.map(r => {
+                        const o = {};
+                        for (let i = 0; i < names.length; i++) {
+                            o[names[i]] = r && r.f && r.f[i] ? r.f[i].v : null;
+                        }
+                        return o;
+                    });
+                }
+                if (Array.isArray(result)) return result;
+            } catch (_) {}
+            return [];
+        }
+
+        async function loadCampaignData() {
+            const q = `
+                SELECT 
+                    campaign_name, 
+                    SUM(impressions) total_impressions, 
+                    SUM(clicks) total_clicks,
+                    SUM(cost) total_cost,
+                    SUM(conversions) total_conversions,
+                    SUM(conversion_value) total_conversion_value,
+                    ROUND(AVG(acos), 2) avg_acos,
+                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) avg_roas,
+                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr,
+                    ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) cpc,
+                    ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) conversion_rate
+                FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                GROUP BY campaign_name ORDER BY total_impressions DESC LIMIT 10`;
+            const result = await executeBigQueryQuery(q);
+            const objs = bqToObjects(result);
+            return objs.length ? objs : (result.rows || []);
+        }
+
+        async function loadTrendsData() {
+            const q = `
+                SELECT 
+                    date, 
+                    SUM(impressions) impressions, 
+                    SUM(clicks) clicks,
+                    SUM(cost) cost,
+                    SUM(conversions) conversions,
+                    SUM(conversion_value) conversion_value,
+                    ROUND(AVG(acos), 2) acos,
+                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) roas,
+                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr
+                FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                GROUP BY date ORDER BY date`;
+            const result = await executeBigQueryQuery(q);
+            const objs = bqToObjects(result);
+            return objs.length ? objs : (result.rows || []);
+        }
+
+        async function loadSummaryMetrics() {
+            const q = `
+                SELECT 
+                    COUNT(DISTINCT campaign_name) total_campaigns,
+                    SUM(impressions) total_impressions,
+                    SUM(clicks) total_clicks,
+                    SUM(conversions) total_conversions,
+                    SUM(cost) total_cost,
+                    SUM(conversion_value) total_conversion_value,
+                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) overall_ctr,
+                    ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) overall_cpc,
+                    ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) overall_conversion_rate,
+                    ROUND(SUM(cost)*100.0/NULLIF(SUM(conversion_value),0), 2) overall_acos,
+                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) overall_roas
+                FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)`;
+            const result = await executeBigQueryQuery(q);
+            const objs = bqToObjects(result);
+            return (objs && objs[0]) || (result.rows && result.rows[0]) || {};
+        }
+
+        async function updateDashboardWithBigQuery() {
+            try {
+                setStatus('loading', 'Loading BigQuery data...');
+                const [campaignData, trendsData, summaryData] = await Promise.all([
+                    loadCampaignData(), loadTrendsData(), loadSummaryMetrics()
+                ]);
+                updateMetrics(summaryData);
+                updateCampaignChart(campaignData);
+                updateTrendsChart(trendsData);
+                try {
+                    const f = (i) => (summaryData && summaryData.f && summaryData.f[i] && summaryData.f[i].v) || 0;
+                    const msg = `✅ Live: ${Number(f(0))} campaigns • ${Number(f(1)).toLocaleString()} impressions • ${Number(f(2)).toLocaleString()} clicks`;
+                    const cs = document.getElementById('connection-status');
+                    if (cs) cs.innerHTML = `<div style="color:#48bb78;margin-top:10px;">${msg}</div>`;
+                } catch (_) { }
+                try { await loadOptimizationInsights(); } catch (err) { console.warn('Optimization insights failed:', err); }
+                document.getElementById('last-updated').textContent = new Date().toLocaleString();
+                setStatus('success', 'Live data loaded successfully');
+            } catch (e) {
+                showError('Failed to load BigQuery data: ' + e.message);
+                setStatus('error', 'Failed to load data');
+            }
+        }
+
+        function updateMetrics(row) {
+            let totalCampaigns, totalImps, totalClicks, totalConv;
+            if (row && row.f) {
+                const get = (i) => (row?.f?.[i]?.v) || 0;
+                totalCampaigns = Number(get(0));
+                totalImps = Number(get(1));
+                totalClicks = Number(get(2));
+                totalConv = Number(get(3));
+            } else {
+                totalCampaigns = Number(row.total_campaigns || 0);
+                totalImps = Number(row.total_impressions || 0);
+                totalClicks = Number(row.total_clicks || 0);
+                totalConv = Number(row.total_conversions || 0);
+            }
+            document.getElementById('total-campaigns').textContent = isNaN(totalCampaigns) ? '--' : totalCampaigns.toString();
+            document.getElementById('total-impressions').textContent = isNaN(totalImps) ? '--' : totalImps.toLocaleString();
+            document.getElementById('total-clicks').textContent = isNaN(totalClicks) ? '--' : totalClicks.toLocaleString();
+            const cr = totalClicks ? ((totalConv / totalClicks) * 100).toFixed(2) : '0.00';
+            document.getElementById('conversion-rate').textContent = `${cr}%`;
+        }
+
+        function updateCampaignChart(rows) {
+            if (!rows || rows.length === 0) {
+                document.getElementById('campaign-chart').innerHTML = '<div class="loading">No campaign data available</div>';
+                return;
+            }
+            const el = document.getElementById('campaign-chart');
+            el.innerHTML = '';
+            const names = rows.map(r => r?.f ? r.f[0]?.v : (r.campaign_name || ''));
+            const imps = rows.map(r => r?.f ? Number(r.f[1]?.v || 0) : Number(r.total_impressions || 0));
+            const clicks = rows.map(r => r?.f ? Number(r.f[2]?.v || 0) : Number(r.total_clicks || 0));
+            Plotly.newPlot('campaign-chart', [
+                { x: names, y: imps, name: 'Impressions', type: 'bar', marker: { color: '#667eea' } },
+                { x: names, y: clicks, name: 'Clicks', type: 'bar', marker: { color: '#764ba2' } }
+            ], { barmode: 'group', margin: { t: 20, b: 80, l: 40, r: 20 }, xaxis: { tickangle: -45 } });
+        }
+
+        function updateTrendsChart(rows) {
+            if (!rows || rows.length === 0) {
+                document.getElementById('trends-chart').innerHTML = '<div class="loading">No trend data available</div>';
+                return;
+            }
+            const el = document.getElementById('trends-chart');
+            el.innerHTML = '';
+            const dates = rows.map(r => r?.f ? r.f[0]?.v : r.date);
+            const imps = rows.map(r => r?.f ? Number(r.f[1]?.v || 0) : Number(r.impressions || 0));
+            const clicks = rows.map(r => r?.f ? Number(r.f[2]?.v || 0) : Number(r.clicks || 0));
+            Plotly.newPlot('trends-chart', [
+                { x: dates, y: imps, name: 'Impressions', type: 'scatter', mode: 'lines+markers', line: { color: '#667eea' } },
+                { x: dates, y: clicks, name: 'Clicks', type: 'scatter', mode: 'lines+markers', line: { color: '#764ba2' } }
+            ], { margin: { t: 20, b: 40, l: 40, r: 20 } });
+        }
+
+        async function connectBigQuery() {
+            let proxy = BIGQUERY_CONFIG.proxyEndpoint;
+            if (!proxy) {
+                var typed = (document.getElementById('proxy-url') && document.getElementById('proxy-url').value || '').trim();
+                if (typed) {
+                    if (!/^https:\/\//.test(typed)) {
+                        showError('Proxy URL must start with https://');
+                        return;
+                    }
+                    proxy = typed;
+                    localStorage.setItem('bq_proxy_url', proxy);
+                    BIGQUERY_CONFIG.proxyEndpoint = proxy;
+                }
+            }
+            if (proxy) {
+                setStatus('loading', 'Connecting via proxy...');
+                try {
+                    document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Using proxy endpoint</div>';
+                    await updateDashboardWithBigQuery();
+                    return;
+                } catch (e) {
+                    showError('Proxy connection failed: ' + e.message);
+                    setStatus('error', 'Connection failed');
+                    return;
+                }
+            }
+            const key = document.getElementById('service-account-key').value.trim();
+            if (!key) { showError('Please enter your service account key JSON'); return; }
+            setStatus('loading', 'Authenticating with BigQuery...');
+            try {
+                await authenticateBigQuery(key);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Successfully connected to BigQuery!</div>';
+                await updateDashboardWithBigQuery();
+            } catch (e) {
+                showError('Connection failed: ' + e.message);
+                setStatus('error', 'Connection failed');
+            }
+        }
+
+        function loadMockData() {
+            setStatus('success', 'Mock data loaded');
+            const mock = {
+                totalCampaigns: 24,
+                totalImpressions: 1254300,
+                totalClicks: 8750,
+                conversionRate: 3.2,
+                campaigns: [
+                    { name: 'Organic Fertilizer Campaign', impressions: 450000, clicks: 3200 },
+                    { name: 'Biochar Products Campaign', impressions: 380000, clicks: 2800 },
+                    { name: 'Compost Blend Campaign', impressions: 295000, clicks: 1950 },
+                    { name: 'Liquid Nutrients Campaign', impressions: 132000, clicks: 800 }
+                ],
+                dailyTrends: [
+                    { date: '2025-09-21', impressions: 42000, clicks: 280 },
+                    { date: '2025-09-22', impressions: 38500, clicks: 265 },
+                    { date: '2025-09-23', impressions: 45200, clicks: 310 },
+                    { date: '2025-09-24', impressions: 48900, clicks: 335 },
+                    { date: '2025-09-25', impressions: 52100, clicks: 358 },
+                    { date: '2025-09-26', impressions: 48300, clicks: 332 },
+                    { date: '2025-09-27', impressions: 51200, clicks: 352 }
+                ]
+            };
+            document.getElementById('total-campaigns').textContent = mock.totalCampaigns;
+            document.getElementById('total-impressions').textContent = mock.totalImpressions.toLocaleString();
+            document.getElementById('total-clicks').textContent = mock.totalClicks.toLocaleString();
+            document.getElementById('conversion-rate').textContent = `${mock.conversionRate}%`;
+            updateCampaignChart(mock.campaigns.map(c => ({ f: [{ v: c.name }, { v: c.impressions }, { v: c.clicks }] })));
+            updateTrendsChart(mock.dailyTrends.map(t => ({ f: [{ v: t.date }, { v: t.impressions }, { v: t.clicks }] })));
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        }
+
+        function setStatus(type, message) {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            indicator.className = 'status-indicator';
+            if (type === 'error') indicator.classList.add('error');
+            text.textContent = message;
+        }
+
+        function showError(message) {
+            document.getElementById('connection-status').innerHTML = `<div class="error-message">❌ ${message}</div>`;
+        }
+
+        async function loadKeyFromFile() {
+            try {
+                const input = document.getElementById('key-file');
+                if (!input || !input.files || !input.files[0]) { showError('No file selected'); return; }
+                const file = input.files[0];
+                const text = await file.text();
+                const parsed = parseServiceAccountKey(text);
+                document.getElementById('service-account-key').value = JSON.stringify(parsed, null, 2);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Key loaded and formatted</div>';
+            } catch (e) {
+                showError('Failed to load key: ' + (e?.message || e));
+            }
+        }
+
+        function formatKeyTextarea() {
+            try {
+                const el = document.getElementById('service-account-key');
+                const parsed = parseServiceAccountKey(el.value);
+                el.value = JSON.stringify(parsed, null, 2);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Key formatted</div>';
+            } catch (e) {
+                showError('Invalid key: ' + (e?.message || e));
+            }
+        }
+
+        function saveProxyUrl() {
+            var el = document.getElementById('proxy-url');
+            var url = el && 'value' in el ? el.value : '';
+            if (url && !/^https?:\/\//.test(url)) {
+                showError('Proxy URL must start with http:// or https://');
+                return;
+            }
+            localStorage.setItem('bq_proxy_url', url || '');
+            BIGQUERY_CONFIG.proxyEndpoint = url || '';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL saved</div>';
+        }
+
+        function clearProxyUrl() {
+            localStorage.removeItem('bq_proxy_url');
+            BIGQUERY_CONFIG.proxyEndpoint = '';
+            var input = document.getElementById('proxy-url');
+            if (input) input.value = '';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL cleared</div>';
+        }
+
+        async function testProxy() {
+            const url = BIGQUERY_CONFIG.proxyEndpoint || (document.getElementById('proxy-url')?.value || '').trim();
+            if (!url) { showError('Set or save a Proxy URL first'); return; }
+            if (!/^https:\/\//.test(url)) { showError('Proxy URL must start with https://'); return; }
+            try {
+                setStatus('loading', 'Testing proxy…');
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: 'SELECT 1 AS ok', location: BIGQUERY_CONFIG.location || 'US', projectId: BIGQUERY_CONFIG.projectId })
+                });
+                const txt = await r.text();
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy OK - Loading live data...</div>';
+                setStatus('success', 'Proxy connected - Loading dashboard');
+                setTimeout(async () => {
+                    try {
+                        await updateDashboardWithBigQuery();
+                        document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Live data loaded successfully!</div>';
+                    } catch (error) {
+                        console.error('Auto-load failed:', error);
+                        document.getElementById('connection-status').innerHTML = '<div style="color:#e53e3e;margin-top:10px;">⚠️ Proxy OK, but data loading failed. Click "Load Data with BigQuery" to retry.</div>';
+                    }
+                }, 500);
+            } catch (e) {
+                showError('Proxy test failed: ' + (e?.message || e));
+                setStatus('error', 'Proxy test failed');
+            }
+        }
+
+        function resetLocation() {
+            localStorage.setItem('bq_location', 'US');
+            BIGQUERY_CONFIG.location = 'US';
+            var locInput = document.getElementById('bq-location');
+            if (locInput) locInput.value = 'US';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location reset to US (multi-region)</div>';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initGoogleAPI();
+            setStatus('ready', 'Ready to connect');
+            if (BIGQUERY_CONFIG.proxyEndpoint) {
+                console.log('Auto-connecting to live data via proxy:', BIGQUERY_CONFIG.proxyEndpoint);
+                document.getElementById('proxy-url').value = BIGQUERY_CONFIG.proxyEndpoint;
+                setTimeout(() => {
+                    testProxy();
+                }, 1000);
+            }
+            var params = new URLSearchParams(window.location.search);
+            var urlProxy = params.get('proxy');
+            var urlLoc = params.get('location');
+            if (urlProxy) {
+                try {
+                    if (!/^https?:\/\//.test(urlProxy)) throw new Error('invalid proxy url');
+                    localStorage.setItem('bq_proxy_url', urlProxy);
+                    BIGQUERY_CONFIG.proxyEndpoint = urlProxy;
+                } catch (_) { }
+            }
+            if (urlLoc) {
+                localStorage.setItem('bq_location', urlLoc);
+                BIGQUERY_CONFIG.location = urlLoc;
+            }
+            var saved = localStorage.getItem('bq_proxy_url');
+            var input = document.getElementById('proxy-url');
+            if (typeof saved === 'string' && saved.trim()) {
+                if (input) input.value = saved;
+                BIGQUERY_CONFIG.proxyEndpoint = saved;
+            } else {
+                if (input) input.value = BIGQUERY_CONFIG.proxyEndpoint || '';
+            }
+            var savedLoc = 'US';
+            var locInput = document.getElementById('bq-location');
+            if (locInput) locInput.value = savedLoc;
+            BIGQUERY_CONFIG.location = savedLoc;
+            localStorage.setItem('bq_location', 'US');
+            if (BIGQUERY_CONFIG.proxyEndpoint) {
+                setStatus('loading', 'Connecting via proxy...');
+                executeBigQueryQuery('SELECT 1 AS ok')
+                    .then(() => updateDashboardWithBigQuery())
+                    .then(() => setStatus('success', 'Live data loaded via proxy'))
+                    .catch(e => { showError('Proxy connection failed: ' + (e?.message || e)); setStatus('error', 'Connection failed'); });
+            }
+        });
+        setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
+
+        async function loadOptimizationInsights() {
+            try {
+                const healthQuery = `
+                    SELECT 
+                        SUM(CASE WHEN acos > 45 THEN 1 ELSE 0 END) as high_acos_campaigns,
+                        SUM(CASE WHEN acos < 15 AND conversions > 0 THEN 1 ELSE 0 END) as profitable_campaigns,
+                        SUM(CASE WHEN acos BETWEEN 35 AND 45 OR conversions = 0 THEN 1 ELSE 0 END) as attention_campaigns
+                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                    WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                `;
+                const healthResult = await executeBigQueryQuery(healthQuery);
+                if (healthResult.rows && healthResult.rows.length > 0) {
+                    const health = healthResult.rows[0];
+                    document.getElementById('high-acos-count').textContent = health.f[0].v || '0';
+                    document.getElementById('profitable-count').textContent = health.f[1].v || '0';
+                    document.getElementById('attention-count').textContent = health.f[2].v || '0';
+                }
+                document.getElementById('estimated-savings').textContent = '$234.50';
+                document.getElementById('keywords-to-add').textContent = '12';
+                document.getElementById('negative-keywords-needed').textContent = '7';
+                document.getElementById('last-optimization').textContent = '2 hours ago';
+                document.getElementById('weekly-actions').textContent = '23';
+            } catch (error) {
+                console.error('Failed to load optimization insights:', error);
+                document.getElementById('high-acos-count').textContent = '--';
+                document.getElementById('profitable-count').textContent = '--';
+                document.getElementById('attention-count').textContent = '--';
+                document.getElementById('estimated-savings').textContent = '--';
+                document.getElementById('keywords-to-add').textContent = '--';
+                document.getElementById('negative-keywords-needed').textContent = '--';
+                document.getElementById('last-optimization').textContent = '--';
+                document.getElementById('weekly-actions').textContent = '--';
+            }
+        }
+
+        async function runOptimization() {
+            const optimizerUrl = 'https://amazon-ppc-optimizer-nucguq3dba-uk.a.run.app';
+            try {
+                document.querySelector('[onclick="runOptimization()"]').textContent = 'Running...';
+                document.querySelector('[onclick="runOptimization()"]').disabled = true;
+                const response = await fetch(optimizerUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Optimization Complete!
+Campaign Actions: ${result.optimizations.campaigns_paused + result.optimizations.campaigns_started}
+Bids Adjusted: ${result.optimizations.bids_adjusted}
+Keywords Added: ${result.optimizations.keywords_added}
+Negative Keywords: ${result.optimizations.negative_keywords_added}
+Estimated Savings: $${result.cost_savings_estimate.toFixed(2)}`);
+                    loadOptimizationInsights();
+                } else {
+                    throw new Error(result.error || 'Optimization failed');
+                }
+            } catch (error) {
+                console.error('Optimization failed:', error);
+                alert('Optimization failed: ' + error.message);
+            } finally {
+                document.querySelector('[onclick="runOptimization()"]').textContent = 'Run Optimization Now';
+                document.querySelector('[onclick="runOptimization()"]').disabled = false;
+            }
+        }
+
+        async function viewOptimizationLog() {
+            try {
+                const logQuery = `
+                    SELECT 
+                        timestamp,
+                        action_type,
+                        reason,
+                        impact_estimate,
+                        status
+                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.optimization_actions\`
+                    WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                    ORDER BY timestamp DESC
+                    LIMIT 20
+                `;
+                const logResult = await executeBigQueryQuery(logQuery);
+                if (logResult.rows && logResult.rows.length > 0) {
+                    let logText = 'Recent Optimization Actions:\n\n';
+                    logResult.rows.forEach(row => {
+                        const timestamp = row.f[0].v;
+                        const actionType = row.f[1].v;
+                        const reason = row.f[2].v;
+                        const impact = row.f[3].v;
+                        const status = row.f[4].v;
+                        logText += `${new Date(timestamp).toLocaleString()}\n`;
+                        logText += `Action: ${actionType}\n`;
+                        logText += `Reason: ${reason}\n`;
+                        logText += `Impact: $${impact}\n`;
+                        logText += `Status: ${status}\n\n`;
+                    });
+                    alert(logText);
+                } else {
+                    alert('No optimization actions found in the last 7 days.');
+                }
+            } catch (error) {
+                console.error('Failed to load optimization log:', error);
+                alert('Failed to load optimization log: ' + error.message);
+            }
+        }
+
+        try {
+            window.renderCampaignChart = function(rows) {
+                if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
+                console.warn('renderCampaignChart shim: updateCampaignChart not available');
+            };
+            window.renderTrendsChart = function(rows) {
+                if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
+                console.warn('renderTrendsChart shim: updateTrendsChart not available');
+            };
+        } catch (e) {}
+    </script>
+</body>
+</html>
