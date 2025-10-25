@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Demo • Nature's Way Soil</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin:0; background:#f7fafc; color:#2d3748; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    h1 { margin: 0 0 12px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:16px; }
+    .card { background:#fff; border-radius:12px; padding:12px; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
+    video { width:100%; border-radius:8px; background:#000; }
+    .meta { margin-top:8px; font-size:14px; color:#4a5568; }
+    .meta .asin { font-weight:600; color:#2d3748; }
+    .muted { color:#718096; font-size:14px; }
+    a { color:#667eea; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎬 Product Videos</h1>
+    <p class="muted">Files are read from <code>/public/videos/index.json</code>. Only entries with present files are shown.</p>
+    <div id="app">Loading…</div>
+  </div>
+  <script>
+    async function load() {
+      try {
+        const res = await fetch('../videos/index.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error('index.json missing');
+        const items = await res.json();
+        const container = document.getElementById('app');
+        if (!Array.isArray(items) || items.length === 0) {
+          container.innerHTML = '<p class="muted">No videos indexed yet. Run the import script.</p>';
+          return;
+        }
+        const cards = items.map(it => `
+          <div class="card">
+            <video controls preload="metadata" src="../${it.src}"></video>
+            <div class="meta"><span class="asin">${it.asin}</span> • ${it.title || ''} ${it.price ? ('— $' + it.price) : ''}</div>
+          </div>
+        `).join('');
+        container.innerHTML = `<div class="grid">${cards}</div>`;
+      } catch (e) {
+        document.getElementById('app').innerHTML = `<p class="muted">Failed to load index.json. ${e.message}</p>`;
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

@@ -489,6 +489,8 @@
                 updateMetrics(summaryData);
                 updateCampaignChart(campaignData);
                 updateTrendsChart(trendsData);
+                // Load optimization insights non-blocking
+                try { await loadOptimizationInsights(); } catch (err) { console.warn('Optimization insights failed:', err); }
                 document.getElementById('last-updated').textContent = new Date().toLocaleString();
                 setStatus('success', 'Live data loaded successfully');
             } catch (e) {
@@ -895,24 +897,7 @@ Estimated Savings: $${result.cost_savings_estimate.toFixed(2)}`);
             }
         }
 
-        // Load optimization insights when dashboard updates
-        async function updateDashboardWithBigQuery() {
-            // ... existing dashboard update code ...
-            await Promise.all([
-                loadCampaignData(),
-                loadTrendsData(), 
-                loadSummaryMetrics(),
-                loadOptimizationInsights() // Add optimization insights
-            ]).then(([campaigns, trends, summary]) => {
-                renderCampaignChart(campaigns);
-                renderTrendsChart(trends);
-                updateSummaryMetrics(summary);
-                document.getElementById('last-updated').textContent = new Date().toLocaleString();
-            }).catch(error => {
-                console.error('Dashboard update failed:', error);
-                showError('Dashboard update failed: ' + error.message);
-            });
-        }
+        
     </script>
 </body>
 </html>

@@ -1,0 +1,52 @@
+{
+  "name": "natureswaysoil-complete-automation",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Complete automation system: Amazon PPC Dashboard + AI Video Generation + Social Media + Asset Management",
+  "scripts": {
+    "dev": "ts-node src/cli.ts",
+    "hybrid": "ts-node src/hybrid-cli.ts",
+    "hybrid:once": "RUN_ONCE=true ts-node src/hybrid-cli.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "video:dev": "ts-node src/cli.ts",
+    "video:once": "RUN_ONCE=true ts-node src/cli.ts",
+    "deploy:assets": "./deploy-assets.sh",
+    "deploy:complete": "./deploy-complete-system.sh",
+    "deploy:cloud-run": "cd cloud-functions/bq-proxy && ./deploy-run.sh amazon-ppc-474902 us-east4",
+    "deploy:functions": "gcloud functions deploy nws-hybrid-video --runtime=nodejs20 --trigger-http --allow-unauthenticated --region=us-east4 --service-account=amazon-sync-sa@amazon-ppc-474902.iam.gserviceaccount.com --source=.",
+    "deploy:scheduler": "gcloud scheduler jobs create http nws-video-automation --schedule='0 9,17 * * *' --uri=https://us-east4-amazon-ppc-474902.cloudfunctions.net/nws-hybrid-video --http-method=POST --time-zone='America/New_York' --description='Nature\\'s Way Soil automated video posting - twice daily'",
+    "production": "npm run deploy:cloud-run && npm run deploy:functions && npm run deploy:scheduler",
+    "test:bigquery": "./test-bigquery.sh",
+    "test:automation": "./test-automation.sh",
+    "buffer:setup": "./buffer-integration.sh setup",
+    "buffer:post": "./buffer-integration.sh post",
+    "dashboard:serve": "python3 -m http.server 8086 --bind 0.0.0.0"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.0.0",
+    "@google-cloud/functions-framework": "^3.4.0",
+    "@google-cloud/secret-manager": "^6.1.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "google-auth-library": "^9.15.0",
+    "googleapis": "^137.0.0",
+    "node-fetch": "2.6.7",
+    "openai": "^4.67.3",
+    "plotly.js": "^2.35.2",
+    "twitter-api-v2": "^1.17.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.16.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

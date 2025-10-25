@@ -25,25 +25,38 @@ if [[ ! -d node_modules ]]; then
   npm ci
 fi
 
-export DRY_RUN=true
 export RUN_ONCE=true
+export DRY_RUN_LOG_ONLY=true
 
-# Try common scripts/entrypoints
-if npm run | grep -q "generate:dry-run"; then
-  echo "Running: npm run generate:dry-run"
-  npm run generate:dry-run
-elif npm run | grep -q "start:dry-run"; then
-  echo "Running: npm run start:dry-run"
-  npm run start:dry-run
-else
-  # Fallback to a typical CLI path (adjust as upstream evolves)
-  if [[ -f dist/cli.js ]]; then
-    echo "Running: node dist/cli.js --dry-run --once"
-    node dist/cli.js --dry-run --once
-  else
-    echo "ERROR: No known dry-run entrypoint found. Please update scripts/dry-run-video.sh to match upstream commands." >&2
-    exit 2
+# Derive CSV export URL from our mapping file
+MAP_FILE="$ROOT_DIR/automation/video-system/heygen-mapping.json"
+if [[ -f "$MAP_FILE" ]]; then
+  SHEET_URL=$(jq -r '.sheet.spreadsheetUrl' "$MAP_FILE")
+  SHEET_GID=$(jq -r '.sheet.gid' "$MAP_FILE")
+  if [[ -n "$SHEET_URL" && -n "$SHEET_GID" && "$SHEET_URL" != "null" && "$SHEET_GID" != "null" ]]; then
+    # Convert edit URL to CSV export
+    # Examples:
+    # https://docs.google.com/spreadsheets/d/<ID>/edit?gid=<GID>#gid=<GID>
+    # -> https://docs.google.com/spreadsheets/d/<ID>/export?format=csv&gid=<GID>
+    CSV_URL=$(echo "$SHEET_URL" | sed -E 's|/edit\?gid=([0-9]+).*|/export?format=csv\&gid='"$SHEET_GID"'|')
+    export CSV_URL
+    echo "Using CSV_URL from mapping: $CSV_URL"
   fi
+fi
+
+# Fallback if not set
+if [[ -z "${CSV_URL:-}" ]]; then
+  export CSV_URL="https://docs.google.com/spreadsheets/d/1LU2ahpzMqLB5FLYqiyDbXOfjTxbdp8U8/export?format=csv&gid=1712974299"
+  echo "Using default CSV_URL: $CSV_URL"
+fi
+
+# Run the compiled CLI directly
+if [[ -f dist/cli.js ]]; then
+  echo "Running: node dist/cli.js (RUN_ONCE, DRY_RUN_LOG_ONLY)"
+  node dist/cli.js
+else
+  echo "ERROR: dist/cli.js not found. Try: npm run build" >&2
+  exit 2
 fi
 
 popd >/dev/null
