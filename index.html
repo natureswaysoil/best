@@ -226,6 +226,48 @@
     </div>
 
     <script>
+        // Early compatibility shims in case any cached code references legacy function names
+        (function(){
+            try {
+                if (typeof window !== 'undefined') {
+                    if (typeof window.renderCampaignChart !== 'function') {
+                        window.renderCampaignChart = function(rows){
+                            if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
+                            console.warn('renderCampaignChart shim in effect; updateCampaignChart not yet available');
+                        };
+                    }
+                    if (typeof window.renderTrendsChart !== 'function') {
+                        window.renderTrendsChart = function(rows){
+                            if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
+                            console.warn('renderTrendsChart shim in effect; updateTrendsChart not yet available');
+                        };
+                    }
+                    // Last-resort handler: gracefully handle legacy ReferenceErrors from cached code
+                    window.addEventListener('error', function(ev){
+                        try {
+                            const msg = (ev && ev.message) || '';
+                            if (/renderCampaignChart is not defined/.test(msg)) {
+                                ev.preventDefault();
+                                console.warn('Intercepted legacy renderCampaignChart error; shimming to updateCampaignChart');
+                                window.renderCampaignChart = function(rows){
+                                    if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
+                                };
+                                return false;
+                            }
+                            if (/renderTrendsChart is not defined/.test(msg)) {
+                                ev.preventDefault();
+                                console.warn('Intercepted legacy renderTrendsChart error; shimming to updateTrendsChart');
+                                window.renderTrendsChart = function(rows){
+                                    if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
+                                };
+                                return false;
+                            }
+                        } catch(_) { /* ignore */ }
+                    }, true);
+                }
+            } catch(_) { /* ignore */ }
+        })();
+
         let bigQueryAuthenticated = false;
         let accessToken = null; // not used if proxy is configured
         let tokenExpiry = null; // not used if proxy is configured
@@ -420,6 +462,27 @@
             return json;
         }
 
+        // Convert BigQuery REST queryResponse into array of plain JS objects
+        function bqToObjects(result) {
+            try {
+                const rows = result && result.rows;
+                const fields = result && result.schema && result.schema.fields;
+                if (Array.isArray(rows) && Array.isArray(fields)) {
+                    const names = fields.map(f => f.name);
+                    return rows.map(r => {
+                        const o = {};
+                        for (let i = 0; i < names.length; i++) {
+                            o[names[i]] = r && r.f && r.f[i] ? r.f[i].v : null;
+                        }
+                        return o;
+                    });
+                }
+                // Already objects?
+                if (Array.isArray(result)) return result;
+            } catch (_) {}
+            return [];
+        }
+
         async function loadCampaignData() {
             const q = `
                 SELECT 
@@ -438,7 +501,8 @@
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
                 GROUP BY campaign_name ORDER BY total_impressions DESC LIMIT 10`;
             const result = await executeBigQueryQuery(q);
-            return result.rows || [];
+            const objs = bqToObjects(result);
+            return objs.length ? objs : (result.rows || []);
         }
 
         async function loadTrendsData() {
@@ -457,7 +521,8 @@
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
                 GROUP BY date ORDER BY date`;
             const result = await executeBigQueryQuery(q);
-            return result.rows || [];
+            const objs = bqToObjects(result);
+            return objs.length ? objs : (result.rows || []);
         }
 
         async function loadSummaryMetrics() {
@@ -477,7 +542,8 @@
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)`;
             const result = await executeBigQueryQuery(q);
-            return result.rows?.[0] || {};
+            const objs = bqToObjects(result);
+            return (objs && objs[0]) || (result.rows && result.rows[0]) || {};
         }
 
         async function updateDashboardWithBigQuery() {
@@ -489,6 +555,13 @@
                 updateMetrics(summaryData);
                 updateCampaignChart(campaignData);
                 updateTrendsChart(trendsData);
+                // Inline confirmation including live totals to make success visible in UI
+                try {
+                    const f = (i) => (summaryData && summaryData.f && summaryData.f[i] && summaryData.f[i].v) || 0;
+                    const msg = `✅ Live: ${Number(f(0))} campaigns • ${Number(f(1)).toLocaleString()} impressions • ${Number(f(2)).toLocaleString()} clicks`;
+                    const cs = document.getElementById('connection-status');
+                    if (cs) cs.innerHTML = `<div style="color:#48bb78;margin-top:10px;">${msg}</div>`;
+                } catch (_) { /* ignore */ }
                 // Load optimization insights non-blocking
                 try { await loadOptimizationInsights(); } catch (err) { console.warn('Optimization insights failed:', err); }
                 document.getElementById('last-updated').textContent = new Date().toLocaleString();
@@ -500,13 +573,24 @@
         }
 
         function updateMetrics(row) {
-            const get = (i) => (row?.f?.[i]?.v) || 0;
-            document.getElementById('total-campaigns').textContent = get(0);
-            document.getElementById('total-impressions').textContent = Number(get(1)).toLocaleString();
-            document.getElementById('total-clicks').textContent = Number(get(2)).toLocaleString();
-            const clicks = Number(get(2));
-            const conv = Number(get(3));
-            const cr = clicks ? ((conv / clicks) * 100).toFixed(2) : '0.00';
+            // Support both BigQuery REST row format (row.f[i].v) and plain object
+            let totalCampaigns, totalImps, totalClicks, totalConv;
+            if (row && row.f) {
+                const get = (i) => (row?.f?.[i]?.v) || 0;
+                totalCampaigns = Number(get(0));
+                totalImps = Number(get(1));
+                totalClicks = Number(get(2));
+                totalConv = Number(get(3));
+            } else {
+                totalCampaigns = Number(row.total_campaigns || 0);
+                totalImps = Number(row.total_impressions || 0);
+                totalClicks = Number(row.total_clicks || 0);
+                totalConv = Number(row.total_conversions || 0);
+            }
+            document.getElementById('total-campaigns').textContent = isNaN(totalCampaigns) ? '--' : totalCampaigns.toString();
+            document.getElementById('total-impressions').textContent = isNaN(totalImps) ? '--' : totalImps.toLocaleString();
+            document.getElementById('total-clicks').textContent = isNaN(totalClicks) ? '--' : totalClicks.toLocaleString();
+            const cr = totalClicks ? ((totalConv / totalClicks) * 100).toFixed(2) : '0.00';
             document.getElementById('conversion-rate').textContent = `${cr}%`;
         }
 
@@ -515,9 +599,12 @@
                 document.getElementById('campaign-chart').innerHTML = '<div class="loading">No campaign data available</div>';
                 return;
             }
-            const names = rows.map(r => r.f[0].v);
-            const imps = rows.map(r => Number(r.f[1].v || 0));
-            const clicks = rows.map(r => Number(r.f[2].v || 0));
+            // Clear any placeholder content before rendering
+            const el = document.getElementById('campaign-chart');
+            el.innerHTML = '';
+            const names = rows.map(r => r?.f ? r.f[0]?.v : (r.campaign_name || ''));
+            const imps = rows.map(r => r?.f ? Number(r.f[1]?.v || 0) : Number(r.total_impressions || 0));
+            const clicks = rows.map(r => r?.f ? Number(r.f[2]?.v || 0) : Number(r.total_clicks || 0));
             Plotly.newPlot('campaign-chart', [
                 { x: names, y: imps, name: 'Impressions', type: 'bar', marker: { color: '#667eea' } },
                 { x: names, y: clicks, name: 'Clicks', type: 'bar', marker: { color: '#764ba2' } }
@@ -529,9 +616,12 @@
                 document.getElementById('trends-chart').innerHTML = '<div class="loading">No trend data available</div>';
                 return;
             }
-            const dates = rows.map(r => r.f[0].v);
-            const imps = rows.map(r => Number(r.f[1].v || 0));
-            const clicks = rows.map(r => Number(r.f[2].v || 0));
+            // Clear any placeholder content before rendering
+            const el = document.getElementById('trends-chart');
+            el.innerHTML = '';
+            const dates = rows.map(r => r?.f ? r.f[0]?.v : r.date);
+            const imps = rows.map(r => r?.f ? Number(r.f[1]?.v || 0) : Number(r.impressions || 0));
+            const clicks = rows.map(r => r?.f ? Number(r.f[2]?.v || 0) : Number(r.clicks || 0));
             Plotly.newPlot('trends-chart', [
                 { x: dates, y: imps, name: 'Impressions', type: 'scatter', mode: 'lines+markers', line: { color: '#667eea' } },
                 { x: dates, y: clicks, name: 'Clicks', type: 'scatter', mode: 'lines+markers', line: { color: '#764ba2' } }
@@ -897,7 +987,21 @@ Estimated Savings: $${result.cost_savings_estimate.toFixed(2)}`);
             }
         }
 
-        
+        // Backward-compatibility shims for older code paths that referenced
+        // render* functions. Some users may have stale cached JS expecting
+        // these symbols. Map them to the current update* implementations.
+        try {
+            window.renderCampaignChart = function(rows) {
+                if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
+                console.warn('renderCampaignChart shim: updateCampaignChart not available');
+            };
+            window.renderTrendsChart = function(rows) {
+                if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
+                console.warn('renderTrendsChart shim: updateTrendsChart not available');
+            };
+        } catch (e) {
+            // Non-browser environments can ignore
+        }
     </script>
 </body>
 </html>
