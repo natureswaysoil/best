@@ -59,7 +59,8 @@ gcloud functions deploy $FUNCTION_NAME \
     --memory=2GB \
     --timeout=540s \
     --max-instances=2 \
-    --allow-unauthenticated
+    --allow-unauthenticated \
+    --set-env-vars=ALLOWED_ORIGINS="https://natureswaysoil.github.io,http://localhost:8086"
 
 # Get function URL
 FUNCTION_URL=$(gcloud functions describe $FUNCTION_NAME --region=$REGION --format="value(serviceConfig.uri)")

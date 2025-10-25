@@ -42,6 +42,20 @@ const CONFIG = {
     performance_lookback_days: 14, // Days to analyze for dayparting
 };
 
+// CORS configuration
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://natureswaysoil.github.io,http://localhost:8086')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+function setCors(res, origin) {
+    const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0] || '*';
+    res.setHeader('Access-Control-Allow-Origin', allow);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
 /**
  * Advanced Amazon PPC Optimizer
  */
@@ -53,6 +67,7 @@ class PPCOptimizer {
         this.clientId = null;
         this.clientSecret = null;
         this.optimizationActions = [];
+        this.bqDataset = `${CONFIG.project_id}.${CONFIG.dataset_id}`;
     }
 
     /**
@@ -579,6 +594,58 @@ class PPCOptimizer {
         }
     }
 
+    async ensureOptimizationActionsTable() {
+        const ddl = `
+            CREATE TABLE IF NOT EXISTS \`${this.bqDataset}.optimization_actions\` (
+                timestamp TIMESTAMP,
+                action_type STRING,
+                campaign_id STRING,
+                campaign_name STRING,
+                ad_group_id STRING,
+                keyword_id STRING,
+                keyword_text STRING,
+                reason STRING,
+                status STRING,
+                impact_estimate FLOAT64,
+                cost_change FLOAT64,
+                old_value STRING,
+                new_value STRING,
+                details STRING
+            ) PARTITION BY DATE(timestamp)
+        `;
+        await bigquery.query({ query: ddl });
+    }
+
+    async recordOptimizationActions() {
+        try {
+            await this.ensureOptimizationActionsTable();
+            const rows = this.optimizationActions.map(a => ({
+                timestamp: new Date().toISOString(),
+                action_type: a.type || 'UNKNOWN',
+                campaign_id: a.campaignId || null,
+                campaign_name: a.campaignName || null,
+                ad_group_id: a.adGroupId || null,
+                keyword_id: a.keywordId || null,
+                keyword_text: a.keywordText || a.searchTerm || null,
+                reason: a.reason || null,
+                status: 'applied',
+                impact_estimate: a.wastedSpend || null,
+                cost_change: (typeof a.oldBudget === 'number' && typeof a.newBudget === 'number') ? (a.newBudget - a.oldBudget) : null,
+                old_value: (typeof a.oldBid !== 'undefined' ? String(a.oldBid) : (typeof a.oldBudget !== 'undefined' ? String(a.oldBudget) : null)),
+                new_value: (typeof a.newBid !== 'undefined' ? String(a.newBid) : (typeof a.newBudget !== 'undefined' ? String(a.newBudget) : null)),
+                details: JSON.stringify(a)
+            }));
+
+            if (rows.length) {
+                const table = bigquery.dataset(CONFIG.dataset_id).table('optimization_actions');
+                await table.insert(rows, { raw: true });
+                console.log(`📝 Recorded ${rows.length} optimization actions to BigQuery`);
+            }
+        } catch (e) {
+            console.warn('⚠️ Failed to record optimization actions:', e.message);
+        }
+    }
+
     // Helper methods for Amazon API calls
     async getCampaignDetails(campaignId) {
         const endpoint = `https://advertising-api.amazon.com/v2/sp/campaigns/${campaignId}`;
@@ -768,7 +835,10 @@ async function optimizePPC(req, res) {
         result.cost_savings_estimate = negativeActions.reduce((sum, a) => sum + (a.wastedSpend || 0), 0);
         result.revenue_increase_estimate = keywordActions.length * 50; // Rough estimate: $50 per new keyword
         
-        result.success = true;
+    // Persist actions for audit/insights
+    await optimizer.recordOptimizationActions();
+
+    result.success = true;
         
         console.log('✅ Optimization complete!', {
             campaigns_managed: result.optimizations.campaigns_paused + result.optimizations.campaigns_started,
@@ -786,6 +856,10 @@ async function optimizePPC(req, res) {
     result.duration = Date.now() - startTime;
     
     if (res) {
+        try { setCors(res, req.headers.origin || ''); } catch(_) {}
+        if (req.method === 'OPTIONS') {
+            return res.status(204).send('');
+        }
         res.status(result.success ? 200 : 500).json(result);
     }
     
