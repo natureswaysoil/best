@@ -102,17 +102,19 @@ class PPCOptimizer {
         }
 
         try {
-            const response = await axios.post('https://api.amazon.com/auth/o2/token', {
+            const body = new URLSearchParams({
                 grant_type: 'refresh_token',
                 refresh_token: this.refreshToken,
                 client_id: this.clientId,
                 client_secret: this.clientSecret
-            }, {
+            });
+            const response = await axios.post('https://api.amazon.com/auth/o2/token', body.toString(), {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
 
             this.accessToken = response.data.access_token;
-            this.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
+            // Refresh a minute early to avoid edge expiry
+            this.tokenExpiry = Date.now() + (Math.max(0, response.data.expires_in - 60) * 1000);
             return this.accessToken;
         } catch (error) {
             console.error('❌ Token refresh failed:', error);
@@ -123,7 +125,7 @@ class PPCOptimizer {
     /**
      * Make authenticated Amazon API request
      */
-    async makeAmazonRequest(endpoint, options = {}) {
+    async makeAmazonRequest(endpoint, options = {}, _retried = false) {
         const token = await this.getAccessToken();
         const config = {
             headers: {
@@ -133,6 +135,7 @@ class PPCOptimizer {
                 'Content-Type': 'application/json',
                 ...options.headers
             },
+            validateStatus: (s) => s >= 200 && s < 300,
             ...options
         };
 
@@ -140,7 +143,17 @@ class PPCOptimizer {
             const response = await axios(endpoint, config);
             return response.data;
         } catch (error) {
-            console.error('❌ Amazon API request failed:', error.response?.data || error.message);
+            const status = error.response?.status;
+            const data = error.response?.data;
+            // If unauthorized/forbidden, try refreshing token once and retry
+            if ((status === 401 || status === 403) && !_retried) {
+                console.warn(`🔁 Amazon API ${status} - retrying after token refresh...`);
+                this.accessToken = null;
+                this.tokenExpiry = 0;
+                await this.getAccessToken();
+                return this.makeAmazonRequest(endpoint, options, true);
+            }
+            console.error('❌ Amazon API request failed:', data || error.message);
             throw error;
         }
     }
