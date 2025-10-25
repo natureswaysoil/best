@@ -866,12 +866,12 @@
         // PPC Optimization Functions
         async function loadOptimizationInsights() {
             try {
-                // Campaign Health Analysis
+                // 1) Campaign Health (last 7 days)
                 const healthQuery = `
                     SELECT 
                         SUM(CASE WHEN acos > 45 THEN 1 ELSE 0 END) as high_acos_campaigns,
                         SUM(CASE WHEN acos < 15 AND conversions > 0 THEN 1 ELSE 0 END) as profitable_campaigns,
-                        SUM(CASE WHEN acos BETWEEN 35 AND 45 OR conversions = 0 THEN 1 ELSE 0 END) as attention_campaigns
+                        SUM(CASE WHEN (acos BETWEEN 35 AND 45) OR conversions = 0 THEN 1 ELSE 0 END) as attention_campaigns
                     FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                     WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
                 `;
@@ -884,14 +884,82 @@
                     document.getElementById('attention-count').textContent = health.f[2].v || '0';
                 }
 
-                // Optimization Opportunities (mock data for now - would come from optimizer function)
-                document.getElementById('estimated-savings').textContent = '$234.50';
-                document.getElementById('keywords-to-add').textContent = '12';
-                document.getElementById('negative-keywords-needed').textContent = '7';
-                
-                // Auto-Optimization Status
-                document.getElementById('last-optimization').textContent = '2 hours ago';
-                document.getElementById('weekly-actions').textContent = '23';
+                // 2) Estimated Monthly Savings (last 30 days)
+                // Heuristic: overspend above a 30% ACOS target
+                // savings = SUM(max(cost - conversion_value * 0.30, 0))
+                const savingsQuery = `
+                    SELECT ROUND(SUM(GREATEST(cost - (conversion_value * 0.30), 0)), 2) AS estimated_savings
+                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                    WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                `;
+                const savingsRes = await executeBigQueryQuery(savingsQuery);
+                if (savingsRes.rows && savingsRes.rows[0] && savingsRes.rows[0].f) {
+                    const savings = Number(savingsRes.rows[0].f[0].v || 0);
+                    document.getElementById('estimated-savings').textContent = `$${savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                }
+
+                // 3) Keywords to Add (last 30 days)
+                // Heuristic: campaigns with conversions > 0 but low impressions (< 5,000) ⇒ expand coverage with new keywords
+                const kwAddQuery = `
+                    WITH agg AS (
+                      SELECT campaign_name,
+                             SUM(impressions) AS total_impressions,
+                             SUM(conversions) AS total_conversions
+                      FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                      GROUP BY campaign_name
+                    )
+                    SELECT COUNTIF(total_conversions > 0 AND total_impressions < 5000) AS keywords_to_add
+                    FROM agg
+                `;
+                const kwAddRes = await executeBigQueryQuery(kwAddQuery);
+                if (kwAddRes.rows && kwAddRes.rows[0] && kwAddRes.rows[0].f) {
+                    const n = Number(kwAddRes.rows[0].f[0].v || 0);
+                    document.getElementById('keywords-to-add').textContent = String(n);
+                }
+
+                // 4) Negative Keywords Needed (last 30 days)
+                // Heuristic: campaigns with significant traffic (clicks ≥ 50) but zero conversions ⇒ add negatives to cut waste
+                const negKwQuery = `
+                    WITH agg AS (
+                      SELECT campaign_name,
+                             SUM(clicks) AS total_clicks,
+                             SUM(conversions) AS total_conversions
+                      FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
+                      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+                      GROUP BY campaign_name
+                    )
+                    SELECT COUNTIF(total_clicks >= 50 AND total_conversions = 0) AS negative_needed
+                    FROM agg
+                `;
+                const negKwRes = await executeBigQueryQuery(negKwQuery);
+                if (negKwRes.rows && negKwRes.rows[0] && negKwRes.rows[0].f) {
+                    const n = Number(negKwRes.rows[0].f[0].v || 0);
+                    document.getElementById('negative-keywords-needed').textContent = String(n);
+                }
+
+                // 5) Auto-Optimization Status (best-effort)
+                // If an optimization_actions table exists, surface recent activity
+                try {
+                    const actionsQuery = `
+                        SELECT 
+                            MAX(timestamp) AS last_ts,
+                            SUM(CASE WHEN action_type = 'keyword_added' THEN 1 ELSE 0 END) AS keywords_added,
+                            SUM(CASE WHEN action_type = 'negative_keyword_added' THEN 1 ELSE 0 END) AS negatives_added
+                        FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.optimization_actions\`
+                        WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+                    `;
+                    const actionsRes = await executeBigQueryQuery(actionsQuery);
+                    if (actionsRes.rows && actionsRes.rows[0] && actionsRes.rows[0].f) {
+                        const lastTs = actionsRes.rows[0].f[0].v;
+                        const added = Number(actionsRes.rows[0].f[1].v || 0);
+                        const negs = Number(actionsRes.rows[0].f[2].v || 0);
+                        document.getElementById('last-optimization').textContent = lastTs ? new Date(lastTs).toLocaleString() : '—';
+                        document.getElementById('weekly-actions').textContent = String(added + negs);
+                    }
+                } catch (e) {
+                    // Table may not exist yet; ignore silently
+                }
 
             } catch (error) {
                 console.error('Failed to load optimization insights:', error);
