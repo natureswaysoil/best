@@ -129,11 +129,20 @@ NEXT_PUBLIC_EMAIL="hello@naturesway.com"
 To complete the website, add:
 1. Your actual product images to `/public/images/`
 2. Your hero video file to `/public/videos/website-hero.mp4`
-3. Additional product videos to `/public/videos/`
+3. ✅ Product videos completed (all 12 products have 30-second videos)
 4. Team photos and farm images
 5. Connect to a real database for product data
 6. Set up email collection backend
 7. Integrate with your payment system
 
-The website is now ready to deploy and fully functional with all the issues from the previous build resolved!# Force rebuild Sat Oct 18 14:57:09 UTC 2025
-# Trigger deployment Sat Oct 18 15:37:39 UTC 2025
+## 📹 Product Videos
+
+All 12 products now have automated 30-second videos:
+- Video format: MP4 (H.264) + WebM for browser compatibility
+- Resolution: 1280x720 (720p)
+- Location: `/public/videos/{PRODUCT_ID}.mp4`
+- Poster images included for better UX
+- Regenerate videos: `npm run videos`
+- Check video status: `npm run check:videos`
+
+The website is now ready to deploy and fully functional with all the issues from the previous build resolved!

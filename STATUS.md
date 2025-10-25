@@ -53,8 +53,8 @@ Route (pages)                             Size     First Load JS
 
 ### Pages
 ✅ Homepage with hero video  
-✅ Shop page (29 products)  
-✅ Product detail pages  
+✅ Shop page (12 products)  
+✅ Product detail pages with videos  
 ✅ About page  
 ✅ Contact page  
 ✅ Privacy policy  
@@ -63,6 +63,8 @@ Route (pages)                             Size     First Load JS
 ### Components
 ✅ Hero video with controls  
 ✅ Product cards (no fake ratings)  
+✅ Product videos (12/12 products)  
+✅ Video player with play/pause and mute controls  
 ✅ Chat widget  
 ✅ Exit-intent popup  
 ✅ Header with email contact  
@@ -70,8 +72,9 @@ Route (pages)                             Size     First Load JS
 
 ### Functionality
 ✅ Stripe checkout integration  
-✅ NC sales tax calculation (7.75%)  
-✅ Product sizing: 5lb, 10lb, 15lb, 40lb  
+✅ Product videos (MP4 + WebM formats)  
+✅ Video poster images  
+✅ Product sizing with multiple options  
 ✅ Responsive design  
 ✅ Logo color integration  
 ✅ Accessibility features  
@@ -89,7 +92,7 @@ Route (pages)                             Size     First Load JS
 
 ### Optional Enhancements:
 - Add more product images (detail shots, lifestyle)
-- Create product videos for key items
+- ✅ Product videos completed (all 12 products have 30-second videos)
 - Add customer testimonial photos
 - Optimize images for faster loading
 
