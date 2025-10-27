@@ -146,3 +146,4 @@ All 12 products now have automated 30-second videos:
 - Check video status: `npm run check:videos`
 
 The website is now ready to deploy and fully functional with all the issues from the previous build resolved!
+# Trigger deployment to pick up Stripe env vars - Mon Oct 27 14:03:31 UTC 2025
