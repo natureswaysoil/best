@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "name": "natureswaysoil-best",
+  "buildCommand": null,
+  "outputDirectory": "./",
   "headers": [
     {
       "source": "/(.*)",
