@@ -73,7 +73,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     : (isLiquid
       ? [
           { name: '32 oz', price: +(product.price * 0.6).toFixed(2) },
-          { name: '32 oz', price: +product.price.toFixed(2) },
+          { name: '1 Gallon', price: +product.price.toFixed(2) },
           { name: '2.5 Gallon', price: +(product.price * 2.8).toFixed(2) }
         ]
       : isCompost
