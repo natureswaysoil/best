@@ -52,7 +52,7 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_001.jpg',
     inStock: true,
     sizes: [
-      { name: '1 Gallon', price: 20.99, sku: '3L-3MPJ-6BQM' }
+      { name: '32 oz', price: 20.99, sku: '3L-3MPJ-6BQM' }
     ],
     usage: [
       'Shake well before each use to activate the living microbes.',
@@ -124,7 +124,7 @@ export const allProducts: ProductData[] = [
   videoWebm: '/videos/NWS_003.webm',
   videoPoster: '/videos/NWS_003.jpg',
     sizes: [
-      { name: '1 Gallon', price: 29.99, sku: 'P5-NP0G-5SL7' }
+      { name: '32 oz', price: 29.99, sku: 'P5-NP0G-5SL7' }
     ],
     usage: [
       'Shake well before mixing to distribute nutrients evenly.',
@@ -197,7 +197,7 @@ export const allProducts: ProductData[] = [
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'XX-XBWB-DF03' },
-      { name: '1 Gallon', price: 34.99, sku: '8K-DBU9-JA4K' },
+      { name: '32 oz', price: 34.99, sku: '8K-DBU9-JA4K' },
       { name: '2.5 Gallon', price: 64.99, sku: '3L-41WW-8JVG' }
     ],
     usage: [
@@ -236,7 +236,7 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_011.jpg',
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'FP-AL1H-WYNQ' },
-      { name: '1 Gallon', price: 39.99, sku: 'IT-ADBS-CXUC' },
+      { name: '32 oz', price: 39.99, sku: 'IT-ADBS-CXUC' },
       { name: '2.5 Gallon', price: 69.99, sku: 'GA-TZ69-N9XK' }
     ],
     usage: [
@@ -275,7 +275,7 @@ export const allProducts: ProductData[] = [
     inStock: true,
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'B5-G9JD-1K10' },
-      { name: '1 Gallon', price: 39.99, sku: 'TY-Z0X8-ENHG' }
+      { name: '32 oz', price: 39.99, sku: 'TY-Z0X8-ENHG' }
     ],
     usage: [
       'Shake thoroughly to suspend the hydrolyzed bone meal particles.',
@@ -350,7 +350,7 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_014.jpg',
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'EG-PJ13-DA9T' },
-      { name: '1 Gallon', price: 59.99, sku: 'T0-MB9Q-JIKC' }
+      { name: '32 oz', price: 59.99, sku: 'T0-MB9Q-JIKC' }
     ],
     usage: [
       'Shake bottle vigorously before every use to activate neutralizing microbes.',
@@ -425,7 +425,7 @@ export const allProducts: ProductData[] = [
     inStock: true,
     sizes: [
       { name: '32 oz', price: 11.99, sku: 'BH-NBDZ-TCRT' },
-      { name: '1 Gallon', price: 19.99, sku: 'BH-NBDZ-1GAL' },
+      { name: '32 oz', price: 19.99, sku: 'BH-NBDZ-1GAL' },
       { name: '2.5 Gallon', price: 55.97, sku: 'BH-NBDZ-25GAL' }
     ],
     usage: [
@@ -466,7 +466,7 @@ export const allProducts: ProductData[] = [
   videoWebm: '/videos/NWS_021.webm',
   videoPoster: '/videos/NWS_021.jpg',
     sizes: [
-      { name: '1 Gallon', price: 39.99, sku: 'VY-T7ZM-760R' },
+      { name: '32 oz', price: 39.99, sku: 'VY-T7ZM-760R' },
       { name: '2.5 Gallon', price: 99.99, sku: 'N4-E00Z-BB9W' }
     ],
     usage: [

@@ -87,7 +87,7 @@ export const SocialProof = ({ className = '' }: { className?: string }) => {
 export const EnhancedPricing = ({ 
   price, 
   originalPrice, 
-  size = '1 Gallon',
+  size = '32 oz',
   freeShippingThreshold = 50 
 }: {
   price: number;
