@@ -26,7 +26,7 @@ export default function Header({ transparent = false }: HeaderProps) {
           <div className="flex items-center space-x-4">
             <div className={`flex items-center space-x-1 ${transparent ? 'text-white' : 'text-nature-green-700'}`}>
               <Mail className="w-4 h-4" />
-              <span>info@natureswaysoil.com</span>
+              <span>support@natureswaysoil.com</span>
             </div>
           </div>
           <div className={`text-xs ${transparent ? 'text-white/90' : 'text-nature-green-600'}`}>

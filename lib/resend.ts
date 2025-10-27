@@ -86,7 +86,7 @@ export async function sendOrderConfirmation(
   
   try {
     const { data, error } = await client.emails.send({
-      from: process.env.RESEND_FROM || 'Nature\'s Way Soil <orders@natureswaysoil.com>',
+      from: process.env.RESEND_FROM || 'Nature\'s Way Soil <no-reply@natureswaysoil.com>',
       to: email,
       subject: `Order Confirmation #${orderId}`,
       html: `
@@ -184,7 +184,7 @@ export async function sendWelcomeEmail(email: string, firstName?: string) {
   
   try {
     const { data, error } = await client.emails.send({
-      from: process.env.RESEND_FROM || 'Nature\'s Way Soil <hello@natureswaysoil.com>',
+      from: process.env.RESEND_FROM || 'Nature\'s Way Soil <support@natureswaysoil.com>',
       to: email,
       subject: 'Welcome to Nature\'s Way Soil - Your Journey to Healthier Soil Starts Here',
       html: `
@@ -249,7 +249,7 @@ export async function sendFollowUpEmail(email: string, name: string) {
   
   try {
     const { data, error } = await client.emails.send({
-      from: process.env.RESEND_FROM || 'Nature\'s Way Soil <hello@natureswaysoil.com>',
+      from: process.env.RESEND_FROM || 'Nature\'s Way Soil <support@natureswaysoil.com>',
       to: email,
       subject: 'How\'s Your Soil Health Journey Going?',
       html: `

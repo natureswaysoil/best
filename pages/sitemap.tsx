@@ -25,8 +25,8 @@ const sitemapSections = [
   {
     title: 'Customer Support',
     links: [
-      { label: 'Email Support', href: 'mailto:info@natureswaysoil.com' },
-      { label: 'Wholesale Inquiries', href: 'mailto:wholesale@natureswaysoil.com' },
+      { label: 'Email Support', href: 'mailto:support@natureswaysoil.com' },
+      { label: 'Wholesale Inquiries', href: 'mailto:sales@natureswaysoil.com' },
       { label: 'Call the Farm', href: 'tel:+15551234567' }
     ]
   }

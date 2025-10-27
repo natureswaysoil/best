@@ -307,11 +307,7 @@ export const HelpfulContact = ({ className = '' }: { className?: string }) => (
     <div className="space-y-2 text-sm">
       <div className="flex items-center gap-2">
         <span className="text-blue-600">📧</span>
-        <span className="text-blue-800">hello@natureswaysoil.com</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-blue-600">📱</span>
-        <span className="text-blue-800">Call during farm hours (8am-5pm)</span>
+        <span className="text-blue-800">support@natureswaysoil.com</span>
       </div>
     </div>
   </div>

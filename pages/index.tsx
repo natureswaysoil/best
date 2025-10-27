@@ -111,17 +111,13 @@ export default function Home({ featuredProducts }: HomeProps) {
                     Questions? Call Us During Farm Hours
                   </h4>
                   <p className="text-blue-700 mb-4 leading-relaxed">
-                    We're farmers first, not just retailers. Call during farm hours (8am-5pm) if you're not sure 
+                    We're farmers first, not just retailers. Email us if you're not sure 
                     what your plants need. We'd rather help you succeed than sell you the wrong product.
                   </p>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="text-blue-600">📧</span>
-                      <span className="text-blue-800 font-medium">hello@natureswaysoil.com</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-blue-600">📱</span>
-                      <span className="text-blue-800">Free growing advice included</span>
+                      <span className="text-blue-800 font-medium">support@natureswaysoil.com</span>
                     </div>
                   </div>
                 </div>
