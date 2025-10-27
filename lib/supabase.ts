@@ -64,3 +64,28 @@ export interface OrderItem {
   price: number; // Your table uses 'price' instead of 'unit_price'
   created_at?: string;
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  price: number;
+  image?: string;
+  tags?: string[];
+  features?: string[];
+  images?: string[];
+  in_stock?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProductSize {
+  id?: string;
+  product_id: string;
+  name: string;
+  price: number;
+  sku: string;
+  in_stock?: boolean;
+  created_at?: string;
+}
