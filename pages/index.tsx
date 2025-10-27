@@ -1,9 +1,9 @@
 import { GetStaticProps } from 'next';
-import Head from 'next/head';
 import Link from 'next/link';
 import { Leaf, Award, ArrowRight, Users, Shield, Truck } from 'lucide-react';
 import Layout from '../components/Layout';
 import HeroVideo from '../components/HeroVideo';
+import SEO from '../components/SEO';
 import { allProducts } from '../data/products';
 
 interface Product {
@@ -22,12 +22,12 @@ interface HomeProps {
 export default function Home({ featuredProducts }: HomeProps) {
   return (
     <>
-      <Head>
-        <title>Nature's Way Soil - Naturally Stronger Soil Starts Here</title>
-        <meta name="description" content="Microbe-rich fertilizers, biochar, and compost from our family farm — safe for kids, pets, and pollinators." />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+      <SEO 
+        title="Nature's Way Soil - Premium Organic Fertilizer & Soil Amendments | Pet & Kid Safe"
+        description="Premium organic liquid fertilizers, activated biochar, and living compost. Made fresh weekly on our family farm. Safe for kids, pets & pollinators. Free shipping on orders $50+."
+        url="https://natureswaysoil.com"
+        type="website"
+      />
 
       <Layout transparentHeader={true}>
         {/* Hero Section with Video */}
@@ -78,6 +78,85 @@ export default function Home({ featuredProducts }: HomeProps) {
                   Three generations of farming expertise from our family farm. Our liquid fertilizers 
                   are made fresh weekly for maximum potency and microbial activity.
                 </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Authentic Farm Story Section */}
+        <section className="section-padding bg-gradient-to-r from-green-50 to-blue-50">
+          <div className="max-w-7xl mx-auto container-padding">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <div className="bg-green-50 border-l-4 border-green-400 p-6 rounded-r-lg">
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl">🚜</span>
+                    <div>
+                      <h3 className="font-bold text-green-800 text-xl mb-2">From Our Farm This Week</h3>
+                      <p className="text-green-700 leading-relaxed mb-4">
+                        "Just finished brewing this week's batch of liquid fertilizer on Tuesday. You can see the 
+                        difference when the microbes are fresh - the soil literally comes alive. We'll ship yours 
+                        Thursday so you get that same active biology working in your garden."
+                      </p>
+                      <p className="text-sm text-green-600 italic">
+                        - Mike & Sarah, 3rd Generation Farmers
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <h4 className="font-bold text-blue-800 mb-3 flex items-center">
+                    <span className="mr-2">📞</span>
+                    Questions? Call Us During Farm Hours
+                  </h4>
+                  <p className="text-blue-700 mb-4 leading-relaxed">
+                    We're farmers first, not just retailers. Call during farm hours (8am-5pm) if you're not sure 
+                    what your plants need. We'd rather help you succeed than sell you the wrong product.
+                  </p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">📧</span>
+                      <span className="text-blue-800 font-medium">hello@natureswaysoil.com</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-600">📱</span>
+                      <span className="text-blue-800">Free growing advice included</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h4 className="font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="mr-2">🧪</span>
+                    Why We Make It Fresh Weekly
+                  </h4>
+                  <p className="text-gray-700 mb-4 leading-relaxed">
+                    Living microbes are most active when fresh. That's why we make our liquid fertilizers in 
+                    small batches every week instead of mass-producing and letting them sit in warehouses for months.
+                  </p>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 italic">
+                      "Each bottle contains billions of beneficial bacteria that form partnerships with your plant roots. 
+                      Fresh microbes colonize faster and work harder than dormant ones."
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <h5 className="font-bold text-gray-800 mb-3">Real Value Breakdown</h5>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Makes 64 gallons of fertilizer</span>
+                      <span className="font-medium">$0.33 per gallon</span>
+                    </div>
+                    <div className="text-xs text-gray-500 border-t pt-2 mt-3">
+                      Compare: Store liquid fertilizer costs $1.50/gallon with no living microbes
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

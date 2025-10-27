@@ -13,7 +13,7 @@ export default function ChatWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hi! I\'m here to help with any questions about our soil products. How can I assist you today?',
+      text: 'Hi! I\'m here to help with soil and plant health questions. What\'s happening in your garden? 🌱',
       sender: 'bot',
       timestamp: new Date()
     }
@@ -21,28 +21,124 @@ export default function ChatWidget() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const predefinedResponses: Record<string, string> = {
-    'shipping': 'We offer free shipping on orders over $50! Orders typically ship within 1-2 business days.',
-    'fertilizer': 'Our microbe-rich fertilizers are perfect for all plants and are completely safe for kids and pets. They help build stronger, healthier soil naturally.',
-    'biochar': 'Our premium biochar improves soil structure, water retention, and nutrient availability. It\'s made from sustainable sources right here on our farm.',
-    'compost': 'Our natural compost is rich in beneficial microorganisms and perfect for vegetable gardens, flower beds, and lawn care.',
-    'natural': 'All our products are 100% natural and safe for children, pets, and pollinators. We believe in naturally stronger soil.',
-    'price': 'Our products start at $25 for small bags, with bulk discounts available. Check out our bundles for the best value!',
-    'application': 'Application is easy! Simply spread evenly over your soil and water in. Detailed instructions come with each product.',
-    'hello': 'Hello! Welcome to Nature\'s Way Soil. What can I help you with today?',
-    'help': 'I can help you with product information, shipping details, application instructions, and more. What would you like to know?'
+  const educationalResponses: Record<string, { answer: string; productHelp?: string }> = {
+    'yellow leaves': {
+      answer: 'Yellow leaves usually indicate nitrogen deficiency, overwatering, or poor soil drainage. First, check if soil is soggy (overwatering) or compacted. For nutrient deficiency, soil needs living microbes to break down organic matter into plant-available nutrients.',
+      productHelp: 'If it\'s nutrient deficiency, our liquid fertilizer with living microbes can help restore the soil\'s natural nutrient cycling.'
+    },
+    'clay soil': {
+      answer: 'Clay soil is nutrient-rich but has poor drainage and aeration. The key is improving soil structure without disrupting the beneficial aspects. Add organic matter and biochar to create pore spaces while maintaining fertility.',
+      productHelp: 'Our biochar works especially well for clay - it creates permanent structure improvements and habitat for beneficial microbes.'
+    },
+    'sandy soil': {
+      answer: 'Sandy soil drains well but doesn\'t hold nutrients or water. You need to increase organic matter and create microbial networks to help retain both. Compost and biochar are the long-term solution.',
+      productHelp: 'Our enhanced compost blend with biochar will help sandy soil hold water and nutrients much better.'
+    },
+    'fertilizer': {
+      answer: 'Plants need 16 essential nutrients. Synthetic fertilizers provide NPK but often kill soil microbes. Living soil with beneficial bacteria and fungi can provide all nutrients naturally by breaking down organic matter.',
+      productHelp: 'If you want to transition to natural fertility, our microbe-rich liquid fertilizer helps rebuild that soil biology.'
+    },
+    'organic': {
+      answer: 'Organic gardening works by feeding the soil ecosystem instead of just the plant. Healthy soil biology creates disease resistance, better nutrient uptake, and improved water retention naturally.',
+      productHelp: 'All our products support organic growing by building soil biology rather than depleting it.'
+    },
+    'compost': {
+      answer: 'Good compost contains billions of beneficial microbes, improves soil structure, and provides slow-release nutrients. The key is making sure it\'s fully decomposed and biologically active.',
+      productHelp: 'Our enhanced living compost includes 20% worm castings and 20% biochar for maximum biological activity and soil improvement.'
+    },
+    'biochar': {
+      answer: 'Biochar is charcoal that creates permanent habitat for soil microbes and improves water retention by up to 40%. It works by providing surface area - 300+ square meters per gram - for beneficial bacteria to live.',
+      productHelp: 'Our activated biochar is sized specifically for garden use and helps create lasting soil improvements.'
+    },
+    'microbes': {
+      answer: 'Soil microbes are the foundation of plant health. They break down organic matter, protect roots from disease, improve nutrient uptake, and help plants communicate. Healthy soil contains billions per gram.',
+      productHelp: 'Our liquid fertilizers contain billions of these beneficial microbes and are made fresh weekly for maximum activity.'
+    },
+    'tomatoes': {
+      answer: 'Tomatoes need consistent moisture, good drainage, and steady nutrition. Common problems: blossom end rot (calcium/watering issue), yellowing (nitrogen), or wilting (root problems or disease).',
+      productHelp: 'Our tomato-specific liquid fertilizer includes calcium and helps prevent blossom end rot while building soil biology.'
+    },
+    'lawn': {
+      answer: 'Healthy lawns need good soil biology, proper pH (6.0-7.0), and adequate organic matter. Most lawn problems come from compacted soil, thatch buildup, or poor microbial activity.',
+      productHelp: 'Our lawn treatment with seaweed and humic acid helps build the soil biology that creates naturally green, healthy grass.'
+    },
+    'pet safe': {
+      answer: 'Pet-safe gardening means avoiding synthetic chemicals that can harm animals. Focus on building healthy soil naturally - it\'s safer and more effective long-term.',
+      productHelp: 'All our products are 100% natural and safe for pets, kids, and beneficial insects like bees and butterflies.'
+    },
+    'shipping': {
+      answer: 'Free shipping on orders over $50. We ship liquid fertilizers the same week they\'re made to ensure you get maximum microbial activity.',
+      productHelp: ''
+    },
+    'application': {
+      answer: 'Application depends on the product and your soil needs. Generally: liquid fertilizers are diluted and watered in, biochar is mixed into soil, and compost is spread as a top layer.',
+      productHelp: 'Each product comes with detailed instructions, and we\'re happy to help you create a custom soil improvement plan.'
+    },
+    'hello': {
+      answer: 'Hi! I\'m here to help with soil and plant questions. What\'s happening in your garden?',
+      productHelp: ''
+    },
+    'help': {
+      answer: 'I can help with soil problems, plant nutrition, organic growing methods, and general gardening questions. What specific challenge are you facing?',
+      productHelp: ''
+    },
+    'nutrients': {
+      answer: 'Plants need 16 essential nutrients. The "big 3" (NPK) get attention, but micronutrients like calcium, magnesium, and iron are equally important. Healthy soil biology makes all nutrients available naturally.',
+      productHelp: 'Our liquid fertilizers provide balanced nutrition plus the microbes that make nutrients available to plants long-term.'
+    },
+    'watering': {
+      answer: 'Most plant problems come from watering issues - either too much or too little. Soil should be moist but not soggy. Good soil structure (from compost/biochar) helps maintain proper moisture levels.',
+      productHelp: 'Biochar can improve water retention by 40%, reducing watering needs and preventing both drought stress and waterlogging.'
+    },
+    'pests': {
+      answer: 'Healthy plants resist pests naturally. Focus on soil health first - strong plants with good nutrition and beneficial microbial partners are less attractive to harmful insects.',
+      productHelp: 'Building soil biology with our products creates the foundation for natural pest resistance.'
+    },
+    'disease': {
+      answer: 'Plant diseases often start with stressed plants in poor soil. Beneficial soil microbes create a protective barrier around roots and help plants defend themselves naturally.',
+      productHelp: 'Our living compost and liquid fertilizers introduce beneficial microbes that help prevent root diseases and build plant immunity.'
+    },
+    'when to fertilize': {
+      answer: 'Feed soil biology year-round, but plants need most nutrition during active growth (spring/summer). Fall is great for building soil with compost. Avoid fertilizing dormant plants in winter.',
+      productHelp: 'Our seasonal application guide can help you time applications for maximum plant benefit and soil health.'
+    }
   };
 
   const getBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
     
-    for (const [key, response] of Object.entries(predefinedResponses)) {
-      if (lowerMessage.includes(key)) {
+    // Look for educational matches first
+    for (const [key, content] of Object.entries(educationalResponses)) {
+      if (lowerMessage.includes(key) || 
+          (key === 'hello' && (lowerMessage.includes('hi') || lowerMessage.includes('hey'))) ||
+          (key === 'yellow leaves' && (lowerMessage.includes('yellow') || lowerMessage.includes('chlorosis'))) ||
+          (key === 'clay soil' && lowerMessage.includes('clay')) ||
+          (key === 'sandy soil' && lowerMessage.includes('sandy')) ||
+          (key === 'pet safe' && (lowerMessage.includes('pet') || lowerMessage.includes('dog') || lowerMessage.includes('cat'))) ||
+          (key === 'tomatoes' && (lowerMessage.includes('tomato') || lowerMessage.includes('blossom end rot'))) ||
+          (key === 'lawn' && (lowerMessage.includes('grass') || lowerMessage.includes('turf')))) {
+        
+        // Combine educational answer with optional product recommendation
+        let response = content.answer;
+        if (content.productHelp && content.productHelp.trim()) {
+          response += '\n\n💡 ' + content.productHelp;
+        }
         return response;
       }
     }
     
-    return 'Thank you for your question! For specific inquiries, please call us at (555) 123-4567 or email hello@naturesway.com. Our team is happy to help!';
+    // Handle plant problems generically
+    if (lowerMessage.includes('wilting') || lowerMessage.includes('dying') || lowerMessage.includes('brown') || lowerMessage.includes('spots')) {
+      return 'Plant problems usually stem from watering issues, soil health, or disease. Can you describe what you\'re seeing? Are leaves yellow, brown, spotted, or wilting? And what type of plant?\n\n💡 Many plant health issues can be prevented with healthy soil biology that creates natural disease resistance.';
+    }
+    
+    // Handle soil testing questions
+    if (lowerMessage.includes('ph') || lowerMessage.includes('test') || lowerMessage.includes('soil test')) {
+      return 'Soil pH affects nutrient availability. Most plants prefer 6.0-7.0 pH. You can test with a simple soil meter or pH strips. But remember - healthy soil biology can help plants access nutrients even in less-than-ideal pH.\n\n💡 Building soil biology with compost and beneficial microbes often solves pH-related nutrient problems naturally.';
+    }
+    
+    // Default response focuses on helpfulness, not sales
+    return 'Great question! I\'d love to help you solve that specific soil or plant issue. Can you tell me more details about what you\'re seeing in your garden? Or feel free to call us during farm hours (8am-5pm) - we love talking soil science!';
   };
 
   const handleSendMessage = async () => {
@@ -91,8 +187,8 @@ export default function ChatWidget() {
             <div className="flex items-center space-x-3">
               <MessageCircle className="w-6 h-6" />
               <div>
-                <h3 className="font-bold text-lg">Need Help With Your Garden?</h3>
-                <p className="text-sm text-green-100">Ask Us</p>
+                <h3 className="font-bold text-lg">Soil & Plant Questions?</h3>
+                <p className="text-sm text-green-100">Ask Our Farm Experts</p>
               </div>
             </div>
             {isOpen ? (

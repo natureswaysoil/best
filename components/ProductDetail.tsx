@@ -3,6 +3,14 @@ import Image from 'next/image';
 import { Play, Pause, Volume2, VolumeX, Truck, Shield, Leaf } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useRouter } from 'next/router';
+import { 
+  FarmTransparency, 
+  WhyItWorks, 
+  HonestValue, 
+  PracticalGuidance, 
+  HelpfulContact, 
+  GentleGuarantee 
+} from './AuthenticConversion';
 
 
 type SizeOption = { name: string; price: number; sku?: string };
@@ -351,6 +359,25 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                   </ul>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Authentic Trust-Building Section */}
+        <div className="max-w-4xl mx-auto mt-16 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <FarmTransparency />
+              <WhyItWorks product={product} />
+              <PracticalGuidance product={product} />
+            </div>
+            
+            {/* Right Column */}
+            <div className="space-y-6">
+              <HonestValue product={product} />
+              <HelpfulContact />
+              <GentleGuarantee />
             </div>
           </div>
         </div>
