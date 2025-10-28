@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import CheckoutForm from '../components/CheckoutForm';
+import FreeShippingProgress from '../components/FreeShippingProgress';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 
@@ -51,6 +52,11 @@ export default function CheckoutPage() {
   const [breakdown, setBreakdown] = useState<PaymentBreakdown | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentId, setIntentId] = useState<string | null>(null);
+
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponApplied, setCouponApplied] = useState(false);
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
@@ -114,6 +120,51 @@ export default function CheckoutPage() {
     return `$${(value / 100).toFixed(2)}`;
   };
 
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    setCouponError(null);
+    
+    try {
+      const response = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim().toUpperCase(),
+          subtotal: computedSubtotal * 100, // Convert to cents
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.valid) {
+        setCouponError(data.error || 'Invalid coupon code');
+        setCouponDiscount(0);
+        setCouponApplied(false);
+        return;
+      }
+
+      setCouponDiscount(data.discount || 0);
+      setCouponApplied(true);
+      setCouponError(null);
+    } catch (error) {
+      console.error('Failed to validate coupon', error);
+      setCouponError('Unable to validate coupon. Please try again.');
+      setCouponDiscount(0);
+      setCouponApplied(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    setCouponError(null);
+  };
+
   const handlePreparePayment = async () => {
     if (!selection) {
       setServerError('Please select a product before checking out.');
@@ -140,6 +191,8 @@ export default function CheckoutPage() {
           sku: selection.sku,
           price: selection.price,
           quantity,
+          couponCode: couponApplied ? couponCode : undefined,
+          couponDiscount: couponApplied ? couponDiscount : undefined,
           customer: {
             name: name.trim(),
             email: email.trim(),
@@ -194,11 +247,14 @@ export default function CheckoutPage() {
     }
 
     const subtotalCents = Math.round(computedSubtotal * 100);
+    const discountCents = Math.round(couponDiscount);
+    const subtotalAfterDiscountCents = subtotalCents - discountCents;
     const shippingCentsValue = breakdown ? breakdown.shipping : null;
     const taxCentsValue = breakdown ? breakdown.tax : null;
-    const totalCentsValue = breakdown ? breakdown.total : null;
+    const totalCentsValue = breakdown ? breakdown.total - discountCents : null;
 
     const subtotalDisplay = formatCurrency(subtotalCents);
+    const subtotalAfterDiscountDisplay = formatCurrency(subtotalAfterDiscountCents);
     const shippingDisplay = shippingCentsValue !== null
       ? formatCurrency(shippingCentsValue)
       : 'Calculated at payment step';
@@ -207,13 +263,7 @@ export default function CheckoutPage() {
       : 'Calculated at payment step';
     const totalDisplay = totalCentsValue !== null
       ? formatCurrency(totalCentsValue)
-      : `${subtotalDisplay} + shipping & tax`;
-
-    const qualifiesForFreeShipping =
-      FREE_SHIPPING_THRESHOLD_CENTS > 0 && subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS;
-    const amountToFreeShipping = FREE_SHIPPING_THRESHOLD_CENTS > 0
-      ? Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - subtotalCents)
-      : 0;
+      : `${subtotalAfterDiscountDisplay} + shipping & tax`;
 
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
@@ -258,6 +308,12 @@ export default function CheckoutPage() {
             <span>Subtotal</span>
             <span>{subtotalDisplay}</span>
           </div>
+          {discountCents > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Discount ({couponCode})</span>
+              <span>-{formatCurrency(discountCents)}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>Shipping</span>
             <span>{shippingDisplay}</span>
@@ -273,14 +329,11 @@ export default function CheckoutPage() {
         </div>
 
         {FREE_SHIPPING_THRESHOLD_CENTS > 0 && (
-          <div className="text-sm">
-            {qualifiesForFreeShipping ? (
-              <p className="text-nature-green-700 font-medium">You unlocked free shipping on this order.</p>
-            ) : (
-              <p className="text-gray-500">
-                Spend {formatCurrency(amountToFreeShipping)} more to unlock free shipping.
-              </p>
-            )}
+          <div className="border-t border-gray-200 pt-4">
+            <FreeShippingProgress 
+              currentTotal={subtotalCents / 100} 
+              threshold={FREE_SHIPPING_THRESHOLD_CENTS / 100}
+            />
           </div>
         )}
 
@@ -419,10 +472,50 @@ export default function CheckoutPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
                 <h3 className="font-medium text-blue-800 mb-2">🚚 Shipping Information</h3>
                 <div className="text-blue-700 space-y-1">
-                  <p><strong>FREE Shipping</strong> on orders over $50!</p>
-                  <p>Orders under $50: Shipping calculated based on weight and delivery location</p>
-                  <p>Typical shipping costs: $4.99 - $19.99 depending on speed and distance</p>
+                  <p><strong>FREE Standard Shipping</strong> on orders over $50!</p>
+                  <p>Orders under $50: Standard shipping starts at $4.99</p>
+                  <p>Expedited ($8.99) and overnight ($19.99) are premium paid services</p>
                 </div>
+              </div>
+
+              {/* Coupon Code Section */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-medium text-gray-800 mb-3">💰 Have a coupon code?</h3>
+                {!couponApplied ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="Enter coupon code (e.g., SAVE15ABC)"
+                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-nature-green-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      className="px-4 py-2 bg-nature-green-600 text-white text-sm font-medium rounded-lg hover:bg-nature-green-700 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center text-green-700">
+                      <span className="text-sm font-medium">✅ Coupon "{couponCode}" applied!</span>
+                      <span className="ml-2 text-sm">Save {formatCurrency(couponDiscount)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-red-600 hover:text-red-700 text-sm underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="text-red-600 text-sm mt-2">{couponError}</p>
+                )}
               </div>
 
               <button

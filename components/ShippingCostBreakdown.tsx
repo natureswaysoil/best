@@ -75,25 +75,17 @@ const ShippingCostBreakdown: React.FC<ShippingCostBreakdownProps> = ({
 
         {/* Shipping Threshold Information */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <h4 className="font-medium text-blue-800 mb-2">Free Shipping Thresholds</h4>
+          <h4 className="font-medium text-blue-800 mb-2">Free Shipping Policy</h4>
           <div className="text-sm text-blue-700 space-y-1">
             <div className="flex items-center gap-2">
               <span className={subtotal >= 50 ? 'text-green-500' : 'text-gray-400'}>
                 {subtotal >= 50 ? '✅' : '○'}
               </span>
-              <span>Standard Shipping FREE over $50</span>
+              <span><strong>Standard Shipping FREE over $50</strong></span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className={subtotal >= 75 ? 'text-green-500' : 'text-gray-400'}>
-                {subtotal >= 75 ? '✅' : '○'}
-              </span>
-              <span>Economy Shipping FREE over $75</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={subtotal >= 100 ? 'text-green-500' : 'text-gray-400'}>
-                {subtotal >= 100 ? '✅' : '○'}
-              </span>
-              <span>Expedited Shipping FREE over $100</span>
+            <div className="flex items-center gap-2 text-gray-600">
+              <span>💰</span>
+              <span>Expedited & overnight shipping are premium paid services</span>
             </div>
           </div>
         </div>

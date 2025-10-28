@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Layout from '../components/Layout';
 import ShippingCalculator from '../components/ShippingCalculator';
 import ShippingCostBreakdown from '../components/ShippingCostBreakdown';
+import FreeShippingProgress from '../components/FreeShippingProgress';
 import { ShippingCalculation } from '../lib/shipping';
 
 interface CheckoutItem {
@@ -43,6 +44,12 @@ const EnhancedCheckout: React.FC = () => {
     state: '',
     zipCode: '',
   });
+
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponApplied, setCouponApplied] = useState(false);
 
   // Load checkout items from localStorage or URL params
   useEffect(() => {
@@ -116,6 +123,51 @@ const EnhancedCheckout: React.FC = () => {
     setSelectedShipping(shipping);
   };
 
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    setCouponError(null);
+    
+    try {
+      const response = await fetch('/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim().toUpperCase(),
+          subtotal: orderSummary.subtotal * 100, // Convert to cents
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.valid) {
+        setCouponError(data.error || 'Invalid coupon code');
+        setCouponDiscount(0);
+        setCouponApplied(false);
+        return;
+      }
+
+      setCouponDiscount(data.discount || 0);
+      setCouponApplied(true);
+      setCouponError(null);
+    } catch (error) {
+      console.error('Failed to validate coupon', error);
+      setCouponError('Unable to validate coupon. Please try again.');
+      setCouponDiscount(0);
+      setCouponApplied(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCouponCode('');
+    setCouponDiscount(0);
+    setCouponApplied(false);
+    setCouponError(null);
+  };
+
   const handleCustomerInfoChange = (field: string, value: string) => {
     setCustomerInfo(prev => ({
       ...prev,
@@ -147,6 +199,8 @@ const EnhancedCheckout: React.FC = () => {
           sizeName: items[0]?.sku,
           price: items[0]?.price,
           quantity: items[0]?.quantity,
+          couponCode: couponApplied ? couponCode : undefined,
+          couponDiscount: couponApplied ? couponDiscount : undefined,
           customer: {
             name: customerInfo.name,
             email: customerInfo.email,
@@ -216,6 +270,11 @@ const EnhancedCheckout: React.FC = () => {
             
             {/* Main Checkout Form */}
             <div className="lg:col-span-2 space-y-6">
+              
+              {/* Free Shipping Progress */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <FreeShippingProgress currentTotal={orderSummary.subtotal} />
+              </div>
               
               {/* Customer Information */}
               <div className="bg-white rounded-lg shadow p-6">
@@ -352,6 +411,46 @@ const EnhancedCheckout: React.FC = () => {
                 />
               </div>
 
+              {/* Coupon Code Section */}
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4">💰 Have a coupon code?</h3>
+                {!couponApplied ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="Enter coupon code (e.g., SAVE15ABC)"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-3">
+                    <div className="flex items-center text-green-700">
+                      <span className="font-medium">✅ Coupon "{couponCode}" applied!</span>
+                      <span className="ml-2">Save ${(couponDiscount / 100).toFixed(2)}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-red-600 hover:text-red-700 underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="text-red-600 text-sm mt-2">{couponError}</p>
+                )}
+              </div>
+
               {/* Shipping Cost Breakdown */}
               {selectedShipping && (
                 <div className="bg-white rounded-lg shadow p-6">
@@ -399,6 +498,13 @@ const EnhancedCheckout: React.FC = () => {
                     <span>${orderSummary.subtotal.toFixed(2)}</span>
                   </div>
                   
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount ({couponCode}):</span>
+                      <span>-${(couponDiscount / 100).toFixed(2)}</span>
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between">
                     <span>Shipping:</span>
                     <span>
@@ -413,7 +519,7 @@ const EnhancedCheckout: React.FC = () => {
                   
                   <div className="border-t pt-2 flex justify-between font-bold text-lg">
                     <span>Total:</span>
-                    <span>${orderSummary.total.toFixed(2)}</span>
+                    <span>${(orderSummary.total - (couponDiscount / 100)).toFixed(2)}</span>
                   </div>
                 </div>
 

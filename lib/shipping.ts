@@ -104,7 +104,7 @@ export const SHIPPING_METHODS: ShippingMethod[] = [
   {
     id: 'standard',
     name: 'Standard Shipping',
-    description: 'Reliable delivery with tracking',
+    description: 'Reliable delivery with tracking (FREE over $50)',
     deliveryDays: { min: 5, max: 8 },
     baseCost: 4.99,
     weightMultiplier: 1.50,
@@ -120,7 +120,7 @@ export const SHIPPING_METHODS: ShippingMethod[] = [
     deliveryDays: { min: 2, max: 4 },
     baseCost: 8.99,
     weightMultiplier: 2.25,
-    freeThreshold: 100.00,
+    // No free threshold - customer always pays for expedited
     tracking: true,
     insurance: true,
     businessDaysOnly: true,
@@ -133,6 +133,7 @@ export const SHIPPING_METHODS: ShippingMethod[] = [
     baseCost: 19.99,
     weightMultiplier: 4.50,
     maxWeight: 10, // No overnight for heavy items
+    // No free threshold - customer always pays for overnight
     tracking: true,
     insurance: true,
     businessDaysOnly: true,
@@ -144,7 +145,7 @@ export const SHIPPING_METHODS: ShippingMethod[] = [
     deliveryDays: { min: 7, max: 12 },
     baseCost: 3.49,
     weightMultiplier: 1.25,
-    freeThreshold: 75.00,
+    // No free threshold - customer pays for economy too
     tracking: true,
     insurance: false,
     businessDaysOnly: false,

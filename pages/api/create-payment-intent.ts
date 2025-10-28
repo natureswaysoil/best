@@ -175,6 +175,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sku,
       price,
       quantity = 1,
+      couponCode,
+      couponDiscount = 0,
       customer,
       address,
     } = req.body as {
@@ -184,6 +186,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sku?: string;
       price?: number;
       quantity?: number;
+      couponCode?: string;
+      couponDiscount?: number;
       customer?: CustomerDetails;
       address?: AddressDetails;
     };
@@ -209,9 +213,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const stateCode = (address.state || '').trim().toUpperCase();
     const subtotalCents = unitAmount * sanitizedQuantity;
-    const shippingCents = calculateShipping(subtotalCents, stateCode);
-    const { taxCents, taxRate } = calculateTax(subtotalCents, shippingCents, stateCode);
-    const totalCents = subtotalCents + shippingCents + taxCents;
+    const discountCents = Math.max(0, Math.round(couponDiscount || 0));
+    const subtotalAfterDiscountCents = Math.max(0, subtotalCents - discountCents);
+    const shippingCents = calculateShipping(subtotalAfterDiscountCents, stateCode);
+    const { taxCents, taxRate } = calculateTax(subtotalAfterDiscountCents, shippingCents, stateCode);
+    const totalCents = subtotalAfterDiscountCents + shippingCents + taxCents;
     const taxRatePercent = Number.isFinite(taxRate)
       ? Number((taxRate * 100).toFixed(4))
       : 0;
@@ -228,6 +234,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sku: sku || '',
         quantity: String(sanitizedQuantity),
         subtotal_cents: String(subtotalCents),
+        discount_cents: discountCents > 0 ? String(discountCents) : '0',
+        coupon_code: couponCode || '',
         shipping_cents: String(shippingCents),
         tax_cents: String(taxCents),
         tax_rate_percent: taxRatePercent.toFixed(4),
@@ -289,10 +297,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       intentId: paymentIntent.id,
       breakdown: {
         subtotal: subtotalCents,
+        discount: discountCents,
+        subtotalAfterDiscount: subtotalAfterDiscountCents,
         shipping: shippingCents,
         tax: taxCents,
         total: totalCents,
         taxRatePercent,
+        couponCode: couponCode || null,
       },
     });
   } catch (error) {
