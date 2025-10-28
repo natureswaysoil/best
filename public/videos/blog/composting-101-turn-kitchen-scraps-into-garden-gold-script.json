@@ -1,0 +1,36 @@
+{
+  "id": "composting-101-turn-kitchen-scraps-into-garden-gold",
+  "title": "Composting 101: Turn Kitchen Scraps into Garden Gold",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Composting 101: Turn Kitchen Scraps into Garden Gold",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Composting 101: Turn Kitchen Scraps into Garden Gold"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Master the art of composting with our complete beginner's guide. Learn what to compost, common mistakes to avoid, and how to create nutrient-rich \"black gold\" for your garden.",
+      "background": "gardening-techniques",
+      "voiceover": "Master the art of composting with our complete beginner's guide. Learn what to compost, common mistakes to avoid, and how to create nutrient-rich \"black gold\" for your garden...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "composting",
+    "organic gardening",
+    "waste reduction",
+    "soil health",
+    "sustainability"
+  ],
+  "category": "Gardening Tips"
+}

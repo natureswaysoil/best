@@ -1,0 +1,91 @@
+name: Auto-Generate Blog Content
+
+on:
+  schedule:
+    # Run every 2 days at 9 AM UTC
+    - cron: '0 9 */2 * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      force_generate:
+        description: 'Force content generation regardless of schedule'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  generate-content:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action - Blog Generator"
+          
+      - name: Generate blog content
+        run: |
+          if [ "${{ github.event.inputs.force_generate }}" = "true" ]; then
+            echo "🚀 Force generating content..."
+            node scripts/auto-generate-blog-content.mjs
+          else
+            echo "📅 Running scheduled content generation..."
+            node scripts/auto-generate-blog-content.mjs
+          fi
+        env:
+          FORCE_GENERATE: ${{ github.event.inputs.force_generate }}
+          
+      - name: Check for changes
+        id: verify-changed-files
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            git status --short
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          fi
+          
+      - name: Commit and push changes
+        if: steps.verify-changed-files.outputs.changes == 'true'
+        run: |
+          git add .
+          git commit -m "auto: generate blog content - $(date '+%Y-%m-%d')"
+          git push
+          
+      - name: Build and verify
+        if: steps.verify-changed-files.outputs.changes == 'true'
+        run: |
+          npm run build
+          echo "✅ Site built successfully with new content"
+          
+      - name: Post-generation summary
+        if: steps.verify-changed-files.outputs.changes == 'true'
+        run: |
+          echo "📝 Blog Content Generation Complete!"
+          echo "New articles and videos have been generated and committed."
+          echo "The site will automatically deploy with the new content."
+          
+          # Show latest log entries
+          if [ -f "auto-blog-generation.log" ]; then
+            echo "📋 Latest generation log:"
+            tail -10 auto-blog-generation.log
+          fi

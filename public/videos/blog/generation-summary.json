@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-10-28T13:46:59.222Z",
+  "articlesProcessed": 2,
+  "videosGenerated": 2,
+  "videosSkipped": 0,
+  "outputDirectory": "/workspaces/best/public/videos/blog",
+  "articles": [
+    {
+      "title": "Water-Wise Gardening: Conserving Water While Growing Abundantly",
+      "slug": "water-wise-gardening-conserving-water-while-growing-abundantly",
+      "category": "Gardening Tips",
+      "videoFiles": [
+        "water-wise-gardening-conserving-water-while-growing-abundantly.mp4",
+        "water-wise-gardening-conserving-water-while-growing-abundantly.webm",
+        "water-wise-gardening-conserving-water-while-growing-abundantly-poster.jpg",
+        "water-wise-gardening-conserving-water-while-growing-abundantly-script.json"
+      ]
+    },
+    {
+      "title": "Composting 101: Turn Kitchen Scraps into Garden Gold",
+      "slug": "composting-101-turn-kitchen-scraps-into-garden-gold",
+      "category": "Gardening Tips",
+      "videoFiles": [
+        "composting-101-turn-kitchen-scraps-into-garden-gold.mp4",
+        "composting-101-turn-kitchen-scraps-into-garden-gold.webm",
+        "composting-101-turn-kitchen-scraps-into-garden-gold-poster.jpg",
+        "composting-101-turn-kitchen-scraps-into-garden-gold-script.json"
+      ]
+    }
+  ]
+}

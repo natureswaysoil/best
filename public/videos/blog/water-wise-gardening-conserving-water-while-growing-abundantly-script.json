@@ -1,0 +1,36 @@
+{
+  "id": "water-wise-gardening-conserving-water-while-growing-abundantly",
+  "title": "Water-Wise Gardening: Conserving Water While Growing Abundantly",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Water-Wise Gardening: Conserving Water While Growing Abundantly",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Water-Wise Gardening: Conserving Water While Growing Abundantly"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Discover expert techniques for creating a thriving garden while conserving precious water resources. Learn about drought-resistant plants, efficient irrigation, and soil amendments that retain moisture.",
+      "background": "gardening-techniques",
+      "voiceover": "Discover expert techniques for creating a thriving garden while conserving precious water resources. Learn about drought-resistant plants, efficient irrigation, and soil amendments that retain moistur..."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "water conservation",
+    "drought gardening",
+    "sustainable gardening",
+    "xeriscaping",
+    "soil health"
+  ],
+  "category": "Gardening Tips"
+}
