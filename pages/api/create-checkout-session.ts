@@ -26,6 +26,8 @@ interface CheckoutRequestBody {
   quantity?: number;
   price?: number;
   sku?: string;
+  shippingMethodId?: string;
+  shippingCost?: number;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -44,6 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       quantity = 1,
       price,
       sku,
+      shippingMethodId,
+      shippingCost = 0,
     } = req.body as CheckoutRequestBody;
 
     if (!productId || !productName || !price) {
@@ -59,33 +63,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
+    const lineItems = [
+      {
+        price_data: {
+          currency: 'usd',
+          unit_amount: unitAmount,
+          product_data: {
+            name: sizeName ? `${productName} – ${sizeName}` : productName,
+            metadata: {
+              productId,
+              sizeName: sizeName || '',
+              sku: sku || '',
+            },
+          },
+        },
+        quantity: sanitizedQuantity,
+      },
+    ];
+
+    // Add shipping as a separate line item if there's a cost
+    if (shippingCost > 0 && shippingMethodId) {
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          unit_amount: Math.round(shippingCost * 100),
+          product_data: {
+            name: `Shipping (${shippingMethodId})`,
+            metadata: {
+              productId: 'shipping',
+              sizeName: shippingMethodId,
+              sku: 'shipping',
+            },
+          },
+        },
+        quantity: 1,
+      });
+    }
+
     const session = await stripeClient.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card', 'link'],
       billing_address_collection: 'auto',
       customer_creation: 'if_required',
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            unit_amount: unitAmount,
-            product_data: {
-              name: sizeName ? `${productName} – ${sizeName}` : productName,
-              metadata: {
-                productId,
-                sizeName: sizeName || '',
-                sku: sku || '',
-              },
-            },
-          },
-          quantity: sanitizedQuantity,
-        },
-      ],
+      line_items: lineItems,
       allow_promotion_codes: true,
       metadata: {
         productId,
         sizeName: sizeName || '',
         sku: sku || '',
+        shippingMethod: shippingMethodId || '',
       },
       success_url: `${origin}/shop?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/product/${productId}`,
