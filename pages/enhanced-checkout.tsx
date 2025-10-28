@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Layout from '../components/Layout';
 import ShippingCalculator from '../components/ShippingCalculator';
+import ShippingCostBreakdown from '../components/ShippingCostBreakdown';
 import { ShippingCalculation } from '../lib/shipping';
 
 interface CheckoutItem {
@@ -350,6 +351,18 @@ const EnhancedCheckout: React.FC = () => {
                   className="border-0 bg-transparent"
                 />
               </div>
+
+              {/* Shipping Cost Breakdown */}
+              {selectedShipping && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <ShippingCostBreakdown
+                    subtotal={orderSummary.subtotal}
+                    shippingCost={selectedShipping.total}
+                    shippingMethod={selectedShipping.method.name}
+                    isFreeShipping={selectedShipping.isFree}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Order Summary Sidebar */}

@@ -241,10 +241,45 @@ const ShippingCalculator: React.FC<ShippingCalculatorProps> = ({
 
       {/* Free shipping promotion */}
       {!isCalculating && state && items.length > 0 && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm text-blue-800">
-            💡 <strong>Tip:</strong> Orders over $50 qualify for free standard shipping!
-          </p>
+        <div className="mt-4">
+          {(() => {
+            const subtotal = items.reduce((total, item) => total + (item.price * item.quantity), 0);
+            const standardFreeThreshold = 50.00;
+            const economyFreeThreshold = 75.00;
+            const expeditedFreeThreshold = 100.00;
+            
+            if (subtotal >= standardFreeThreshold) {
+              return (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-sm text-green-800 font-medium">
+                    🎉 <strong>Congratulations!</strong> Your order qualifies for FREE shipping!
+                  </p>
+                  <p className="text-xs text-green-700 mt-1">
+                    {subtotal >= expeditedFreeThreshold ? 
+                      'FREE expedited, standard, and economy shipping available!' :
+                      subtotal >= economyFreeThreshold ?
+                      'FREE economy and standard shipping available!' :
+                      'FREE standard shipping available!'
+                    }
+                  </p>
+                </div>
+              );
+            } else {
+              const needed = standardFreeThreshold - subtotal;
+              return (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    💡 <strong>Add ${needed.toFixed(2)} more</strong> to your order to qualify for FREE standard shipping!
+                  </p>
+                  <div className="mt-2 text-xs text-blue-700 space-y-1">
+                    <div>• Standard shipping FREE over $50.00</div>
+                    <div>• Economy shipping FREE over $75.00</div>
+                    <div>• Expedited shipping FREE over $100.00</div>
+                  </div>
+                </div>
+              );
+            }
+          })()}
         </div>
       )}
     </div>

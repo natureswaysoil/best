@@ -415,6 +415,16 @@ export default function CheckoutPage() {
                 </div>
               )}
 
+              {/* Shipping Information */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+                <h3 className="font-medium text-blue-800 mb-2">🚚 Shipping Information</h3>
+                <div className="text-blue-700 space-y-1">
+                  <p><strong>FREE Shipping</strong> on orders over $50!</p>
+                  <p>Orders under $50: Shipping calculated based on weight and delivery location</p>
+                  <p>Typical shipping costs: $4.99 - $19.99 depending on speed and distance</p>
+                </div>
+              </div>
+
               <button
                 type="button"
                 onClick={handlePreparePayment}
