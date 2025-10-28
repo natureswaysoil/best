@@ -28,6 +28,19 @@ npm install
 
 ### 2. Configure API Credentials
 
+**Option A: Using Google Secret Manager** (Recommended if credentials are already there)
+```bash
+# Set your Google Cloud project
+export GOOGLE_CLOUD_PROJECT=your-project-id
+
+# Fetch credentials from Secret Manager
+npm run ads:fetch-secrets
+```
+
+See `GOOGLE_SECRET_MANAGER_GUIDE.md` for detailed instructions.
+
+**Option B: Manual Configuration**
+
 Add these to your `.env.local` file:
 
 ```bash

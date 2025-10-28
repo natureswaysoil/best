@@ -24,7 +24,9 @@
     "pinterest:status": "node scripts/check-pinterest-health.mjs quick",
     "ads:generate": "node scripts/automated-ads-system.mjs",
     "ads:deploy": "node scripts/deploy-ads.mjs",
-    "ads:monitor": "node scripts/monitor-ads.mjs"
+    "ads:monitor": "node scripts/monitor-ads.mjs",
+    "ads:fetch-secrets": "node scripts/fetch-secrets-from-google.mjs fetch",
+    "ads:list-secrets": "node scripts/fetch-secrets-from-google.mjs list"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",
