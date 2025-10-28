@@ -10,7 +10,13 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "videos": "node scripts/generate-product-videos.mjs",
-    "check:videos": "node scripts/check-videos.mjs"
+    "check:videos": "node scripts/check-videos.mjs",
+    "pinterest:test": "node scripts/pinterest-test.mjs",
+    "pinterest:refresh": "node scripts/pinterest-auto-refresh.mjs refresh",
+    "pinterest:fix": "node scripts/pinterest-auto-refresh.mjs smart-refresh",
+    "pinterest:smart-refresh": "node scripts/pinterest-auto-refresh.mjs smart-refresh",
+    "pinterest:health": "node scripts/check-pinterest-health.mjs",
+    "pinterest:status": "node scripts/check-pinterest-health.mjs quick"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",
