@@ -1,0 +1,572 @@
+{
+  "season": "fall",
+  "seasonName": "Fall Soil Prep Season",
+  "generatedAt": "2025-10-28T23:00:46.961Z",
+  "google": {
+    "platform": "google_ads",
+    "name": "Nature's Way Soil - Fall Soil Prep Season",
+    "budget": 50,
+    "bidStrategy": "MAXIMIZE_CONVERSIONS",
+    "targetLocation": "United States",
+    "adGroups": [
+      {
+        "name": "Horticultural Activated Charcoal - 4 Quarts",
+        "keywords": [
+          {
+            "text": "fall planting",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil preparation",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "compost",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "winter prep",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil amendment",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil amendment",
+            "matchType": "PHRASE"
+          },
+          {
+            "text": "horticultural activated charcoal - 4 quarts",
+            "matchType": "EXACT"
+          }
+        ],
+        "ads": [
+          {
+            "headline1": "Horticultural Activated Charco",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Creates permanent habitat for soil microbes",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_002",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Transform Your Garden with Soi",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Premium activated biochar for plants, terrariums, and soil conditioning. Improves drainage",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_002",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Limited Time: Premium Soil Ame",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Creates permanent habitat for soil microbes. Order today for Fall Soil Prep Season!",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_002",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Ready for Fall Soil Prep Seaso",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Get Horticultural Activated Charcoal - 4 Quarts - Creates permanent habitat for soil micro",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_002",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          }
+        ]
+      },
+      {
+        "name": "Liquid Humic & Fulvic Acid with Kelp",
+        "keywords": [
+          {
+            "text": "fall planting",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil preparation",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "compost",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "winter prep",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil amendment",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil amendment",
+            "matchType": "PHRASE"
+          },
+          {
+            "text": "liquid humic & fulvic acid with kelp",
+            "matchType": "EXACT"
+          }
+        ],
+        "ads": [
+          {
+            "headline1": "Liquid Humic & Fulvic Acid wit",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $39.99",
+            "description1": "Enhances nutrient uptake dramatically",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_011",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Transform Your Garden with Soi",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $39.99",
+            "description1": "Professional-grade liquid humic and fulvic acid fertilizer enriched with organic kelp extr",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_011",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Limited Time: Premium Soil Ame",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $39.99",
+            "description1": "Enhances nutrient uptake dramatically. Order today for Fall Soil Prep Season!",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_011",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Ready for Fall Soil Prep Seaso",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $39.99",
+            "description1": "Get Liquid Humic & Fulvic Acid with Kelp - Enhances nutrient uptake dramatically",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_011",
+            "path1": "soil-amendment",
+            "path2": "buy-now"
+          }
+        ]
+      },
+      {
+        "name": "Enhanced Living Compost with Fermented Duckweed",
+        "keywords": [
+          {
+            "text": "fall planting",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil preparation",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "compost",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "winter prep",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "soil amendment",
+            "matchType": "BROAD"
+          },
+          {
+            "text": "compost",
+            "matchType": "PHRASE"
+          },
+          {
+            "text": "enhanced living compost with fermented duckweed",
+            "matchType": "EXACT"
+          }
+        ],
+        "ads": [
+          {
+            "headline1": "Enhanced Living Compost with F",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Contains billions of beneficial soil microbes",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_013",
+            "path1": "compost",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Transform Your Garden with Com",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Superior living compost blend with 20% worm castings, 20% activated biochar, and 60% weed-",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_013",
+            "path1": "compost",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Limited Time: Premium Compost",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Contains billions of beneficial soil microbes. Order today for Fall Soil Prep Season!",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_013",
+            "path1": "compost",
+            "path2": "buy-now"
+          },
+          {
+            "headline1": "Ready for Fall Soil Prep Seaso",
+            "headline2": "Prepare Your Soil for Next Sea",
+            "headline3": "From $29.99",
+            "description1": "Get Enhanced Living Compost with Fermented Duckweed - Contains billions of beneficial soil",
+            "description2": "USDA Certified. Made Fresh Weekly.",
+            "finalUrl": "https://natureswaysoil.com/product/NWS_013",
+            "path1": "compost",
+            "path2": "buy-now"
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "platform": "meta",
+    "name": "Nature's Way Soil - Fall Soil Prep Season",
+    "objective": "OUTCOME_SALES",
+    "budget": 30,
+    "targeting": {
+      "locations": [
+        "US"
+      ],
+      "interests": [
+        "Organic gardening",
+        "Sustainable living",
+        "Home improvement",
+        "Farming"
+      ],
+      "demographics": {
+        "age_min": 25,
+        "age_max": 65
+      }
+    },
+    "adSets": [
+      {
+        "name": "Horticultural Activated Charcoal - 4 Quarts - fall",
+        "optimization_goal": "OFFSITE_CONVERSIONS",
+        "bid_amount": 500,
+        "ads": [
+          {
+            "name": "NWS_002_fall_v1",
+            "creative": {
+              "title": "Horticultural Activated Charcoal - 4 Quarts - Prepare Your Soil for Next Season!",
+              "body": "Creates permanent habitat for soil microbes",
+              "call_to_action": "SHOP_NOW",
+              "link": "https://natureswaysoil.com/product/NWS_002?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_002_fall_v2",
+            "creative": {
+              "title": "Transform Your Garden with Soil Amendment",
+              "body": "Premium activated biochar for plants, terrariums, and soil conditioning. Improves drainage, filters toxins, and provides habitat for beneficial microbes.. Prepare Your Soil for Next Season!",
+              "call_to_action": "LEARN_MORE",
+              "link": "https://natureswaysoil.com/product/NWS_002?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_002_fall_v3",
+            "creative": {
+              "title": "Limited Time: Premium Soil Amendment",
+              "body": "Creates permanent habitat for soil microbes. Order today for Fall Soil Prep Season!",
+              "call_to_action": "ORDER_NOW",
+              "link": "https://natureswaysoil.com/product/NWS_002?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_002_fall_v4",
+            "creative": {
+              "title": "Ready for Fall Soil Prep Season?",
+              "body": "Get Horticultural Activated Charcoal - 4 Quarts - Creates permanent habitat for soil microbes",
+              "call_to_action": "GET_STARTED",
+              "link": "https://natureswaysoil.com/product/NWS_002?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Liquid Humic & Fulvic Acid with Kelp - fall",
+        "optimization_goal": "OFFSITE_CONVERSIONS",
+        "bid_amount": 500,
+        "ads": [
+          {
+            "name": "NWS_011_fall_v1",
+            "creative": {
+              "title": "Liquid Humic & Fulvic Acid with Kelp - Prepare Your Soil for Next Season!",
+              "body": "Enhances nutrient uptake dramatically",
+              "call_to_action": "SHOP_NOW",
+              "link": "https://natureswaysoil.com/product/NWS_011?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_011_fall_v2",
+            "creative": {
+              "title": "Transform Your Garden with Soil Amendment",
+              "body": "Professional-grade liquid humic and fulvic acid fertilizer enriched with organic kelp extract. Revives tired soil by enhancing nutrient uptake and microbial activity.. Prepare Your Soil for Next Season!",
+              "call_to_action": "LEARN_MORE",
+              "link": "https://natureswaysoil.com/product/NWS_011?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_011_fall_v3",
+            "creative": {
+              "title": "Limited Time: Premium Soil Amendment",
+              "body": "Enhances nutrient uptake dramatically. Order today for Fall Soil Prep Season!",
+              "call_to_action": "ORDER_NOW",
+              "link": "https://natureswaysoil.com/product/NWS_011?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_011_fall_v4",
+            "creative": {
+              "title": "Ready for Fall Soil Prep Season?",
+              "body": "Get Liquid Humic & Fulvic Acid with Kelp - Enhances nutrient uptake dramatically",
+              "call_to_action": "GET_STARTED",
+              "link": "https://natureswaysoil.com/product/NWS_011?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Enhanced Living Compost with Fermented Duckweed - fall",
+        "optimization_goal": "OFFSITE_CONVERSIONS",
+        "bid_amount": 500,
+        "ads": [
+          {
+            "name": "NWS_013_fall_v1",
+            "creative": {
+              "title": "Enhanced Living Compost with Fermented Duckweed - Prepare Your Soil for Next Season!",
+              "body": "Contains billions of beneficial soil microbes",
+              "call_to_action": "SHOP_NOW",
+              "link": "https://natureswaysoil.com/product/NWS_013?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_013_fall_v2",
+            "creative": {
+              "title": "Transform Your Garden with Compost",
+              "body": "Superior living compost blend with 20% worm castings, 20% activated biochar, and 60% weed-free aged compost. Premium blend with fermented duckweed extract.. Prepare Your Soil for Next Season!",
+              "call_to_action": "LEARN_MORE",
+              "link": "https://natureswaysoil.com/product/NWS_013?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_013_fall_v3",
+            "creative": {
+              "title": "Limited Time: Premium Compost",
+              "body": "Contains billions of beneficial soil microbes. Order today for Fall Soil Prep Season!",
+              "call_to_action": "ORDER_NOW",
+              "link": "https://natureswaysoil.com/product/NWS_013?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          },
+          {
+            "name": "NWS_013_fall_v4",
+            "creative": {
+              "title": "Ready for Fall Soil Prep Season?",
+              "body": "Get Enhanced Living Compost with Fermented Duckweed - Contains billions of beneficial soil microbes",
+              "call_to_action": "GET_STARTED",
+              "link": "https://natureswaysoil.com/product/NWS_013?utm_source=meta&utm_medium=cpc&utm_campaign=fall",
+              "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg"
+            },
+            "platforms": [
+              "facebook",
+              "instagram"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "pinterest": {
+    "platform": "pinterest",
+    "name": "Nature's Way Soil - Fall Soil Prep Season",
+    "objective": "WEB_CONVERSIONS",
+    "budget": 20,
+    "targeting": {
+      "interests": [
+        "Gardening",
+        "Organic living",
+        "Home & garden"
+      ],
+      "keywords": [
+        "fall planting",
+        "soil preparation",
+        "compost",
+        "winter prep",
+        "soil amendment"
+      ]
+    },
+    "adGroups": [
+      {
+        "name": "Horticultural Activated Charcoal - 4 Quarts",
+        "pins": [
+          {
+            "title": "Horticultural Activated Charcoal - 4 Quarts - Prepare Your Soil for Next Season!",
+            "description": "Creates permanent habitat for soil microbes",
+            "link": "https://natureswaysoil.com/product/NWS_002?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Transform Your Garden with Soil Amendment",
+            "description": "Premium activated biochar for plants, terrariums, and soil conditioning. Improves drainage, filters toxins, and provides habitat for beneficial microbes.. Prepare Your Soil for Next Season!",
+            "link": "https://natureswaysoil.com/product/NWS_002?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Limited Time: Premium Soil Amendment",
+            "description": "Creates permanent habitat for soil microbes. Order today for Fall Soil Prep Season!",
+            "link": "https://natureswaysoil.com/product/NWS_002?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Ready for Fall Soil Prep Season?",
+            "description": "Get Horticultural Activated Charcoal - 4 Quarts - Creates permanent habitat for soil microbes",
+            "link": "https://natureswaysoil.com/product/NWS_002?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_002/main.jpg",
+            "board": "Organic Gardening Products"
+          }
+        ]
+      },
+      {
+        "name": "Liquid Humic & Fulvic Acid with Kelp",
+        "pins": [
+          {
+            "title": "Liquid Humic & Fulvic Acid with Kelp - Prepare Your Soil for Next Season!",
+            "description": "Enhances nutrient uptake dramatically",
+            "link": "https://natureswaysoil.com/product/NWS_011?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Transform Your Garden with Soil Amendment",
+            "description": "Professional-grade liquid humic and fulvic acid fertilizer enriched with organic kelp extract. Revives tired soil by enhancing nutrient uptake and microbial activity.. Prepare Your Soil for Next Season!",
+            "link": "https://natureswaysoil.com/product/NWS_011?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Limited Time: Premium Soil Amendment",
+            "description": "Enhances nutrient uptake dramatically. Order today for Fall Soil Prep Season!",
+            "link": "https://natureswaysoil.com/product/NWS_011?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Ready for Fall Soil Prep Season?",
+            "description": "Get Liquid Humic & Fulvic Acid with Kelp - Enhances nutrient uptake dramatically",
+            "link": "https://natureswaysoil.com/product/NWS_011?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_011/main.jpg",
+            "board": "Organic Gardening Products"
+          }
+        ]
+      },
+      {
+        "name": "Enhanced Living Compost with Fermented Duckweed",
+        "pins": [
+          {
+            "title": "Enhanced Living Compost with Fermented Duckweed - Prepare Your Soil for Next Season!",
+            "description": "Contains billions of beneficial soil microbes",
+            "link": "https://natureswaysoil.com/product/NWS_013?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Transform Your Garden with Compost",
+            "description": "Superior living compost blend with 20% worm castings, 20% activated biochar, and 60% weed-free aged compost. Premium blend with fermented duckweed extract.. Prepare Your Soil for Next Season!",
+            "link": "https://natureswaysoil.com/product/NWS_013?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Limited Time: Premium Compost",
+            "description": "Contains billions of beneficial soil microbes. Order today for Fall Soil Prep Season!",
+            "link": "https://natureswaysoil.com/product/NWS_013?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg",
+            "board": "Organic Gardening Products"
+          },
+          {
+            "title": "Ready for Fall Soil Prep Season?",
+            "description": "Get Enhanced Living Compost with Fermented Duckweed - Contains billions of beneficial soil microbes",
+            "link": "https://natureswaysoil.com/product/NWS_013?utm_source=pinterest&utm_medium=paid&utm_campaign=fall",
+            "image_url": "https://natureswaysoil.com/images/products/NWS_013/main.jpg",
+            "board": "Organic Gardening Products"
+          }
+        ]
+      }
+    ]
+  }
+}

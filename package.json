@@ -21,7 +21,10 @@
     "pinterest:fix": "node scripts/pinterest-auto-refresh.mjs smart-refresh",
     "pinterest:smart-refresh": "node scripts/pinterest-auto-refresh.mjs smart-refresh",
     "pinterest:health": "node scripts/check-pinterest-health.mjs",
-    "pinterest:status": "node scripts/check-pinterest-health.mjs quick"
+    "pinterest:status": "node scripts/check-pinterest-health.mjs quick",
+    "ads:generate": "node scripts/automated-ads-system.mjs",
+    "ads:deploy": "node scripts/deploy-ads.mjs",
+    "ads:monitor": "node scripts/monitor-ads.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",
