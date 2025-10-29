@@ -36,7 +36,12 @@
     "pinterest:emergency-refresh": "node scripts/pinterest-emergency-refresh.mjs",
     "pinterest:auto-setup": "node scripts/pinterest-auto-setup.mjs",
     "pinterest:recovery": "node scripts/pinterest-token-recovery.mjs",
-    "pinterest:quick-setup": "node scripts/pinterest-quick-setup.mjs"
+    "pinterest:quick-setup": "node scripts/pinterest-quick-setup.mjs",
+    "ads:generate": "node scripts/automated-ads-system.mjs",
+    "ads:deploy": "node scripts/deploy-ads.mjs",
+    "ads:monitor": "node scripts/monitor-ads.mjs",
+    "ads:fetch-secrets": "node scripts/fetch-secrets-from-google.mjs fetch",
+    "ads:list-secrets": "node scripts/fetch-secrets-from-google.mjs list"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",
