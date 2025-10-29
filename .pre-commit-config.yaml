@@ -39,7 +39,7 @@ repos:
     hooks:
       - id: check-google-api-keys
         name: Check for Google API Keys
-        entry: bash -c 'if grep -rE "AIzaSy[a-zA-Z0-9_-]{33}" --include="*.py" --include="*.js" --include="*.mjs" --include="*.ts" --include="*.tsx" .; then echo "ERROR: Google API key detected in code!"; exit 1; fi'
+        entry: scripts/check-api-keys.sh
         language: system
         pass_filenames: false
         stages: [commit]
