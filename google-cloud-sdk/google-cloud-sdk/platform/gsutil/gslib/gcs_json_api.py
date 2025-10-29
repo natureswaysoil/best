@@ -339,8 +339,8 @@ class GcsJsonApi(CloudApi):
     if isinstance(self.credentials, NoOpCredentials):
       # This API key is not secret and is used to identify gsutil during
       # anonymous requests.
-      self.api_client.AddGlobalParam('key',
-                                     'AIzaSyDnacJHrKma0048b13sh8cgxNUwulubmJM')
+      api_key = os.environ.get('GSUTIL_ANONYMOUS_API_KEY', 'AIzaSyDnacJHrKma0048b13sh8cgxNUwulubmJM')
+      self.api_client.AddGlobalParam('key', api_key)
 
   def GetServiceAccountId(self):
     """Returns the service account email id."""

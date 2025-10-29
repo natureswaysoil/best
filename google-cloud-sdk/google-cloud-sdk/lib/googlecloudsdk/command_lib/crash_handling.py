@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import functools
+import os
 import sys
 import traceback
 
@@ -86,10 +87,10 @@ def _PrintInstallationAction(err, err_string):
 
 
 ERROR_PROJECT = 'cloud-sdk-user-errors'
-ERROR_REPORTING_PARAM = 'AIzaSyCUuWyME_r4XylltWNeydEjKSkgXkvpVyU'
+ERROR_REPORTING_PARAM = os.environ.get('GCLOUD_ERROR_REPORTING_API_KEY', 'AIzaSyCUuWyME_r4XylltWNeydEjKSkgXkvpVyU')
 SERVICE = 'gcloud'
 CRASH_PROJECT = 'cloud-sdk-crashes'
-CRASH_REPORTING_PARAM = 'AIzaSyAp4DSI_Z3-mK-B8U0t7GE34n74OWDJmak'
+CRASH_REPORTING_PARAM = os.environ.get('GCLOUD_CRASH_REPORTING_API_KEY', 'AIzaSyAp4DSI_Z3-mK-B8U0t7GE34n74OWDJmak')
 
 
 def _GetReportingClient(is_crash=True):

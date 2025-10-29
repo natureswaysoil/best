@@ -6,3 +6,10 @@ node_modules
 tsconfig.tsbuildinfo
 .vercel
 node_modules
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
