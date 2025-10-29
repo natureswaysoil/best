@@ -1,0 +1,53 @@
+# Cloud Build configuration for Social Media Automation with HeyGen
+steps:
+  # Build the Docker image for social automation
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-f', 'Dockerfile.social-automation',
+      '-t', 'gcr.io/$PROJECT_ID/social-automation:$BUILD_ID',
+      '-t', 'gcr.io/$PROJECT_ID/social-automation:latest',
+      '.'
+    ]
+
+  # Push the Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/social-automation:$BUILD_ID']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/social-automation:latest']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args: [
+      'run', 'deploy', 'social-automation',
+      '--image', 'gcr.io/$PROJECT_ID/social-automation:$BUILD_ID',
+      '--region', 'us-central1',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--memory', '2Gi',
+      '--cpu', '2',
+      '--timeout', '900',
+      '--max-instances', '1',
+      '--set-env-vars', 'NODE_ENV=production',
+      '--set-secrets', 'HEYGEN_API_KEY=HEYGEN_API_KEY:latest',
+      '--set-secrets', 'TWITTER_BEARER_TOKEN=TWITTER_BEARER_TOKEN:latest',
+      '--set-secrets', 'TWITTER_API_KEY=TWITTER_API_KEY:latest',
+      '--set-secrets', 'TWITTER_API_SECRET=TWITTER_API_SECRET:latest',
+      '--set-secrets', 'TWITTER_ACCESS_TOKEN=TWITTER_ACCESS_TOKEN:latest',
+      '--set-secrets', 'TWITTER_ACCESS_TOKEN_SECRET=TWITTER_ACCESS_SECRET:latest',
+      '--set-secrets', 'YT_CLIENT_ID=YT_CLIENT_ID:latest',
+      '--set-secrets', 'YT_CLIENT_SECRET=YT_CLIENT_SECRET:latest',
+      '--set-secrets', 'YT_REFRESH_TOKEN=YT_REFRESH_TOKEN:latest'
+    ]
+
+images:
+  - 'gcr.io/$PROJECT_ID/social-automation:$BUILD_ID'
+  - 'gcr.io/$PROJECT_ID/social-automation:latest'
+
+timeout: '1200s'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY

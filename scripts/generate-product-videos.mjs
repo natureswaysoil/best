@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Generate 30-second instructional videos for each product into public/videos.
- * - Uses ASIN-specific scripts when available (content/video-scripts/asin-scripts.json)
- * - Produces a single continuous video timeline (no per-slide files)
- * - Background: Ken Burns pan/zoom on the product's generated poster when available; fallback to brand color
- * - Captions: Timed drawtext overlays from the script segments
- * - Outputs MP4 (H.264) + WebM (VP9) and a poster JPG
+ * Generate 30-second AI presenter videos for each product using HeyGen.
+ * - Professional AI avatars present product benefits and usage instructions
+ * - High-quality talking head videos with branded backgrounds
+ * - Outputs MP4 optimized for web and social media
+ * - Fallback to FFmpeg generation if HeyGen is unavailable
  */
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import { spawnSync, execSync } from 'child_process';
+import HeyGenVideoGenerator from './heygen-video-generator.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -231,15 +231,95 @@ function buildVideoForProduct(prod, asinMap, cfg) {
   return { mp4: outPath, webm: outWebm, poster: outPosterJpg };
 }
 
-function main() {
-  if (!hasFfmpeg()) {
-    console.error('Error: ffmpeg is not installed. Please install ffmpeg and re-run.');
+async function main() {
+  console.log('🎬 Starting HeyGen AI Video Generation for Products');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  const products = loadProducts();
+  if (!products.length) {
+    console.error('❌ No products found to generate videos for.');
     process.exit(1);
   }
-  ensureDir(OUT_DIR);
-  const products = loadProducts();
+
+  console.log(`📝 Found ${products.length} products to process`);
+
+  // Check for HeyGen API key
+  const heygenApiKey = process.env.HEYGEN_API_KEY;
+  
+  if (!heygenApiKey || heygenApiKey === 'your_heygen_api_key') {
+    console.log('⚠️  HeyGen API key not found, falling back to FFmpeg generation');
+    await generateWithFFmpeg(products);
+    return;
+  }
+
+  try {
+    // Initialize HeyGen generator
+    const generator = new HeyGenVideoGenerator(heygenApiKey);
+    console.log('✅ HeyGen API connected successfully');
+
+    ensureDir(OUT_DIR);
+    const results = [];
+
+    for (const product of products) {
+      try {
+        console.log(`\n🎥 Generating AI video for: ${product.name}`);
+        
+        const result = await generator.generateProductVideo(product, OUT_DIR);
+        results.push(result);
+        
+        console.log(`✅ ${product.id} -> ${path.relative(PROJECT, result.videoPath)}`);
+        console.log(`   📊 Duration: ${result.duration}s`);
+        
+        // Add delay between requests to be nice to the API
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+      } catch (error) {
+        console.error(`❌ Failed to generate video for ${product.id}: ${error.message}`);
+        
+        // Try FFmpeg fallback for this product
+        try {
+          console.log(`🔄 Attempting FFmpeg fallback for ${product.id}...`);
+          const fallbackResult = await generateSingleVideoWithFFmpeg(product);
+          results.push(fallbackResult);
+        } catch (fallbackError) {
+          console.error(`❌ FFmpeg fallback also failed: ${fallbackError.message}`);
+        }
+      }
+    }
+
+    console.log('\n🎉 Video Generation Complete!');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📊 Summary:');
+    
+    results.forEach(result => {
+      const relativePath = path.relative(PROJECT, result.videoPath || result.out?.mp4);
+      console.log(`✅ ${result.productId}: ${relativePath}`);
+    });
+
+    console.log(`\n🎯 Generated ${results.length}/${products.length} videos successfully`);
+
+  } catch (error) {
+    console.error(`❌ HeyGen generation failed: ${error.message}`);
+    console.log('🔄 Falling back to FFmpeg generation...');
+    await generateWithFFmpeg(products);
+  }
+}
+
+// FFmpeg fallback generation
+async function generateWithFFmpeg(products) {
+  console.log('🎬 Using FFmpeg for video generation...');
+  
+  if (!hasFfmpeg()) {
+    console.error('❌ Error: FFmpeg is not installed and HeyGen is unavailable.');
+    console.error('   Please either:');
+    console.error('   1. Add HEYGEN_API_KEY to your environment, or');
+    console.error('   2. Install FFmpeg for local generation');
+    process.exit(1);
+  }
+
   let asinMap = {};
   let cfg = {};
+  
   try {
     if (fs.existsSync(ASIN_SCRIPTS)) {
       asinMap = JSON.parse(fs.readFileSync(ASIN_SCRIPTS, 'utf8'));
@@ -247,6 +327,7 @@ function main() {
   } catch (e) {
     console.warn('Warning: Failed to read asin-scripts.json:', e.message);
   }
+  
   try {
     if (fs.existsSync(VIDEO_CONFIG)) {
       cfg = JSON.parse(fs.readFileSync(VIDEO_CONFIG, 'utf8'));
@@ -254,23 +335,54 @@ function main() {
   } catch (e) {
     console.warn('Warning: Failed to read video-config.json:', e.message);
   }
-  if (!products.length) {
-    console.error('No products found to generate videos for.');
-    process.exit(1);
-  }
-  console.log(`Generating continuous 30s videos for ${products.length} products...`);
+
+  ensureDir(OUT_DIR);
   const results = [];
-  for (const p of products) {
+  
+  for (const product of products) {
     try {
-      const out = buildVideoForProduct(p, asinMap, cfg);
-      results.push({ id: p.id, out });
-  console.log(`✔ ${p.id} -> ${path.relative(PROJECT, out.mp4)} | ${path.relative(PROJECT, out.webm)} | ${path.relative(PROJECT, out.poster)}`);
+      const out = buildVideoForProduct(product, asinMap, cfg);
+      results.push({ productId: product.id, out });
+      console.log(`✅ FFmpeg: ${product.id} -> ${path.relative(PROJECT, out.mp4)}`);
     } catch (e) {
-      console.error(`✖ Failed to build video for ${p.id}:`, e.message);
+      console.error(`❌ FFmpeg failed for ${product.id}: ${e.message}`);
     }
   }
-  console.log('\nDone. Generated files:');
-  results.forEach(r => console.log(`- ${r.id}: ${path.relative(PROJECT, r.out.mp4)} | ${path.relative(PROJECT, r.out.webm)} | ${path.relative(PROJECT, r.out.poster)}`));
+  
+  console.log('\n📊 FFmpeg Results:');
+  results.forEach(r => {
+    console.log(`- ${r.productId}: ${path.relative(PROJECT, r.out.mp4)} | ${path.relative(PROJECT, r.out.webm)} | ${path.relative(PROJECT, r.out.poster)}`);
+  });
+
+  return results;
 }
 
-main();
+// Single product FFmpeg generation (for fallback)
+async function generateSingleVideoWithFFmpeg(product) {
+  let asinMap = {};
+  let cfg = {};
+  
+  try {
+    if (fs.existsSync(ASIN_SCRIPTS)) {
+      asinMap = JSON.parse(fs.readFileSync(ASIN_SCRIPTS, 'utf8'));
+    }
+  } catch {
+    // Ignore errors loading asin-scripts.json
+  }
+  
+  try {
+    if (fs.existsSync(VIDEO_CONFIG)) {
+      cfg = JSON.parse(fs.readFileSync(VIDEO_CONFIG, 'utf8'));
+    }
+  } catch {
+    // Ignore errors loading video-config.json
+  }
+
+  const out = buildVideoForProduct(product, asinMap, cfg);
+  return { productId: product.id, videoPath: out.mp4, out };
+}
+
+main().catch(error => {
+  console.error('❌ Video generation failed:', error);
+  process.exit(1);
+});

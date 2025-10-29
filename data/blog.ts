@@ -118,8 +118,8 @@ Remember that gardening is a journey of continuous learning. Each season brings 
 For more detailed guidance and premium soil products to support your garden design success, explore our full range of organic gardening solutions. Our expert team is always here to help you achieve your gardening goals.
 
 *Ready to start your garden design journey? Browse our Premium Organic Soil Mix and other essential gardening products to get started today.*`,
-    author: 'Nature's Way Soil Expert',
-    publishedAt: '2025-10-28',
+    author: "Nature's Way Soil Expert",
+    publishedAt: '2024-10-28',
     featuredImage: '/images/blog/creating-perfect-raised-garden-beds-featured.jpg',
     tags: ["raised-beds","garden-design","soil-preparation","drainage"],
     category: 'Garden Design',

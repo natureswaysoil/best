@@ -2,12 +2,14 @@
 
 /**
  * Blog Video Generator Script
- * Generates videos for blog articles using AI and natural video creation
+ * Generates AI presenter videos for blog articles using HeyGen
+ * Professional talking head videos with avatars explaining blog content
  * Videos are saved to public/videos/blog/ directory
  */
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import HeyGenVideoGenerator from './heygen-video-generator.mjs';
 
 // Blog articles data (inline for compatibility)
 const blogArticles = [
@@ -90,7 +92,63 @@ async function generateVideoScript(article) {
   return script;
 }
 
-// Create video placeholder files
+// Generate video using HeyGen AI
+async function generateVideoWithHeyGen(article) {
+  try {
+    const heygenApiKey = process.env.HEYGEN_API_KEY;
+    
+    if (!heygenApiKey || heygenApiKey === 'your_heygen_api_key') {
+      throw new Error('HeyGen API key not configured');
+    }
+
+    const generator = new HeyGenVideoGenerator(heygenApiKey);
+    
+    // Generate script for blog article
+    const script = `Hi! Welcome to Nature's Way Soil. Today I want to share insights about ${article.title}.
+
+${article.excerpt}
+
+This topic is crucial for creating a healthier, more sustainable garden that works with nature.
+
+You can find the complete guide and our premium organic soil products at NaturesWaySoil.com. Let's grow better gardens together!`;
+
+    const title = `${article.title} - Nature's Way Soil`;
+    
+    // Create HeyGen video
+    const videoJob = await generator.createVideo({
+      script,
+      title,
+      avatarId: 'Anna_public_3_20240108', // Professional gardening expert avatar
+      voiceId: 'b8266b04af0a4c7e8adc8ea21273eecd', // Clear female voice
+      background: '#0d3b2a' // Nature's Way brand color
+    });
+
+    console.log(`   🎬 HeyGen video creation started...`);
+    
+    // Wait for completion
+    const result = await generator.waitForCompletion(videoJob.videoId);
+    
+    // Download video
+    const outputPath = path.join(VIDEOS_DIR, `${article.slug}.mp4`);
+    await generator.downloadVideo(result.videoUrl, outputPath);
+
+    console.log(`   ✅ HeyGen video generated: ${article.slug}.mp4`);
+    
+    return {
+      videoPath: outputPath,
+      videoUrl: result.videoUrl,
+      duration: result.duration,
+      script: script,
+      provider: 'heygen'
+    };
+
+  } catch (error) {
+    console.log(`   ⚠️ HeyGen generation failed: ${error.message}`);
+    throw error;
+  }
+}
+
+// Create video placeholder files (fallback)
 async function createVideoPlaceholders(article) {
   const slug = article.slug;
   const videoFiles = [
@@ -174,11 +232,30 @@ async function generateBlogVideos() {
       console.log(`   Read Time: ${article.readTime} minutes`);
 
       try {
-        const script = await createVideoPlaceholders(article);
-        await logGeneration(article, script);
+        // Try HeyGen generation first
+        let videoResult = null;
+        
+        try {
+          videoResult = await generateVideoWithHeyGen(article);
+          console.log(`   🎬 Generated with HeyGen AI`);
+        } catch (heygenError) {
+          console.log(`   ⚠️ HeyGen unavailable, creating placeholder: ${heygenError.message}`);
+          // Fall back to placeholder creation
+          const script = await createVideoPlaceholders(article);
+          videoResult = { script, provider: 'placeholder' };
+        }
+        
+        // Log generation details
+        await logGeneration(article, videoResult.script || videoResult);
         generatedCount++;
         
-        console.log(`   ✅ Video files created successfully`);
+        console.log(`   ✅ Video files created successfully (${videoResult.provider || 'placeholder'})`);
+        
+        // Add delay between HeyGen requests
+        if (videoResult.provider === 'heygen') {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        
       } catch (error) {
         console.error(`   ❌ Error creating video for ${article.slug}:`, error.message);
         skippedCount++;

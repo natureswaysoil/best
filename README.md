@@ -20,6 +20,13 @@ A modern, responsive website for Nature's Way Soil featuring natural fertilizers
 - Professional header/navigation and footer
 - SEO optimized with proper meta tags
 
+### 🎬 AI Video Generation (New!)
+- **HeyGen Integration**: Professional AI avatars for product videos
+- **Automated Content**: 30-second videos generated for all products
+- **Blog Videos**: AI presenters for educational content
+- **Fallback System**: Graceful fallback to FFmpeg if needed
+- **Social Media Ready**: Videos optimized for all platforms
+
 ### Components Built
 - `HeroVideo`: Your existing hero video component
 - `Header`: Responsive navigation with transparent mode for hero
@@ -98,11 +105,73 @@ The previous build had these problems that are now fixed:
 3. **❌ Broken chat feature** → **✅ Working customer support chat**
 4. **❌ Non-functional exit popup** → **✅ Working exit-intent popup with coupons**
 
+## 🚀 Production Deployment
+
+### Quick Start
+```bash
+# 1. Verify deployment readiness
+./verify-deployment-ready.sh
+
+# 2. Deploy to Google Cloud Run
+./deploy-social-automation.sh
+
+# 3. Test deployed service
+./test-social-automation-service.sh
+```
+
+### What Gets Deployed
+- **HeyGen AI Video Generation**: Professional avatar videos with natural voices
+- **Twitter Automation**: Daily tweet posting with videos
+- **YouTube Automation**: Daily video uploads with descriptions  
+- **Cloud Run Service**: Scalable, serverless container deployment
+- **Cloud Scheduler**: Automated twice-daily posting (6 AM & 6 PM UTC)
+- **Secret Manager**: Secure credential storage
+
+### Deployment Features
+- **Automatic Scaling**: Cloud Run scales to zero when not in use
+- **Secure Credentials**: All API keys stored in Google Secret Manager
+- **Health Monitoring**: Built-in health checks and status endpoints
+- **Error Recovery**: Automatic retries and fallback systems
+- **Cost Efficient**: Pay only for actual usage
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete deployment instructions.
+
+## 🎬 HeyGen Video Generation
+
+Professional AI-generated videos with avatars and natural voices:
+
+```bash
+# Test HeyGen integration
+npm run heygen:test
+
+# List available avatars
+npm run heygen:avatars
+
+# List available voices  
+npm run heygen:voices
+
+# Generate videos with HeyGen (fallback to FFmpeg if needed)
+npm run videos
+
+# Generate blog videos with AI
+npm run blog:videos
+```
+
+### HeyGen Features
+- **AI Avatars**: Professional presenters for your content
+- **Natural Voices**: High-quality text-to-speech in multiple languages
+- **Automatic Fallback**: Uses FFmpeg if HeyGen is unavailable
+- **Custom Scripts**: Product descriptions converted to engaging video scripts
+- **Multiple Formats**: Optimized for different social media platforms
+
+See [HEYGEN_INTEGRATION.md](HEYGEN_INTEGRATION.md) for detailed setup and customization.
+
 ## 🔧 Key Technologies
 
 - **Next.js 14**: React framework with SSG/SSR
 - **TypeScript**: Type-safe JavaScript
 - **Tailwind CSS**: Utility-first styling
+- **HeyGen AI**: Professional video generation
 - **Lucide React**: Modern icon library
 - **Responsive Design**: Works on all screen sizes
 
@@ -111,10 +180,19 @@ The previous build had these problems that are now fixed:
 Create a `.env.local` file:
 
 ```env
+# Site Configuration
 NEXT_PUBLIC_HERO_VIDEO_URL=/videos/website-hero.mp4
 NEXT_PUBLIC_SITE_NAME="Nature's Way Soil"
 NEXT_PUBLIC_PHONE="(555) 123-4567"
 NEXT_PUBLIC_EMAIL="hello@naturesway.com"
+
+# HeyGen AI Video Generation (Optional)
+HEYGEN_API_KEY=your_heygen_api_key_here
+
+# Other integrations
+STRIPE_SECRET_KEY=your_stripe_key
+SUPABASE_URL=your_supabase_url
+RESEND_API_KEY=your_resend_key
 ```
 
 ## 📞 Support Features
