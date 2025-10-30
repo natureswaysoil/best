@@ -1,0 +1,45 @@
+# Pre-commit hooks for secret detection and code quality
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.63.2
+    hooks:
+      - id: trufflehog
+        name: TruffleHog - Secret Scanner
+        entry: bash -c 'trufflehog git file://. --since-commit HEAD --only-verified --fail'
+        language: system
+        stages: [commit]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+        name: Detect Private Keys
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
+
+  - repo: local
+    hooks:
+      - id: check-google-api-keys
+        name: Check for Google API Keys
+        entry: scripts/check-api-keys.sh
+        language: system
+        pass_filenames: false
+        stages: [commit]
