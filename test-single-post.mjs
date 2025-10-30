@@ -41,7 +41,12 @@ function createTwitterOAuth1aHeader(method, url, bodyParams = {}) {
   const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET;
 
   if (!consumerKey || !consumerSecret || !accessToken || !accessTokenSecret) {
-    throw new Error('Twitter OAuth 1.0a credentials not configured');
+    throw new Error('Twitter OAuth 1.0a credentials missing: ' + [
+      !consumerKey && 'TWITTER_API_KEY',
+      !consumerSecret && 'TWITTER_API_SECRET',
+      !accessToken && 'TWITTER_ACCESS_TOKEN',
+      !accessTokenSecret && 'TWITTER_ACCESS_TOKEN_SECRET'
+    ].filter(Boolean).join(', '));
   }
 
   const oauthParams = {
