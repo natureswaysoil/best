@@ -63,7 +63,7 @@ function missingKeys() {
   return Object.keys(SECRET_MAP).filter(key => !process.env[key]);
 }
 
-export async function ensureSocialSecretsLoaded(options = {}) {
+export function ensureSocialSecretsLoaded(options = {}) {
   if (cachedResult) {
     return cachedResult;
   }
