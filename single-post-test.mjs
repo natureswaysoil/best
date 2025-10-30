@@ -8,6 +8,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { ensureSocialSecretsLoaded } from './scripts/utils/social-secret-loader.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -25,9 +27,19 @@ const testProduct = {
   video: 'NWS_001.mp4'
 };
 
+const secretLoadResult = await ensureSocialSecretsLoaded();
+
 console.log('🧪 Single Post Test for Twitter and YouTube');
 console.log('==========================================');
 console.log(`Testing with: ${testProduct.name}`);
+
+if (secretLoadResult.loaded?.length) {
+  console.log(`📦 Loaded ${secretLoadResult.loaded.length} secret${secretLoadResult.loaded.length === 1 ? '' : 's'} from Google Secret Manager.`);
+}
+
+if (secretLoadResult.missing?.length) {
+  console.log(`⚠️ Missing secrets: ${secretLoadResult.missing.join(', ')}`);
+}
 
 // Test Twitter posting with OAuth 1.0a
 async function testTwitterPost() {

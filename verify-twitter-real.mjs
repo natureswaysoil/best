@@ -5,6 +5,14 @@
 
 import crypto from 'crypto';
 
+import { ensureSocialSecretsLoaded } from './scripts/utils/social-secret-loader.mjs';
+
+const secretLoadResult = await ensureSocialSecretsLoaded();
+
+if (secretLoadResult.missing?.length) {
+  console.warn(`⚠️ Missing secrets: ${secretLoadResult.missing.join(', ')}`);
+}
+
 function generateTwitterOAuth1aSignature(method, url, params, consumerSecret, tokenSecret) {
   const sortedParams = Object.keys(params)
     .sort()

@@ -6,6 +6,14 @@
 
 import crypto from 'crypto';
 
+import { ensureSocialSecretsLoaded } from './scripts/utils/social-secret-loader.mjs';
+
+const secretLoadResult = await ensureSocialSecretsLoaded();
+
+if (secretLoadResult.missing?.length) {
+  console.log(`⚠️ Missing secrets: ${secretLoadResult.missing.join(', ')}`);
+}
+
 // OAuth 1.0a signature generation for Twitter
 function generateTwitterOAuth1aSignature(method, url, params, consumerSecret, tokenSecret) {
   // Sort parameters
@@ -30,8 +38,12 @@ function createTwitterOAuth1aHeader(method, url, bodyParams = {}) {
   const consumerKey = process.env.TWITTER_API_KEY;
   const consumerSecret = process.env.TWITTER_API_SECRET;
   const accessToken = process.env.TWITTER_ACCESS_TOKEN;
-  const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
-  
+  const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET;
+
+  if (!consumerKey || !consumerSecret || !accessToken || !accessTokenSecret) {
+    throw new Error('Twitter OAuth 1.0a credentials not configured');
+  }
+
   const oauthParams = {
     oauth_consumer_key: consumerKey,
     oauth_token: accessToken,

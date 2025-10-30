@@ -9,9 +9,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { ensureSocialSecretsLoaded } from './utils/social-secret-loader.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
+
+const secretLoadResult = await ensureSocialSecretsLoaded({ silent: true });
+
+if (secretLoadResult.missing?.length) {
+  console.warn('[Social Auto-Post] Missing secrets:', secretLoadResult.missing.join(', '));
+}
 
 // API Configuration
 const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
@@ -20,7 +28,7 @@ const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 const TWITTER_API_KEY = process.env.TWITTER_API_KEY;
 const TWITTER_API_SECRET = process.env.TWITTER_API_SECRET;
 const TWITTER_ACCESS_TOKEN = process.env.TWITTER_ACCESS_TOKEN;
-const TWITTER_ACCESS_SECRET = process.env.TWITTER_ACCESS_SECRET;
+const TWITTER_ACCESS_TOKEN_SECRET = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET;
 const YOUTUBE_CLIENT_ID = process.env.YT_CLIENT_ID;
 const YOUTUBE_CLIENT_SECRET = process.env.YT_CLIENT_SECRET;
 const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
@@ -34,6 +42,11 @@ const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://naturesway
 class SocialMediaAutoPoster {
   constructor() {
     this.postedContent = this.loadPostedContent();
+    this.platformConfig = {
+      instagram: Boolean(INSTAGRAM_ACCESS_TOKEN && INSTAGRAM_IG_ID),
+      twitter: Boolean(TWITTER_BEARER_TOKEN),
+      youtube: Boolean(YOUTUBE_CLIENT_ID && YOUTUBE_CLIENT_SECRET && YOUTUBE_REFRESH_TOKEN)
+    };
   }
 
   log(message) {
@@ -335,6 +348,24 @@ class SocialMediaAutoPoster {
         return;
       }
 
+      this.log('Platform configuration status:');
+      Object.entries(this.platformConfig).forEach(([platform, enabled]) => {
+        this.log(`  • ${platform}: ${enabled ? 'ready' : 'missing credentials'}`);
+      });
+
+      if (!this.platformConfig.instagram && !this.platformConfig.twitter && !this.platformConfig.youtube) {
+        this.log('No platforms configured with credentials. Exiting without attempting posts.');
+        return {
+          success: { instagram: [], twitter: [], youtube: [] },
+          skipped: {
+            instagram: [{ reason: 'missing_credentials' }],
+            twitter: [{ reason: 'missing_credentials' }],
+            youtube: [{ reason: 'missing_credentials' }]
+          },
+          errors: { instagram: [], twitter: [], youtube: [] }
+        };
+      }
+
       this.log(`Found ${products.length} products to process`);
 
       const results = {
@@ -350,43 +381,58 @@ class SocialMediaAutoPoster {
           // Check if video files exist
           if (!fs.existsSync(videoPath)) {
             this.log(`Video not found for ${product.id}, skipping...`);
+            results.skipped.instagram.push({ productId: product.id, reason: 'missing_video' });
+            results.skipped.twitter.push({ productId: product.id, reason: 'missing_video' });
+            results.skipped.youtube.push({ productId: product.id, reason: 'missing_video' });
             continue;
           }
 
           // Instagram posting
-          try {
-            const igResult = await this.postToInstagram(product);
-            if (igResult.postId && !igResult.postId.includes('placeholder')) {
-              results.success.instagram.push({ productId: product.id, postId: igResult.postId });
-            } else {
-              results.skipped.instagram.push(product.id);
+          if (this.platformConfig.instagram) {
+            try {
+              const igResult = await this.postToInstagram(product);
+              if (igResult.postId && !igResult.postId.includes('placeholder')) {
+                results.success.instagram.push({ productId: product.id, postId: igResult.postId });
+              } else {
+                results.skipped.instagram.push({ productId: product.id, reason: 'already_posted' });
+              }
+            } catch (error) {
+              results.errors.instagram.push({ productId: product.id, error: error.message });
             }
-          } catch (error) {
-            results.errors.instagram.push({ productId: product.id, error: error.message });
+          } else {
+            results.skipped.instagram.push({ productId: product.id, reason: 'missing_credentials' });
           }
 
           // Twitter posting
-          try {
-            const twitterResult = await this.postToTwitter(product);
-            if (twitterResult.tweetId) {
-              results.success.twitter.push({ productId: product.id, tweetId: twitterResult.tweetId });
-            } else {
-              results.skipped.twitter.push(product.id);
+          if (this.platformConfig.twitter) {
+            try {
+              const twitterResult = await this.postToTwitter(product);
+              if (twitterResult.tweetId) {
+                results.success.twitter.push({ productId: product.id, tweetId: twitterResult.tweetId });
+              } else {
+                results.skipped.twitter.push({ productId: product.id, reason: 'already_posted' });
+              }
+            } catch (error) {
+              results.errors.twitter.push({ productId: product.id, error: error.message });
             }
-          } catch (error) {
-            results.errors.twitter.push({ productId: product.id, error: error.message });
+          } else {
+            results.skipped.twitter.push({ productId: product.id, reason: 'missing_credentials' });
           }
 
           // YouTube upload preparation
-          try {
-            const ytResult = await this.uploadToYouTube(product);
-            if (ytResult.status === 'ready_for_upload') {
-              results.success.youtube.push({ productId: product.id, videoId: ytResult.videoId, status: 'prepared' });
-            } else {
-              results.skipped.youtube.push(product.id);
+          if (this.platformConfig.youtube) {
+            try {
+              const ytResult = await this.uploadToYouTube(product);
+              if (ytResult.status === 'ready_for_upload') {
+                results.success.youtube.push({ productId: product.id, videoId: ytResult.videoId, status: 'prepared' });
+              } else {
+                results.skipped.youtube.push({ productId: product.id, reason: 'already_posted' });
+              }
+            } catch (error) {
+              results.errors.youtube.push({ productId: product.id, error: error.message });
             }
-          } catch (error) {
-            results.errors.youtube.push({ productId: product.id, error: error.message });
+          } else {
+            results.skipped.youtube.push({ productId: product.id, reason: 'missing_credentials' });
           }
 
           // Add delay between products to be nice to APIs
@@ -442,6 +488,23 @@ class SocialMediaAutoPoster {
           this.log(`\n❌ ${platformName} Errors:`);
           results.errors[platform].forEach(err => {
             this.log(`  • ${err.productId}: ${err.error}`);
+          });
+        }
+      });
+
+      // Show skipped reasons when relevant
+      ['instagram', 'twitter', 'youtube'].forEach(platform => {
+        const skipped = results.skipped[platform];
+        if (skipped.length > 0) {
+          const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+          const reasons = skipped.reduce((acc, entry) => {
+            const reason = entry.reason || 'unknown';
+            acc[reason] = (acc[reason] || 0) + 1;
+            return acc;
+          }, {});
+          this.log(`\n⏭️  ${platformName} skipped details:`);
+          Object.entries(reasons).forEach(([reason, count]) => {
+            this.log(`  • ${reason}: ${count}`);
           });
         }
       });

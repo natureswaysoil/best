@@ -3,7 +3,19 @@
  * Simple Twitter and YouTube credential test
  */
 
+import { ensureSocialSecretsLoaded } from './scripts/utils/social-secret-loader.mjs';
+
 console.log('🔑 Testing API Credentials...');
+
+const secretLoadResult = await ensureSocialSecretsLoaded();
+
+if (secretLoadResult.loaded?.length) {
+  console.log(`📦 Loaded ${secretLoadResult.loaded.length} secret${secretLoadResult.loaded.length === 1 ? '' : 's'} from Google Secret Manager.`);
+}
+
+if (secretLoadResult.missing?.length) {
+  console.log(`⚠️ Missing secrets: ${secretLoadResult.missing.join(', ')}`);
+}
 
 // Test Twitter Bearer Token
 if (process.env.TWITTER_BEARER_TOKEN) {
@@ -33,10 +45,12 @@ if (process.env.TWITTER_BEARER_TOKEN) {
 }
 
 // Test Twitter OAuth 1.0a credentials
-if (process.env.TWITTER_API_KEY && process.env.TWITTER_ACCESS_TOKEN) {
+if (process.env.TWITTER_API_KEY && process.env.TWITTER_ACCESS_TOKEN && (process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET)) {
   console.log('\n🔐 Twitter OAuth 1.0a credentials present:');
   console.log(`   API Key: ${process.env.TWITTER_API_KEY.substring(0, 10)}...`);
   console.log(`   Access Token: ${process.env.TWITTER_ACCESS_TOKEN.substring(0, 10)}...`);
+  const secret = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET;
+  console.log(`   Token Secret: ${secret.substring(0, 10)}...`);
 } else {
   console.log('\n❌ Twitter OAuth 1.0a credentials missing');
 }
