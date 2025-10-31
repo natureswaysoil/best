@@ -17,7 +17,7 @@
     "blog:videos": "node scripts/generate-blog-videos.mjs",
     "blog:auto": "node scripts/auto-generate-blog-content.mjs",
     "blog:generate": "node scripts/auto-generate-blog-content.mjs",
-    "blog:monitor": "node scripts/monitor-blog-automation.mjs",
+    "blog:monitor": "node scripts/blog-automation-monitor.mjs",
     "blog:test": "node scripts/test-blog-generation.mjs",
     "social:health": "node scripts/social-media-health-check.mjs",
     "social:schedule": "node scripts/social-schedule-diagnostic.mjs",
