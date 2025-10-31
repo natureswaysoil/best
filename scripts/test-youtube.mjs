@@ -18,7 +18,7 @@ async function testYouTube() {
   };
   
   const missingCreds = Object.entries(credentials)
-    .filter(([key, value]) => !value || value.startsWith('your_'))
+    .filter(([, value]) => !value || value.startsWith('your_'))
     .map(([key]) => key);
   
   if (missingCreds.length > 0) {

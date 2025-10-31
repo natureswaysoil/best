@@ -1,5 +1,6 @@
 // Blog articles data for Nature's Way Soil website
 // This file contains all blog articles and their metadata
+// Auto-generated on 2025-10-31T17:45:28.450Z
 
 export interface BlogArticle {
   id: string;
@@ -20,224 +21,69 @@ export interface BlogArticle {
 
 export const blogArticles: BlogArticle[] = [
   {
-    id: 'creating-perfect-raised-garden-beds',
-    title: 'Creating Perfect Raised Garden Beds',
-    slug: 'creating-perfect-raised-garden-beds',
-    excerpt: 'Learn essential tips and techniques for raised bed construction and soil preparation. This comprehensive guide covers everything you need to know to succeed with garden design.',
-    content: `# Creating Perfect Raised Garden Beds
-
-Garden Design is one of the most rewarding aspects of gardening, offering both practical benefits and deep satisfaction. Whether you're a beginner just starting your gardening journey or an experienced gardener looking to expand your knowledge, this comprehensive guide will help you master raised bed construction and soil preparation.
-
-## Getting Started with Garden Design
-
-The foundation of successful garden design begins with understanding the basic principles and having the right tools and materials. Our **Premium Organic Soil Mix** provides the perfect foundation for any garden design project, ensuring your plants have the nutrients and drainage they need to thrive.
-
-### Essential Elements for Success
-
-**Soil Preparation:** Start with high-quality soil that drains well but retains moisture. Our Premium Organic Soil Mix is specifically formulated to provide the ideal growing medium for garden design.
-
-**Planning:** Take time to plan your approach, considering factors like:
-- Available space and sunlight
-- Your experience level and time commitment
-- Seasonal timing and local climate
-- Long-term maintenance requirements
-
-### Step-by-Step Implementation
-
-**Week 1-2: Foundation Work**
-Begin by preparing your growing area. Remove any weeds or debris, and test your existing soil if working with an established area. Incorporate our Premium Organic Soil Mix to improve soil structure and fertility.
-
-**Week 3-4: Installation**
-This is when you'll implement your garden design plan. Take your time during this phase – proper installation now prevents problems later.
-
-**Ongoing: Maintenance and Care**
-Regular maintenance ensures long-term success. Develop a routine that includes:
-- Regular watering (adjust based on season and weather)
-- Monitoring for pests and diseases
-- Seasonal soil amendments
-- Pruning or harvesting as appropriate
-
-## Advanced Techniques
-
-Once you've mastered the basics, these advanced techniques will take your garden design to the next level:
-
-### Seasonal Optimization
-Each season brings unique opportunities and challenges. Spring is ideal for major plantings and soil preparation, while fall is perfect for soil improvement and planning for next year.
-
-### Troubleshooting Common Issues
-Even experienced gardeners encounter challenges. Common issues include:
-- Poor drainage or waterlogged soil
-- Nutrient deficiencies
-- Pest and disease problems
-- Seasonal stress on plants
-
-Most of these issues can be prevented or resolved with proper soil preparation and regular care.
-
-## Product Recommendations
-
-For garden design success, we recommend:
-
-**Premium Organic Soil Mix** - Our flagship product provides the perfect foundation for any gardening project. Rich in organic matter and beneficial microorganisms, it improves soil structure while providing essential nutrients.
-
-**Organic Fertilizer Blend** - Specially formulated to support healthy plant growth without harsh chemicals. Slow-release formula provides consistent nutrition throughout the growing season.
-
-**Natural Mulch Blend** - Helps retain soil moisture, suppress weeds, and regulate soil temperature. Made from locally sourced organic materials.
-
-## Seasonal Calendar
-
-**Spring (March-May)**
-- Prepare soil and planting areas
-- Begin planting after last frost
-- Establish watering routines
-- Apply organic fertilizer
-
-**Summer (June-August)**
-- Maintain consistent watering
-- Monitor for pests and diseases
-- Harvest regularly to encourage production
-- Mulch to conserve moisture
-
-**Fall (September-November)**
-- Prepare for winter
-- Plant cool-season varieties
-- Improve soil with compost
-- Plan for next year
-
-**Winter (December-February)**
-- Plan and research for next season
-- Order seeds and supplies
-- Maintain tools and equipment
-- Study and learn new techniques
-
-## Conclusion
-
-Successful garden design is achievable for gardeners of all experience levels. By starting with quality soil, following proven techniques, and maintaining consistent care, you'll enjoy abundant results and the satisfaction of growing your own garden design.
-
-Remember that gardening is a journey of continuous learning. Each season brings new experiences and opportunities to improve your skills. Start with the basics, be patient with yourself, and enjoy the process of creating something beautiful and productive.
-
-For more detailed guidance and premium soil products to support your garden design success, explore our full range of organic gardening solutions. Our expert team is always here to help you achieve your gardening goals.
-
-*Ready to start your garden design journey? Browse our Premium Organic Soil Mix and other essential gardening products to get started today.*`,
-    author: "Nature's Way Soil Expert",
-    publishedAt: '2025-10-28',
-    featuredImage: '/images/blog/creating-perfect-raised-garden-beds-featured.jpg',
-    tags: ["raised-beds","garden-design","soil-preparation","drainage"],
-    category: 'Garden Design',
-    readTime: 9,
-    seoTitle: 'Creating Perfect Raised Garden Beds | Nature\'s Way Soil Gardening Guide',
-    seoDescription: 'Expert guide to raised bed construction and soil preparation. Get professional tips and techniques for successful garden design.'
-  },
-{
-    id: 'water-wise-gardening-conserving-water-while-growing-abundantly',
-    title: 'Water-Wise Gardening: Conserving Water While Growing Abundantly',
-    slug: 'water-wise-gardening-conserving-water-while-growing-abundantly',
-    excerpt: 'Discover expert techniques for creating a thriving garden while conserving precious water resources. Learn about drought-resistant plants, efficient irrigation, and soil amendments that retain moisture.',
-    content: `# Water-Wise Gardening: Conserving Water While Growing Abundantly
-
-In today's world of increasing environmental awareness and fluctuating water costs, creating a beautiful, productive garden while conserving water has become both an art and a science. Water-wise gardening, also known as xeriscaping or drought gardening, doesn't mean sacrificing beauty or abundance – it means gardening smarter.
-
-## Understanding Water-Wise Principles
-
-Water-wise gardening is built on seven fundamental principles that work together to create a sustainable, low-maintenance landscape. The foundation of any water-wise garden is healthy, well-amended soil. Our **Premium Organic Soil Mix** is specifically formulated to improve water retention while maintaining proper drainage.
-
-## Soil Improvement for Water Conservation
-
-Rich organic matter acts like a sponge, holding moisture during dry periods and releasing it slowly to plant roots. Key soil improvements include adding compost to increase water-holding capacity, incorporating organic matter to improve soil structure, and creating proper drainage to prevent waterlogging.
-
-## Efficient Irrigation Techniques
-
-When irrigation is necessary, make every drop count with drip irrigation systems that deliver water directly to root zones, reducing evaporation by up to 50% compared to overhead sprinklers.
-
-## Plant Selection and Placement
-
-Choose drought-tolerant plants and group them according to their water needs. This creates microclimates that maximize efficiency while maintaining visual appeal.
-
-## Conclusion
-
-Water-wise gardening with our Premium Organic Soil Mix creates beautiful, sustainable landscapes that thrive with minimal water input while supporting local ecosystems.`,
-    author: "Nature's Way Soil Expert",
-    publishedAt: '2024-10-15',
-    featuredImage: '/images/blog/water-wise-gardening-featured.jpg',
-    tags: ['water-conservation', 'drought-gardening', 'sustainable-gardening', 'soil-improvement'],
-    category: 'Gardening Tips',
-    readTime: 8,
-    seoTitle: 'Water-Wise Gardening Guide | Drought-Resistant Garden Tips',
-    seoDescription: 'Learn expert water-wise gardening techniques. Create beautiful, drought-resistant gardens that conserve water while growing abundantly with our soil guide.'
-  },
-  {
-    id: 'composting-101-turning-kitchen-scraps-into-garden-gold',
-    title: 'Composting 101: Turning Kitchen Scraps into Garden Gold',
-    slug: 'composting-101-turning-kitchen-scraps-into-garden-gold',
-    excerpt: 'Master the art of composting with this comprehensive beginner guide. Learn how to transform kitchen waste into nutrient-rich soil amendments that will supercharge your garden growth.',
-    content: `# Composting 101: Turning Kitchen Scraps into Garden Gold
-
-Composting is nature's recycling system – a simple, sustainable way to transform organic waste into nutrient-rich soil amendment that plants absolutely love. Whether you're dealing with kitchen scraps, yard waste, or both, composting creates "black gold" that enhances soil structure, feeds beneficial microorganisms, and reduces waste.
-
-## Understanding the Composting Process
-
-Composting works through the activity of billions of microorganisms that break down organic matter. These tiny workers need four key elements: carbon, nitrogen, oxygen, and moisture. When balanced correctly, they create nutrient-rich compost in just 3-6 months.
-
-## Setting Up Your Compost System
-
-Start with the right location – choose a spot with good drainage and partial shade. Our **Premium Organic Soil Mix** can help accelerate the composting process when used as a starter layer, introducing beneficial microorganisms.
-
-## What to Compost and What to Avoid
-
-**Green materials** (nitrogen-rich): Kitchen scraps like fruit and vegetable peels, coffee grounds, fresh grass clippings, and plant trimmings.
-
-**Brown materials** (carbon-rich): Dry leaves, paper, cardboard, straw, and dried plant material.
-
-Avoid meat, dairy, oils, and pet waste which can attract pests or create odors.
-
-## Maintaining Your Compost
-
-Turn your pile every 2-3 weeks to provide oxygen and speed decomposition. Keep moisture levels like a wrung-out sponge – damp but not soggy.
-
-## Using Finished Compost
-
-Finished compost should be dark, crumbly, and smell earthy. Mix it with our Premium Organic Soil Mix for the ultimate growing medium that combines immediate nutrients with long-term soil health benefits.
-
-## Conclusion
-
-Composting transforms waste into garden treasure while supporting sustainable gardening practices. Combined with our Premium Organic Soil Mix, homemade compost creates the perfect foundation for thriving plants.`,
-    author: "Nature's Way Soil Expert",
-    publishedAt: '2024-10-20',
-    featuredImage: '/images/blog/composting-101-featured.jpg',
-    tags: ['composting', 'sustainable-gardening', 'organic-matter', 'waste-reduction'],
-    category: 'Gardening Tips',
-    readTime: 10,
-    seoTitle: 'Composting 101: Complete Beginner Guide to Making Compost',
-    seoDescription: 'Learn how to make nutrient-rich compost from kitchen scraps. Complete composting guide for beginners with tips for successful organic waste recycling.'
+    "id": "seasonal-soil-preparation-getting-your-garden-ready-for-fall",
+    "title": "Seasonal Soil Preparation: Getting Your Garden Ready for fall",
+    "slug": "seasonal-soil-preparation-getting-your-garden-ready-for-fall",
+    "excerpt": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+    "content": "\n# Seasonal Soil Preparation: Getting Your Garden Ready for fall\n\nWelcome to another comprehensive guide from Nature's Way Soil, where we share expert knowledge to help you create thriving, abundant gardens using sustainable and proven techniques.\n\n## Introduction\n\nSuccessful gardening combines traditional wisdom with modern techniques. Whether you're a beginner or experienced gardener, these proven strategies will help you achieve better results.\n\n## Key Principles\n\n### Understanding Your Garden's Needs\nEvery garden is unique, with its own microclimate, soil conditions, and challenges. The first step to success is understanding these specific conditions and working with them rather than against them.\n\n### The Role of Quality Soil\nPremium organic soil provides the foundation for healthy plant growth. Our **Premium Organic Soil Mix** contains:\n- Aged compost for slow-release nutrition\n- Coconut coir for moisture retention\n- Perlite for proper drainage\n- Beneficial microorganisms for soil health\n\n### Seasonal Considerations\nPreparation for winter is crucial during this time of year. Focus on:\n- Fall planting\n- Soil preparation\n- Cover crops\n- Season extension\n\n## Step-by-Step Implementation\n\n### Planning Phase\n1. **Assess your current conditions** - soil, sunlight, water access\n2. **Set realistic goals** based on your space and experience\n3. **Create a timeline** for implementation\n4. **Gather necessary materials** including quality soil amendments\n\n### Preparation Phase\n1. **Prepare your growing area** with proper soil amendments\n2. **Test soil pH and nutrients** for optimal plant health\n3. **Plan your layout** for efficient use of space\n4. **Install any necessary infrastructure** (irrigation, support structures)\n\n### Implementation Phase\n1. **Follow proven techniques** for your specific growing conditions\n2. **Monitor progress regularly** and adjust as needed\n3. **Maintain consistent care** throughout the growing season\n4. **Document what works** for future reference\n\n## Advanced Techniques\n\n### Soil Enhancement Methods\n- **Organic matter incorporation** improves soil structure and fertility\n- **Microbial inoculation** enhances nutrient cycling\n- **pH optimization** ensures proper nutrient availability\n- **Drainage management** prevents root problems\n\n### Sustainable Practices\n- **Water conservation** through mulching and efficient irrigation\n- **Natural pest management** using beneficial insects and companion planting\n- **Nutrient cycling** through composting and cover crops\n- **Biodiversity promotion** for garden ecosystem health\n\n## Common Challenges and Solutions\n\n### Challenge 1: Poor Soil Quality\n**Solution:** Gradually improve soil with organic matter, starting with our Premium Organic Soil Mix as a foundation.\n\n### Challenge 2: Inconsistent Results\n**Solution:** Maintain detailed records and follow proven techniques consistently.\n\n### Challenge 3: Pest and Disease Issues\n**Solution:** Focus on prevention through healthy soil and appropriate plant selection.\n\n### Challenge 4: Water Management\n**Solution:** Implement mulching, efficient irrigation, and water-wise plant choices.\n\n## Seasonal Maintenance Calendar\n\n### Fall Tasks\n- **Fall planting**: Essential for current season success\n- **Soil preparation**: Essential for current season success\n- **Cover crops**: Essential for current season success\n- **Season extension**: Essential for current season success\n\n### Year-Round Considerations\n- Regular soil testing and amendment\n- Consistent watering and maintenance\n- Pest and disease monitoring\n- Planning for next season's improvements\n\n## Expert Tips for Success\n\n1. **Start with quality soil** - it's the foundation of everything else\n2. **Be patient** - sustainable gardening builds results over time\n3. **Observe and learn** from your garden's responses\n4. **Stay consistent** with care and maintenance\n5. **Plan ahead** for seasonal transitions\n\n## Measuring Success\n\nTrack your progress with these key indicators:\n- **Plant health and vigor** - strong growth and disease resistance\n- **Soil improvement** - better structure, moisture retention, and fertility\n- **Yield increases** - more abundant harvests over time\n- **Reduced inputs** - less need for external fertilizers and pest control\n\n## Getting Started Today\n\nReady to implement these techniques in your garden? Here's your action plan:\n\n1. **Assess your current situation** - soil, space, and goals\n2. **Start with soil improvement** using our Premium Organic Soil Mix\n3. **Begin with small areas** and expand as you gain experience\n4. **Keep detailed records** of what works in your specific conditions\n5. **Be patient and consistent** - results improve over time\n\n## Conclusion\n\nSeasonal Soil Preparation: Getting Your Garden Ready for fall represents an investment in your garden's long-term health and productivity. By combining these proven techniques with quality soil amendments and consistent care, you'll create a thriving garden ecosystem that produces abundant results year after year.\n\nRemember, every expert gardener started as a beginner. The key is to start with solid fundamentals, use quality materials, and remain committed to learning and improving your techniques over time.\n\n**Ready to transform your garden?** Our Premium Organic Soil Mix provides the perfect foundation for implementing these techniques. Combined with the knowledge you've gained here, you have everything needed to create the abundant, healthy garden you've always wanted.\n\n*For more expert gardening advice and premium soil products, visit our complete collection of gardening resources and soil amendments.*\n  ",
+    "author": "Nature's Way Soil Team",
+    "publishedAt": "2025-10-31",
+    "featuredImage": "/images/blog/seasonal-soil-preparation-getting-your-garden-ready-for-fall.jpg",
+    "tags": [
+      "seasonal gardening",
+      "soil preparation",
+      "fall gardening",
+      "garden maintenance"
+    ],
+    "category": "Gardening Tips",
+    "readTime": 7,
+    "seoTitle": "Seasonal Soil Preparation: Getting Your Garden Ready for fall - Expert Guide | Nature's Way Soil",
+    "seoDescription": "Complete guide to seasonal soil preparation: getting your garden ready for fall. Expert tips, sustainable techniques, and proven methods for successful gardening."
   }
 ];
 
 // Helper functions for blog functionality
-export function getAllBlogArticles(): BlogArticle[] {
-  return blogArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-}
-
-export function getAllBlogCategories(): string[] {
-  const categories = blogArticles.map(article => article.category);
-  const uniqueCategories = categories.filter((category, index) => categories.indexOf(category) === index);
-  return uniqueCategories.sort();
+export function getBlogArticleById(id: string): BlogArticle | undefined {
+  return blogArticles.find(article => article.id === id);
 }
 
 export function getBlogArticleBySlug(slug: string): BlogArticle | undefined {
   return blogArticles.find(article => article.slug === slug);
 }
 
-export function getBlogArticlesByCategory(category: string): BlogArticle[] {
-  return blogArticles.filter(article => article.category === category);
+export function getAllBlogArticles(): BlogArticle[] {
+  return blogArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 }
 
-export function getRelatedBlogArticles(currentArticle: BlogArticle, limit: number = 3): BlogArticle[] {
+export function getBlogArticlesByCategory(category: string): BlogArticle[] {
   return blogArticles
-    .filter(article => article.id !== currentArticle.id)
+    .filter(article => article.category === category)
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+}
+
+export function getBlogArticlesByTag(tag: string): BlogArticle[] {
+  return blogArticles
+    .filter(article => article.tags.includes(tag))
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+}
+
+export function getAllBlogCategories(): string[] {
+  const categories = new Set(blogArticles.map(article => article.category));
+  return Array.from(categories).sort();
+}
+
+export function getAllBlogTags(): string[] {
+  const tags = new Set(blogArticles.flatMap(article => article.tags));
+  return Array.from(tags).sort();
+}
+
+export function getRelatedArticles(currentArticle: BlogArticle, limit: number = 3): BlogArticle[] {
+  return blogArticles
     .filter(article => 
-      article.category === currentArticle.category || 
-      article.tags.some(tag => currentArticle.tags.includes(tag))
+      article.id !== currentArticle.id && 
+      (article.category === currentArticle.category || 
+       article.tags.some(tag => currentArticle.tags.includes(tag)))
     )
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, limit);
 }
-
-export default blogArticles;

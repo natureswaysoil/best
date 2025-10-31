@@ -54,9 +54,7 @@ async function testTwitterPost() {
     // For now, let's use a simple approach to test Twitter API v2 with OAuth 1.0a
     const twitterHeaders = {
       'Content-Type': 'application/json',
-      'Authorization': createTwitterOAuth1aHeader('POST', 'https://api.twitter.com/2/tweets', {
-        text: tweetText
-      })
+      'Authorization': createTwitterOAuth1aHeader()
     };
     
     const response = await fetch('https://api.twitter.com/2/tweets', {
@@ -147,19 +145,14 @@ async function refreshYouTubeToken() {
 }
 
 // Helper function to create Twitter OAuth 1.0a header (simplified)
-function createTwitterOAuth1aHeader(method, url, params) {
+function createTwitterOAuth1aHeader() {
   // This is a simplified version - in production you'd use a proper OAuth 1.0a library
-  const consumerKey = process.env.TWITTER_API_KEY;
-  const consumerSecret = process.env.TWITTER_API_SECRET;
-  const accessToken = process.env.TWITTER_ACCESS_TOKEN;
-  const accessTokenSecret = process.env.TWITTER_ACCESS_TOKEN_SECRET;
+  // Note: OAuth 1.0a would typically use method, url, and params for signature generation
   
   // For this test, we'll use a basic Bearer token approach first
   // If that fails, we know we need full OAuth 1.0a implementation
   return `Bearer ${process.env.TWITTER_BEARER_TOKEN}`;
 }
-
-// Main test function
 async function runSinglePostTest() {
   console.log(`\n🎯 Testing single post capability for: ${testProduct.name}`);
   

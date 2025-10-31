@@ -6,7 +6,6 @@
  * Focus: Get social media posting back online immediately
  */
 
-import fetch from 'node-fetch';
 import fs from 'fs/promises';
 
 console.log('🚀 YouTube & Twitter Recovery System');

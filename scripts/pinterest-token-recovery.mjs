@@ -67,7 +67,7 @@ async function findPinterestTokens() {
           type: 'token_file'
         });
       }
-    } catch (error) {
+    } catch {
       // File doesn't exist, skip
     }
   }

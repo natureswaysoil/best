@@ -28,7 +28,7 @@ async function readGenerationLog() {
       }
       return null;
     }).filter(Boolean);
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -112,7 +112,7 @@ async function getVideoStats() {
       videoScripts: scriptFiles.length,
       lastGenerated: await getLastVideoGeneration()
     };
-  } catch (error) {
+  } catch {
     return {
       totalVideos: 0,
       posterImages: 0,
@@ -138,7 +138,7 @@ async function getLastVideoGeneration() {
     );
     
     return new Date(Math.max(...stats.map(d => d.getTime())));
-  } catch (error) {
+  } catch {
     return null;
   }
 }

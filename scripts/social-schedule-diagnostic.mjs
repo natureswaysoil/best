@@ -7,7 +7,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
 console.log('📅 Social Media Schedule Diagnostic');
 console.log(`🕐 Current time: ${new Date().toISOString()}`);
@@ -115,7 +114,7 @@ function diagnosePotentialIssues() {
     } else {
       console.log('✅ Sufficient video content available');
     }
-  } catch (error) {
+  } catch {
     console.log('⚠️  Could not check video availability');
     issues.push('Video directory access issue');
   }
@@ -135,7 +134,7 @@ function diagnosePotentialIssues() {
       console.log('📝 No posting history file found');
       console.log('   💡 This might indicate first-time setup or reset');
     }
-  } catch (error) {
+  } catch {
     console.log('⚠️  Could not check posting history');
   }
   
@@ -178,7 +177,7 @@ function provideRecommendations(issues) {
  */
 function main() {
   try {
-    const schedule = analyzeSchedule();
+    analyzeSchedule();
     console.log('\n' + '━'.repeat(50));
     
     const activity = analyzeRecentActivity();
@@ -189,8 +188,8 @@ function main() {
     
     provideRecommendations(issues);
     
-    // Determine if there's a real issue
-    const hoursSincePost = 13;
+    // Determine if there's a real issue using actual activity data
+    const hoursSincePost = activity.hoursSinceLastPost;
     const isLateForSchedule = hoursSincePost > 14; // More than 14 hours = definitely missed
     
     console.log('\n🎯 SUMMARY:');

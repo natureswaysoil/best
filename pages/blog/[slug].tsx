@@ -7,7 +7,7 @@ import Layout from '../../components/Layout';
 import { 
   getAllBlogArticles, 
   getBlogArticleBySlug, 
-  getRelatedBlogArticles, 
+  getRelatedArticles, 
   BlogArticle 
 } from '../../data/blog';
 
@@ -314,7 +314,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     };
   }
 
-  const relatedArticles = getRelatedBlogArticles(article, 3);
+  const relatedArticles = getRelatedArticles(article, 3);
 
   return {
     props: {
