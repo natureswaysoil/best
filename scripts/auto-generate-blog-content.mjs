@@ -271,21 +271,26 @@ Remember, every expert gardener started as a beginner. The key is to start with 
 // Read current blog data
 async function readCurrentBlogData() {
   try {
-    // Try to import the blog data directly instead of parsing TypeScript as JSON
-    const blogDataPath = new URL('../data/blog.ts', import.meta.url).pathname;
-    
-    // Since we can't directly import TypeScript, read and count existing articles differently
     const content = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
     
-    // Simple count of existing articles by looking for title patterns
-    const articleMatches = content.match(/"title":\s*"/g);
-    const articleCount = articleMatches ? articleMatches.length : 0;
+    // Extract article titles to check for duplicates
+    const titleMatches = content.match(/"title":\s*"([^"]+)"/g);
+    const existingArticles = [];
     
-    console.log(`Found ${articleCount} existing articles (estimated)`);
+    if (titleMatches) {
+      titleMatches.forEach(match => {
+        const titleMatch = match.match(/"title":\s*"([^"]+)"/);
+        if (titleMatch) {
+          existingArticles.push({
+            title: titleMatch[1],
+            // We only need title for duplicate checking
+          });
+        }
+      });
+    }
     
-    // For now, return empty array to avoid JSON parsing issues
-    // The script will generate new content regardless
-    return [];
+    console.log(`Found ${existingArticles.length} existing articles`);
+    return existingArticles;
   } catch (error) {
     console.error('Error reading blog data:', error);
     return [];
@@ -441,9 +446,16 @@ async function logActivity(message) {
 
 // Check if it's time to generate content (every 2 days)
 function shouldGenerateContent() {
-  const now = new Date();
-  const daysSinceEpoch = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
-  return daysSinceEpoch % 2 === 0; // Every 2 days
+  // Always generate content when the script is run - let GitHub Actions control the schedule
+  const forceGenerate = process.env.FORCE_GENERATE === 'true';
+  
+  if (forceGenerate) {
+    console.log('🚀 Force generation enabled via environment variable');
+    return true;
+  }
+  
+  // Always generate when run by GitHub Actions or manually
+  return true;
 }
 
 // Main content generation function
@@ -461,21 +473,56 @@ async function generateNewContent() {
     const currentArticles = await readCurrentBlogData();
     await logActivity(`Found ${currentArticles.length} existing articles`);
 
-    // Select a topic for new article (simplified selection)
+    // Select a topic for new article (avoid duplicates when possible)
     const season = getCurrentSeason();
-    const selectedTopic = GARDENING_TOPICS[Math.floor(Math.random() * GARDENING_TOPICS.length)];
+    
+    // Get list of existing titles to avoid duplicates
+    const existingTitles = currentArticles.map(article => 
+      article.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+    );
+    
+    // Find topics we haven't covered yet
+    const availableTopics = GARDENING_TOPICS.filter(topic => {
+      const topicTitle = topic.title.replace('{season}', season).toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      return !existingTitles.some(existing => existing.includes(topicTitle.substring(0, 20)));
+    });
+    
+    // Select from available topics, or random if all have been used
+    const selectedTopic = availableTopics.length > 0 
+      ? availableTopics[Math.floor(Math.random() * availableTopics.length)]
+      : GARDENING_TOPICS[Math.floor(Math.random() * GARDENING_TOPICS.length)];
+      
     const newArticle = generateArticleContent(selectedTopic, season);
     
-    await logActivity(`Generated new article: ${newArticle.title}`);
+    await logActivity(`Generated new article: ${newArticle.title} (${availableTopics.length} unused topics remaining)`);
 
     // Generate video assets
     await generateVideoAssets(newArticle);
     await logActivity(`Generated video assets for: ${newArticle.slug}`);
 
-    // Update blog data
-    const updatedArticles = [newArticle, ...currentArticles];
-    await writeBlogData(updatedArticles);
-    await logActivity('Updated blog data file');
+    // Update blog data - read existing content and add new article
+    const existingContent = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
+    
+    // Find the blogArticles array and insert the new article at the beginning
+    const arrayMatch = existingContent.match(/(export const blogArticles: BlogArticle\[\] = \[)([\s\S]*?)(\];)/);
+    
+    if (arrayMatch) {
+      const beforeArray = existingContent.substring(0, arrayMatch.index + arrayMatch[1].length);
+      const afterArray = existingContent.substring(arrayMatch.index + arrayMatch[1].length + arrayMatch[2].length);
+      
+      // Add new article at the beginning
+      const newArticleJson = JSON.stringify(newArticle, null, 2);
+      const newContent = beforeArray + 
+        (arrayMatch[2].trim() ? '\n  ' + newArticleJson + ',' + arrayMatch[2] : '\n  ' + newArticleJson + '\n') +
+        afterArray;
+      
+      await fs.writeFile(BLOG_DATA_PATH, newContent, 'utf-8');
+      await logActivity('Added new article to existing blog data');
+    } else {
+      // Fallback: create new file with just this article
+      await writeBlogData([newArticle]);
+      await logActivity('Created new blog data file');
+    }
 
     // Create featured image placeholder
     const imageDir = path.join(process.cwd(), 'public', 'images', 'blog');

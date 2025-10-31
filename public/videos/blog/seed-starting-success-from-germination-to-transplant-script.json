@@ -1,0 +1,36 @@
+{
+  "id": "seed-starting-success-from-germination-to-transplant",
+  "title": "Seed Starting Success: From Germination to Transplant",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Seed Starting Success: From Germination to Transplant",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Seed Starting Success: From Germination to Transplant"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+      "background": "gardening-techniques",
+      "voiceover": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "seed starting",
+    "germination",
+    "transplanting",
+    "garden planning"
+  ],
+  "category": "Gardening Tips",
+  "generatedAt": "2025-10-31T17:56:08.970Z"
+}
