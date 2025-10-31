@@ -1,0 +1,36 @@
+{
+  "id": "organic-pest-control-natural-solutions-for-a-healthy-garden",
+  "title": "Organic Pest Control: Natural Solutions for a Healthy Garden",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Organic Pest Control: Natural Solutions for a Healthy Garden",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Organic Pest Control: Natural Solutions for a Healthy Garden"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Professional organic gardening advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+      "background": "gardening-techniques",
+      "voiceover": "Professional organic gardening advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "pest control",
+    "organic gardening",
+    "natural remedies",
+    "garden health"
+  ],
+  "category": "Organic Gardening",
+  "generatedAt": "2025-10-31T17:46:56.966Z"
+}
