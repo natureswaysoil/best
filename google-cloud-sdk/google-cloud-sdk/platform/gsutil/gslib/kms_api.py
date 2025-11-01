@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import os
 import traceback
 
 from apitools.base.py import exceptions as apitools_exceptions
@@ -95,8 +96,12 @@ class KmsApi(object):
     if isinstance(self.credentials, NoOpCredentials):
       # This API key is not secret and is used to identify gsutil during
       # anonymous requests.
-      self.api_client.AddGlobalParam(
-          'key', u'AIzaSyDnacJHrKma0048b13sh8cgxNUwulubmJM')
+      api_key = os.environ.get('GOOGLE_API_KEY_KMS')
+      if api_key:
+        self.api_client.AddGlobalParam('key', api_key)
+      elif self.logger:
+        self.logger.warning('GOOGLE_API_KEY_KMS environment variable not set. '
+                            'Anonymous KMS API requests may not function properly.')
 
   def GetKeyIamPolicy(self, key_name):
     request = (apitools_messages.

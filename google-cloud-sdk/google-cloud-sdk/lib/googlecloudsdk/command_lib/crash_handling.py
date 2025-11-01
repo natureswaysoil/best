@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import functools
+import os
 import sys
 import traceback
 
@@ -86,10 +87,10 @@ def _PrintInstallationAction(err, err_string):
 
 
 ERROR_PROJECT = 'cloud-sdk-user-errors'
-ERROR_REPORTING_PARAM = 'AIzaSyCUuWyME_r4XylltWNeydEjKSkgXkvpVyU'
+ERROR_REPORTING_PARAM = os.environ.get('GOOGLE_API_KEY_ERROR_REPORTING')
 SERVICE = 'gcloud'
 CRASH_PROJECT = 'cloud-sdk-crashes'
-CRASH_REPORTING_PARAM = 'AIzaSyAp4DSI_Z3-mK-B8U0t7GE34n74OWDJmak'
+CRASH_REPORTING_PARAM = os.environ.get('GOOGLE_API_KEY_CRASH_REPORTING')
 
 
 def _GetReportingClient(is_crash=True):
@@ -105,9 +106,17 @@ def _GetReportingClient(is_crash=True):
   client_class = core_apis.GetClientClass(util.API_NAME, util.API_VERSION)
   client_instance = client_class(get_credentials=False)
   if is_crash:
-    client_instance.AddGlobalParam('key', CRASH_REPORTING_PARAM)
+    if CRASH_REPORTING_PARAM:
+      client_instance.AddGlobalParam('key', CRASH_REPORTING_PARAM)
+    else:
+      log.warning('GOOGLE_API_KEY_CRASH_REPORTING environment variable not set. '
+                  'Crash reporting may not function properly.')
   else:
-    client_instance.AddGlobalParam('key', ERROR_REPORTING_PARAM)
+    if ERROR_REPORTING_PARAM:
+      client_instance.AddGlobalParam('key', ERROR_REPORTING_PARAM)
+    else:
+      log.warning('GOOGLE_API_KEY_ERROR_REPORTING environment variable not set. '
+                  'Error reporting may not function properly.')
   return client_instance
 
 
