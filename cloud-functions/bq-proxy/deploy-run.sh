@@ -12,7 +12,8 @@ gcloud run deploy "$SERVICE" \
   --source=. \
   --region="$REGION" \
   --allow-unauthenticated \
-  --env-vars-file=env.yaml
+  --set-env-vars=ALLOWED_ORIGINS=https://natureswaysoil.github.io \
+  --set-env-vars=NODE_OPTIONS=--enable-source-maps
 
 URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
 echo "\nService URL: $URL"

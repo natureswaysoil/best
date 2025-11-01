@@ -29,18 +29,6 @@
         .metric-card h3 { color: #2d3748; font-size: 1.2rem; margin-bottom: 15px; }
         .metric-value { font-size: 2.5rem; font-weight: bold; color: #667eea; margin-bottom: 5px; }
         .metric-change { font-size: 0.9rem; color: #48bb78; }
-        
-        /* Optimization Section Styles */
-        .optimization-section { background: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .optimization-section h2 { color: #2d3748; margin-bottom: 20px; font-size: 1.8rem; }
-        .optimization-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
-        .optimization-card { background: #f7fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; }
-        .optimization-card h3 { color: #2d3748; margin-bottom: 15px; font-size: 1.1rem; }
-        .health-item, .opportunity-item, .status-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .health-label, .opportunity-label, .status-label { color: #4a5568; font-size: 0.9rem; }
-        .health-value, .opportunity-value, .status-value { font-weight: bold; color: #2d3748; }
-        .auto-controls { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .auto-controls .btn { padding: 8px 16px; font-size: 14px; }
         .metric-change.negative { color: #f56565; }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; }
         .chart-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -58,15 +46,6 @@
         <div class="header">
             <h1>🌱 Amazon PPC Dashboard</h1>
             <p><span class="status-indicator" id="status-indicator"></span><span id="status-text">Ready to connect</span></p>
-            <p style="margin-top:8px; font-size:0.95rem;">
-                <a href="policy/" style="color:#667eea; text-decoration:none; font-weight:600;">Policy Center</a>
-                <span style="color:#a0aec0;"> • </span>
-                <a href="policy/privacy.html" style="color:#667eea; text-decoration:none;">Privacy</a>
-                <span style="color:#a0aec0;"> • </span>
-                <a href="policy/terms.html" style="color:#667eea; text-decoration:none;">Terms</a>
-                <span style="color:#a0aec0;"> • </span>
-                <a href="policy/data-deletion.html" style="color:#667eea; text-decoration:none;">Data Deletion</a>
-            </p>
         </div>
 
         <div class="config-section">
@@ -99,22 +78,13 @@
                         <button class="btn secondary" onclick="testProxy()">Test Proxy</button>
                     </div>
                 </div>
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label for="optimizer-url">Optional: Optimizer URL (Cloud Function/Run)</label>
-                    <input id="optimizer-url" type="url" placeholder="https://REGION-PROJECT.cloudfunctions.net/amazon-ppc-optimizer" />
-                    <small style="color:#718096">Set your optimizer endpoint; the Run Optimization button will POST here.</small>
-                    <div style="margin-top:8px;">
-                        <button class="btn secondary" onclick="saveOptimizerUrl()">Save Optimizer URL</button>
-                        <button class="btn secondary" onclick="clearOptimizerUrl()">Clear Optimizer URL</button>
-                        <button class="btn secondary" onclick="testOptimizer()">Test Optimizer</button>
-                    </div>
-                </div>
                 <div class="form-group">
                     <label for="bq-location">Dataset Location</label>
-                    <input id="bq-location" type="text" placeholder="US (Multi-region)" readonly />
-                    <small style="color:#718096">Dataset location is set to US (multi-region). This is the correct location for the amazon_ppc dataset.</small>
+                    <input id="bq-location" type="text" placeholder="us-east4 (Eastern US)" />
+                    <small style="color:#718096">Use your dataset location (e.g., us, us-east4, eu). Defaults to us-east4.</small>
                     <div style="margin-top:8px;">
-                        <button class="btn secondary" onclick="resetLocation()">Reset to US</button>
+                        <button class="btn secondary" onclick="saveLocation()">Save Location</button>
+                        <button class="btn secondary" onclick="clearLocation()">Clear Location</button>
                     </div>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
@@ -154,66 +124,6 @@
             </div>
         </div>
 
-        <!-- Optimization Insights Section -->
-        <div class="optimization-section">
-            <h2>🎯 PPC Optimization Insights</h2>
-            <div class="optimization-grid">
-                <div class="optimization-card">
-                    <h3>📊 Campaign Health</h3>
-                    <div id="campaign-health">
-                        <div class="health-item">
-                            <span class="health-label">High ACOS (>45%):</span>
-                            <span class="health-value" id="high-acos-count">--</span>
-                        </div>
-                        <div class="health-item">
-                            <span class="health-label">Profitable (<15% ACOS):</span>
-                            <span class="health-value" id="profitable-count">--</span>
-                        </div>
-                        <div class="health-item">
-                            <span class="health-label">Needs Attention:</span>
-                            <span class="health-value" id="attention-count">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="optimization-card">
-                    <h3>💰 Optimization Opportunities</h3>
-                    <div id="optimization-opportunities">
-                        <div class="opportunity-item">
-                            <span class="opportunity-label">Estimated Monthly Savings:</span>
-                            <span class="opportunity-value" id="estimated-savings">--</span>
-                        </div>
-                        <div class="opportunity-item">
-                            <span class="opportunity-label">Keywords to Add:</span>
-                            <span class="opportunity-value" id="keywords-to-add">--</span>
-                        </div>
-                        <div class="opportunity-item">
-                            <span class="opportunity-label">Negative Keywords Needed:</span>
-                            <span class="opportunity-value" id="negative-keywords-needed">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="optimization-card">
-                    <h3>⚡ Auto-Optimization Status</h3>
-                    <div id="auto-optimization">
-                        <div class="status-item">
-                            <span class="status-label">Last Optimization:</span>
-                            <span class="status-value" id="last-optimization">--</span>
-                        </div>
-                        <div class="status-item">
-                            <span class="status-label">Actions This Week:</span>
-                            <span class="status-value" id="weekly-actions">--</span>
-                        </div>
-                        <div class="auto-controls">
-                            <button class="btn secondary" onclick="runOptimization()">Run Optimization Now</button>
-                            <button class="btn secondary" onclick="viewOptimizationLog()">View Log</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="charts-grid">
             <div class="chart-card">
                 <h3>Campaign Performance</h3>
@@ -236,75 +146,18 @@
     </div>
 
     <script>
-        // Early compatibility shims in case any cached code references legacy function names
-        (function(){
-            try {
-                if (typeof window !== 'undefined') {
-                    if (typeof window.renderCampaignChart !== 'function') {
-                        window.renderCampaignChart = function(rows){
-                            if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
-                            console.warn('renderCampaignChart shim in effect; updateCampaignChart not yet available');
-                        };
-                    }
-                    if (typeof window.renderTrendsChart !== 'function') {
-                        window.renderTrendsChart = function(rows){
-                            if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
-                            console.warn('renderTrendsChart shim in effect; updateTrendsChart not yet available');
-                        };
-                    }
-                    // Last-resort handler: gracefully handle legacy ReferenceErrors from cached code
-                    window.addEventListener('error', function(ev){
-                        try {
-                            const msg = (ev && ev.message) || '';
-                            if (/renderCampaignChart is not defined/.test(msg)) {
-                                ev.preventDefault();
-                                console.warn('Intercepted legacy renderCampaignChart error; shimming to updateCampaignChart');
-                                window.renderCampaignChart = function(rows){
-                                    if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
-                                };
-                                return false;
-                            }
-                            if (/renderTrendsChart is not defined/.test(msg)) {
-                                ev.preventDefault();
-                                console.warn('Intercepted legacy renderTrendsChart error; shimming to updateTrendsChart');
-                                window.renderTrendsChart = function(rows){
-                                    if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
-                                };
-                                return false;
-                            }
-                        } catch(_) { /* ignore */ }
-                    }, true);
-                }
-            } catch(_) { /* ignore */ }
-        })();
-
         let bigQueryAuthenticated = false;
         let accessToken = null; // not used if proxy is configured
         let tokenExpiry = null; // not used if proxy is configured
-
-        // Allow clearing cached proxy via URL param for debugging: ?resetProxy=1
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('resetProxy') === '1') {
-                localStorage.removeItem('bq_proxy_url');
-            }
-        } catch (e) {
-            // ignore in environments without URL parsing
-        }
 
         const BIGQUERY_CONFIG = {
             projectId: 'amazon-ppc-474902',
             datasetId: 'amazon_ppc',
             apiEndpoint: 'https://bigquery.googleapis.com/v2',
             // Default to deployed Cloud Run proxy if none saved
-            proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-nucguq3dba-uk.a.run.app',
-            location: 'US' // Force US location - dataset is in multi-region US
+            proxyEndpoint: localStorage.getItem('bq_proxy_url') || 'https://bq-proxy-1009540130231.us-east4.run.app',
+            location: localStorage.getItem('bq_location') || 'us-east4' // Eastern US default
         };
-
-        // Automatically set proxy URL on page load for live data connection
-        if (!localStorage.getItem('bq_proxy_url')) {
-            localStorage.setItem('bq_proxy_url', 'https://bq-proxy-nucguq3dba-uk.a.run.app');
-        }
 
         function initGoogleAPI() {
             if (window.gapi) {
@@ -472,88 +325,36 @@
             return json;
         }
 
-        // Convert BigQuery REST queryResponse into array of plain JS objects
-        function bqToObjects(result) {
-            try {
-                const rows = result && result.rows;
-                const fields = result && result.schema && result.schema.fields;
-                if (Array.isArray(rows) && Array.isArray(fields)) {
-                    const names = fields.map(f => f.name);
-                    return rows.map(r => {
-                        const o = {};
-                        for (let i = 0; i < names.length; i++) {
-                            o[names[i]] = r && r.f && r.f[i] ? r.f[i].v : null;
-                        }
-                        return o;
-                    });
-                }
-                // Already objects?
-                if (Array.isArray(result)) return result;
-            } catch (_) {}
-            return [];
-        }
-
         async function loadCampaignData() {
             const q = `
-                SELECT 
-                    campaign_name, 
-                    SUM(impressions) total_impressions, 
-                    SUM(clicks) total_clicks,
-                    SUM(cost) total_cost,
-                    SUM(conversions) total_conversions,
-                    SUM(conversion_value) total_conversion_value,
-                    ROUND(AVG(acos), 2) avg_acos,
-                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) avg_roas,
-                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr,
-                    ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) cpc,
-                    ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) conversion_rate
+                SELECT campaign_name, SUM(impressions) total_impressions, SUM(clicks) total_clicks
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
                 GROUP BY campaign_name ORDER BY total_impressions DESC LIMIT 10`;
             const result = await executeBigQueryQuery(q);
-            const objs = bqToObjects(result);
-            return objs.length ? objs : (result.rows || []);
+            return result.rows || [];
         }
 
         async function loadTrendsData() {
             const q = `
-                SELECT 
-                    date, 
-                    SUM(impressions) impressions, 
-                    SUM(clicks) clicks,
-                    SUM(cost) cost,
-                    SUM(conversions) conversions,
-                    SUM(conversion_value) conversion_value,
-                    ROUND(AVG(acos), 2) acos,
-                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) roas,
-                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) ctr
+                SELECT date, SUM(impressions) impressions, SUM(clicks) clicks
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
                 GROUP BY date ORDER BY date`;
             const result = await executeBigQueryQuery(q);
-            const objs = bqToObjects(result);
-            return objs.length ? objs : (result.rows || []);
+            return result.rows || [];
         }
 
         async function loadSummaryMetrics() {
             const q = `
-                SELECT 
-                    COUNT(DISTINCT campaign_name) total_campaigns,
-                    SUM(impressions) total_impressions,
-                    SUM(clicks) total_clicks,
-                    SUM(conversions) total_conversions,
-                    SUM(cost) total_cost,
-                    SUM(conversion_value) total_conversion_value,
-                    ROUND(SUM(clicks)*100.0/NULLIF(SUM(impressions),0), 2) overall_ctr,
-                    ROUND(SUM(cost)/NULLIF(SUM(clicks),0), 2) overall_cpc,
-                    ROUND(SUM(conversions)*100.0/NULLIF(SUM(clicks),0), 2) overall_conversion_rate,
-                    ROUND(SUM(cost)*100.0/NULLIF(SUM(conversion_value),0), 2) overall_acos,
-                    ROUND(SUM(conversion_value)/NULLIF(SUM(cost),0), 2) overall_roas
+                SELECT COUNT(DISTINCT campaign_name) total_campaigns,
+                       SUM(impressions) total_impressions,
+                       SUM(clicks) total_clicks,
+                       SUM(conversions) total_conversions
                 FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
                 WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)`;
             const result = await executeBigQueryQuery(q);
-            const objs = bqToObjects(result);
-            return (objs && objs[0]) || (result.rows && result.rows[0]) || {};
+            return result.rows?.[0] || {};
         }
 
         async function updateDashboardWithBigQuery() {
@@ -565,15 +366,6 @@
                 updateMetrics(summaryData);
                 updateCampaignChart(campaignData);
                 updateTrendsChart(trendsData);
-                // Inline confirmation including live totals to make success visible in UI
-                try {
-                    const f = (i) => (summaryData && summaryData.f && summaryData.f[i] && summaryData.f[i].v) || 0;
-                    const msg = `✅ Live: ${Number(f(0))} campaigns • ${Number(f(1)).toLocaleString()} impressions • ${Number(f(2)).toLocaleString()} clicks`;
-                    const cs = document.getElementById('connection-status');
-                    if (cs) cs.innerHTML = `<div style="color:#48bb78;margin-top:10px;">${msg}</div>`;
-                } catch (_) { /* ignore */ }
-                // Load optimization insights non-blocking
-                try { await loadOptimizationInsights(); } catch (err) { console.warn('Optimization insights failed:', err); }
                 document.getElementById('last-updated').textContent = new Date().toLocaleString();
                 setStatus('success', 'Live data loaded successfully');
             } catch (e) {
@@ -583,24 +375,13 @@
         }
 
         function updateMetrics(row) {
-            // Support both BigQuery REST row format (row.f[i].v) and plain object
-            let totalCampaigns, totalImps, totalClicks, totalConv;
-            if (row && row.f) {
-                const get = (i) => (row?.f?.[i]?.v) || 0;
-                totalCampaigns = Number(get(0));
-                totalImps = Number(get(1));
-                totalClicks = Number(get(2));
-                totalConv = Number(get(3));
-            } else {
-                totalCampaigns = Number(row.total_campaigns || 0);
-                totalImps = Number(row.total_impressions || 0);
-                totalClicks = Number(row.total_clicks || 0);
-                totalConv = Number(row.total_conversions || 0);
-            }
-            document.getElementById('total-campaigns').textContent = isNaN(totalCampaigns) ? '--' : totalCampaigns.toString();
-            document.getElementById('total-impressions').textContent = isNaN(totalImps) ? '--' : totalImps.toLocaleString();
-            document.getElementById('total-clicks').textContent = isNaN(totalClicks) ? '--' : totalClicks.toLocaleString();
-            const cr = totalClicks ? ((totalConv / totalClicks) * 100).toFixed(2) : '0.00';
+            const get = (i) => (row?.f?.[i]?.v) || 0;
+            document.getElementById('total-campaigns').textContent = get(0);
+            document.getElementById('total-impressions').textContent = Number(get(1)).toLocaleString();
+            document.getElementById('total-clicks').textContent = Number(get(2)).toLocaleString();
+            const clicks = Number(get(2));
+            const conv = Number(get(3));
+            const cr = clicks ? ((conv / clicks) * 100).toFixed(2) : '0.00';
             document.getElementById('conversion-rate').textContent = `${cr}%`;
         }
 
@@ -609,12 +390,9 @@
                 document.getElementById('campaign-chart').innerHTML = '<div class="loading">No campaign data available</div>';
                 return;
             }
-            // Clear any placeholder content before rendering
-            const el = document.getElementById('campaign-chart');
-            el.innerHTML = '';
-            const names = rows.map(r => r?.f ? r.f[0]?.v : (r.campaign_name || ''));
-            const imps = rows.map(r => r?.f ? Number(r.f[1]?.v || 0) : Number(r.total_impressions || 0));
-            const clicks = rows.map(r => r?.f ? Number(r.f[2]?.v || 0) : Number(r.total_clicks || 0));
+            const names = rows.map(r => r.f[0].v);
+            const imps = rows.map(r => Number(r.f[1].v || 0));
+            const clicks = rows.map(r => Number(r.f[2].v || 0));
             Plotly.newPlot('campaign-chart', [
                 { x: names, y: imps, name: 'Impressions', type: 'bar', marker: { color: '#667eea' } },
                 { x: names, y: clicks, name: 'Clicks', type: 'bar', marker: { color: '#764ba2' } }
@@ -626,12 +404,9 @@
                 document.getElementById('trends-chart').innerHTML = '<div class="loading">No trend data available</div>';
                 return;
             }
-            // Clear any placeholder content before rendering
-            const el = document.getElementById('trends-chart');
-            el.innerHTML = '';
-            const dates = rows.map(r => r?.f ? r.f[0]?.v : r.date);
-            const imps = rows.map(r => r?.f ? Number(r.f[1]?.v || 0) : Number(r.impressions || 0));
-            const clicks = rows.map(r => r?.f ? Number(r.f[2]?.v || 0) : Number(r.clicks || 0));
+            const dates = rows.map(r => r.f[0].v);
+            const imps = rows.map(r => Number(r.f[1].v || 0));
+            const clicks = rows.map(r => Number(r.f[2].v || 0));
             Plotly.newPlot('trends-chart', [
                 { x: dates, y: imps, name: 'Impressions', type: 'scatter', mode: 'lines+markers', line: { color: '#667eea' } },
                 { x: dates, y: clicks, name: 'Clicks', type: 'scatter', mode: 'lines+markers', line: { color: '#764ba2' } }
@@ -770,52 +545,15 @@
             document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy URL cleared</div>';
         }
 
-        function saveOptimizerUrl() {
-            var el = document.getElementById('optimizer-url');
-            var url = el && 'value' in el ? el.value.trim() : '';
-            if (url && !/^https?:\/\//.test(url)) {
-                showError('Optimizer URL must start with http:// or https://');
-                return;
-            }
-            localStorage.setItem('optimizer_url', url || '');
-            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Optimizer URL saved</div>';
-        }
-
-        function clearOptimizerUrl() {
-            localStorage.removeItem('optimizer_url');
-            var input = document.getElementById('optimizer-url');
-            if (input) input.value = '';
-            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Optimizer URL cleared</div>';
-        }
-
-        async function testOptimizer() {
-            const url = (document.getElementById('optimizer-url')?.value || localStorage.getItem('optimizer_url') || '').trim();
-            if (!url) { showError('Set or save an Optimizer URL first'); return; }
-            if (!/^https:\/\//.test(url)) { showError('Optimizer URL must start with https://'); return; }
-            try {
-                setStatus('loading', 'Testing optimizer…');
-                const r = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ probe: true })
-                });
-                const txt = await r.text();
-                if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
-                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Optimizer reachable</div>';
-                setStatus('success', 'Optimizer is reachable');
-            } catch (e) {
-                showError('Optimizer test failed: ' + (e?.message || e));
-                setStatus('error', 'Optimizer test failed');
-            }
-        }
-
         async function testProxy() {
             const url = BIGQUERY_CONFIG.proxyEndpoint || (document.getElementById('proxy-url')?.value || '').trim();
             if (!url) { showError('Set or save a Proxy URL first'); return; }
             if (!/^https:\/\//.test(url)) { showError('Proxy URL must start with https://'); return; }
             try {
                 setStatus('loading', 'Testing proxy…');
-                // Tiny query (browser will handle preflight automatically)
+                // Preflight
+                await fetch(url, { method: 'OPTIONS' });
+                // Tiny query
                 const r = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -823,48 +561,34 @@
                 });
                 const txt = await r.text();
                 if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
-                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy OK - Loading live data...</div>';
-                setStatus('success', 'Proxy connected - Loading dashboard');
-                
-                // Auto-load dashboard data if proxy test succeeds
-                setTimeout(async () => {
-                    try {
-                        await updateDashboardWithBigQuery();
-                        document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Live data loaded successfully!</div>';
-                    } catch (error) {
-                        console.error('Auto-load failed:', error);
-                        document.getElementById('connection-status').innerHTML = '<div style="color:#e53e3e;margin-top:10px;">⚠️ Proxy OK, but data loading failed. Click "Load Data with BigQuery" to retry.</div>';
-                    }
-                }, 500);
-                
+                document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Proxy OK</div>';
+                setStatus('success', 'Proxy reachable');
             } catch (e) {
                 showError('Proxy test failed: ' + (e?.message || e));
                 setStatus('error', 'Proxy test failed');
             }
         }
 
-        function resetLocation() {
-            localStorage.setItem('bq_location', 'US');
-            BIGQUERY_CONFIG.location = 'US';
-            var locInput = document.getElementById('bq-location');
-            if (locInput) locInput.value = 'US';
-            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location reset to US (multi-region)</div>';
+        function saveLocation() {
+            var el = document.getElementById('bq-location');
+            var loc = el && 'value' in el ? el.value.trim() : '';
+            if (!loc) loc = 'us-east4';
+            localStorage.setItem('bq_location', loc);
+            BIGQUERY_CONFIG.location = loc;
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location saved</div>';
+        }
+
+        function clearLocation() {
+            localStorage.removeItem('bq_location');
+            BIGQUERY_CONFIG.location = 'us-east4';
+            var el = document.getElementById('bq-location');
+            if (el) el.value = 'us-east4';
+            document.getElementById('connection-status').innerHTML = '<div style="color:#48bb78;margin-top:10px;">✅ Location reset to us-east4</div>';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initGoogleAPI();
             setStatus('ready', 'Ready to connect');
-            
-            // Auto-connect to live data if proxy is available
-            if (BIGQUERY_CONFIG.proxyEndpoint) {
-                console.log('Auto-connecting to live data via proxy:', BIGQUERY_CONFIG.proxyEndpoint);
-                document.getElementById('proxy-url').value = BIGQUERY_CONFIG.proxyEndpoint;
-                // Auto-load live data after a short delay
-                setTimeout(() => {
-                    testProxy();
-                }, 1000);
-            }
-            
             // URL param overrides
             var params = new URLSearchParams(window.location.search);
             var urlProxy = params.get('proxy');
@@ -893,17 +617,10 @@
                 // Preserve the default proxy; reflect it in the input for visibility
                 if (input) input.value = BIGQUERY_CONFIG.proxyEndpoint || '';
             }
-            var savedLoc = 'US'; // Force US location - dataset is in multi-region US
+            var savedLoc = localStorage.getItem('bq_location') || BIGQUERY_CONFIG.location;
             var locInput = document.getElementById('bq-location');
             if (locInput) locInput.value = savedLoc;
             BIGQUERY_CONFIG.location = savedLoc;
-            // Clear any incorrect cached location
-            localStorage.setItem('bq_location', 'US');
-
-            // Load Optimizer URL into field if saved
-            var optSaved = localStorage.getItem('optimizer_url');
-            var optInput = document.getElementById('optimizer-url');
-            if (optInput) optInput.value = (typeof optSaved === 'string') ? optSaved : '';
 
             // Auto-connect if proxy is configured
             if (BIGQUERY_CONFIG.proxyEndpoint) {
@@ -916,225 +633,6 @@
             }
         });
         setInterval(() => { if (bigQueryAuthenticated) updateDashboardWithBigQuery(); }, 5 * 60 * 1000);
-
-        // PPC Optimization Functions
-        async function loadOptimizationInsights() {
-            try {
-                // 1) Campaign Health (last 7 days)
-                const healthQuery = `
-                    SELECT 
-                        SUM(CASE WHEN acos > 45 THEN 1 ELSE 0 END) as high_acos_campaigns,
-                        SUM(CASE WHEN acos < 15 AND conversions > 0 THEN 1 ELSE 0 END) as profitable_campaigns,
-                        SUM(CASE WHEN (acos BETWEEN 35 AND 45) OR conversions = 0 THEN 1 ELSE 0 END) as attention_campaigns
-                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
-                    WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-                `;
-
-                const healthResult = await executeBigQueryQuery(healthQuery);
-                if (healthResult.rows && healthResult.rows.length > 0) {
-                    const health = healthResult.rows[0];
-                    document.getElementById('high-acos-count').textContent = health.f[0].v || '0';
-                    document.getElementById('profitable-count').textContent = health.f[1].v || '0';
-                    document.getElementById('attention-count').textContent = health.f[2].v || '0';
-                }
-
-                // 2) Estimated Monthly Savings (last 30 days)
-                // Heuristic: overspend above a 30% ACOS target
-                // savings = SUM(max(cost - conversion_value * 0.30, 0))
-                const savingsQuery = `
-                    SELECT ROUND(SUM(GREATEST(cost - (conversion_value * 0.30), 0)), 2) AS estimated_savings
-                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
-                    WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-                `;
-                const savingsRes = await executeBigQueryQuery(savingsQuery);
-                if (savingsRes.rows && savingsRes.rows[0] && savingsRes.rows[0].f) {
-                    const savings = Number(savingsRes.rows[0].f[0].v || 0);
-                    document.getElementById('estimated-savings').textContent = `$${savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                }
-
-                // 3) Keywords to Add (last 30 days)
-                // Heuristic: campaigns with conversions > 0 but low impressions (< 5,000) ⇒ expand coverage with new keywords
-                const kwAddQuery = `
-                    WITH agg AS (
-                      SELECT campaign_name,
-                             SUM(impressions) AS total_impressions,
-                             SUM(conversions) AS total_conversions
-                      FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
-                      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-                      GROUP BY campaign_name
-                    )
-                    SELECT COUNTIF(total_conversions > 0 AND total_impressions < 5000) AS keywords_to_add
-                    FROM agg
-                `;
-                const kwAddRes = await executeBigQueryQuery(kwAddQuery);
-                if (kwAddRes.rows && kwAddRes.rows[0] && kwAddRes.rows[0].f) {
-                    const n = Number(kwAddRes.rows[0].f[0].v || 0);
-                    document.getElementById('keywords-to-add').textContent = String(n);
-                }
-
-                // 4) Negative Keywords Needed (last 30 days)
-                // Heuristic: campaigns with significant traffic (clicks ≥ 50) but zero conversions ⇒ add negatives to cut waste
-                const negKwQuery = `
-                    WITH agg AS (
-                      SELECT campaign_name,
-                             SUM(clicks) AS total_clicks,
-                             SUM(conversions) AS total_conversions
-                      FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.campaign_performance\`
-                      WHERE date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
-                      GROUP BY campaign_name
-                    )
-                    SELECT COUNTIF(total_clicks >= 50 AND total_conversions = 0) AS negative_needed
-                    FROM agg
-                `;
-                const negKwRes = await executeBigQueryQuery(negKwQuery);
-                if (negKwRes.rows && negKwRes.rows[0] && negKwRes.rows[0].f) {
-                    const n = Number(negKwRes.rows[0].f[0].v || 0);
-                    document.getElementById('negative-keywords-needed').textContent = String(n);
-                }
-
-                // 5) Auto-Optimization Status (best-effort)
-                // If an optimization_actions table exists, surface recent activity
-                try {
-                    const actionsQuery = `
-                        SELECT 
-                            MAX(timestamp) AS last_ts,
-                            SUM(CASE WHEN action_type = 'keyword_added' THEN 1 ELSE 0 END) AS keywords_added,
-                            SUM(CASE WHEN action_type = 'negative_keyword_added' THEN 1 ELSE 0 END) AS negatives_added
-                        FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.optimization_actions\`
-                        WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-                    `;
-                    const actionsRes = await executeBigQueryQuery(actionsQuery);
-                    if (actionsRes.rows && actionsRes.rows[0] && actionsRes.rows[0].f) {
-                        const lastTs = actionsRes.rows[0].f[0].v;
-                        const added = Number(actionsRes.rows[0].f[1].v || 0);
-                        const negs = Number(actionsRes.rows[0].f[2].v || 0);
-                        document.getElementById('last-optimization').textContent = lastTs ? new Date(lastTs).toLocaleString() : '—';
-                        document.getElementById('weekly-actions').textContent = String(added + negs);
-                    }
-                } catch (e) {
-                    // Table may not exist yet; ignore silently
-                }
-
-            } catch (error) {
-                console.error('Failed to load optimization insights:', error);
-                // Set default values on error
-                document.getElementById('high-acos-count').textContent = '--';
-                document.getElementById('profitable-count').textContent = '--';
-                document.getElementById('attention-count').textContent = '--';
-                document.getElementById('estimated-savings').textContent = '--';
-                document.getElementById('keywords-to-add').textContent = '--';
-                document.getElementById('negative-keywords-needed').textContent = '--';
-                document.getElementById('last-optimization').textContent = '--';
-                document.getElementById('weekly-actions').textContent = '--';
-            }
-        }
-
-        async function runOptimization() {
-            // Prefer saved optimizer URL, then typed field, then fallback
-            let optimizerUrl = (localStorage.getItem('optimizer_url') || '').trim();
-            if (!optimizerUrl) {
-                optimizerUrl = (document.getElementById('optimizer-url')?.value || '').trim();
-            }
-            if (!optimizerUrl) {
-                optimizerUrl = 'https://amazon-ppc-optimizer-nucguq3dba-uk.a.run.app';
-            }
-            if (!/^https:\/\//.test(optimizerUrl)) {
-                showError('Optimizer URL must start with https://');
-                return;
-            }
-
-            try {
-                document.querySelector('[onclick="runOptimization()"]').textContent = 'Running...';
-                document.querySelector('[onclick="runOptimization()"]').disabled = true;
-                
-                const response = await fetch(optimizerUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert(`Optimization Complete!
-Campaign Actions: ${result.optimizations.campaigns_paused + result.optimizations.campaigns_started}
-Bids Adjusted: ${result.optimizations.bids_adjusted}
-Keywords Added: ${result.optimizations.keywords_added}
-Negative Keywords: ${result.optimizations.negative_keywords_added}
-Estimated Savings: $${result.cost_savings_estimate.toFixed(2)}`);
-                    
-                    // Refresh insights
-                    loadOptimizationInsights();
-                } else {
-                    throw new Error(result.error || 'Optimization failed');
-                }
-            } catch (error) {
-                console.error('Optimization failed:', error);
-                alert('Optimization failed: ' + error.message);
-            } finally {
-                document.querySelector('[onclick="runOptimization()"]').textContent = 'Run Optimization Now';
-                document.querySelector('[onclick="runOptimization()"]').disabled = false;
-            }
-        }
-
-        async function viewOptimizationLog() {
-            try {
-                const logQuery = `
-                    SELECT 
-                        timestamp,
-                        action_type,
-                        reason,
-                        impact_estimate,
-                        status
-                    FROM \`${BIGQUERY_CONFIG.projectId}.${BIGQUERY_CONFIG.datasetId}.optimization_actions\`
-                    WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
-                    ORDER BY timestamp DESC
-                    LIMIT 20
-                `;
-                
-                const logResult = await executeBigQueryQuery(logQuery);
-                
-                if (logResult.rows && logResult.rows.length > 0) {
-                    let logText = 'Recent Optimization Actions:\n\n';
-                    logResult.rows.forEach(row => {
-                        const timestamp = row.f[0].v;
-                        const actionType = row.f[1].v;
-                        const reason = row.f[2].v;
-                        const impact = row.f[3].v;
-                        const status = row.f[4].v;
-                        
-                        logText += `${new Date(timestamp).toLocaleString()}\n`;
-                        logText += `Action: ${actionType}\n`;
-                        logText += `Reason: ${reason}\n`;
-                        logText += `Impact: $${impact}\n`;
-                        logText += `Status: ${status}\n\n`;
-                    });
-                    
-                    alert(logText);
-                } else {
-                    alert('No optimization actions found in the last 7 days.');
-                }
-            } catch (error) {
-                console.error('Failed to load optimization log:', error);
-                alert('Failed to load optimization log: ' + error.message);
-            }
-        }
-
-        // Backward-compatibility shims for older code paths that referenced
-        // render* functions. Some users may have stale cached JS expecting
-        // these symbols. Map them to the current update* implementations.
-        try {
-            window.renderCampaignChart = function(rows) {
-                if (typeof updateCampaignChart === 'function') return updateCampaignChart(rows);
-                console.warn('renderCampaignChart shim: updateCampaignChart not available');
-            };
-            window.renderTrendsChart = function(rows) {
-                if (typeof updateTrendsChart === 'function') return updateTrendsChart(rows);
-                console.warn('renderTrendsChart shim: updateTrendsChart not available');
-            };
-        } catch (e) {
-            // Non-browser environments can ignore
-        }
     </script>
 </body>
 </html>

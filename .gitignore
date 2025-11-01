@@ -20,3 +20,4 @@ dist/
 # Packages/artifacts
 deployment-package/*.tar.gz
 *.tar.gz
+.vercel
