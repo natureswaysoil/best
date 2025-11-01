@@ -39,28 +39,48 @@ const createYouTubeClient = async () => {
   return google.youtube({ version: 'v3', auth: oauth2Client });
 };
 
-// Generate a sample video (placeholder - would normally use HeyGen or FFmpeg)
-const generateSampleVideo = async () => {
-  // For testing, we'll create a minimal MP4 or use a test video URL
-  // In production, this would call HeyGen API or FFmpeg
+// Generate a proper video file using FFmpeg
+function generateSampleVideo() {
   const videoPath = path.join(__dirname, 'test-video.mp4');
   
-  // Check if we have a test video
+  // Check if video already exists and is valid
   if (fs.existsSync(videoPath)) {
-    return videoPath;
+    const stats = fs.statSync(videoPath);
+    if (stats.size > 100000) { // If larger than 100KB, assume it's valid
+      console.log('Using existing video file:', videoPath);
+      return videoPath;
+    }
   }
   
-  // Create a minimal valid MP4 file (black frame, 1 second)
-  // This is a hex representation of a minimal MP4
-  const minimalMP4 = Buffer.from([
-    0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d,
-    0x00, 0x00, 0x02, 0x00, 0x69, 0x73, 0x6f, 0x6d, 0x69, 0x73, 0x6f, 0x32,
-    0x61, 0x76, 0x63, 0x31, 0x6d, 0x70, 0x34, 0x31
-  ]);
+  console.log('Generating new video with FFmpeg...');
   
-  fs.writeFileSync(videoPath, minimalMP4);
-  return videoPath;
-};
+  // Generate a proper H.264 video with audio using FFmpeg
+  const { execSync } = require('child_process');
+  
+  const ffmpegCmd = `ffmpeg -y \
+    -f lavfi -i color=c=darkgreen:s=1280x720:d=10 \
+    -f lavfi -i sine=frequency=440:duration=10 \
+    -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:\
+text='Nature'\\''s Way Soil':fontcolor=white:fontsize=80:x=(w-text_w)/2:y=h/2-100,\
+drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:\
+text='Transform Your Garden Naturally':fontcolor=white:fontsize=40:x=(w-text_w)/2:y=h/2+50,\
+drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf:\
+text='Organic Soil Amendments':fontcolor=white:fontsize=30:x=(w-text_w)/2:y=h/2+120" \
+    -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p \
+    -c:a aac -b:a 128k -ar 44100 \
+    -t 10 \
+    -movflags +faststart \
+    ${videoPath}`;
+  
+  try {
+    execSync(ffmpegCmd, { stdio: 'pipe' });
+    console.log('Video generated successfully:', videoPath);
+    return videoPath;
+  } catch (error) {
+    console.error('FFmpeg error:', error.message);
+    throw new Error('Failed to generate video with FFmpeg');
+  }
+}
 
 // Upload video to YouTube
 const uploadToYouTube = async (videoPath, metadata) => {

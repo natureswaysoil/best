@@ -2,6 +2,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install FFmpeg and fonts for video generation
+RUN apk add --no-cache ffmpeg ttf-dejavu
+
 # Copy package files
 COPY package*.json ./
 
