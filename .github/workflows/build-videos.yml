@@ -27,13 +27,13 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           HEYGEN_API_KEY: ${{ secrets.HEYGEN_API_KEY }}
-        run: node tools/generate-from-asins.mjs asins.json out_videos
+        run: node scripts/generate-product-videos.mjs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: product-videos
-          path: out_videos/**
+          path: public/videos/**
 
       - name: Notify website repo
         env:
