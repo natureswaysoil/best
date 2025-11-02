@@ -35,8 +35,4 @@ jobs:
           name: product-videos
           path: public/videos/**
 
-      - name: Notify website repo
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api repos/natureswaysoil/natures-way-soil-website/dispatches -f event_type=product_videos_ready
+# (Removed the "Notify website repo" step as it was self-dispatching to the same repository)
