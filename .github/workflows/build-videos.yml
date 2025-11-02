@@ -21,7 +21,7 @@ jobs:
         run: |
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/creds.json
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/creds.json
-          node tools/asin-from-sheet.mjs 1LU2ahpzMqLB5FLYqiyDbXOfjTxbdp8U8 1712974299 asins.json
+          node scripts/asin-from-sheet.mjs 1LU2ahpzMqLB5FLYqiyDbXOfjTxbdp8U8 1712974299 asins.json
 
       - name: Generate videos
         env:
