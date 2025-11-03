@@ -1,0 +1,36 @@
+{
+  "id": "vertical-gardening-maximizing-your-growing-space",
+  "title": "Vertical Gardening: Maximizing Your Growing Space",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Vertical Gardening: Maximizing Your Growing Space",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Vertical Gardening: Maximizing Your Growing Space"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+      "background": "gardening-techniques",
+      "voiceover": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "vertical gardening",
+    "space saving",
+    "garden design",
+    "urban farming"
+  ],
+  "category": "Gardening Tips",
+  "generatedAt": "2025-11-03T09:30:00.637Z"
+}
