@@ -27,12 +27,10 @@ function extractProductsLiteral(contents) {
   return literal.replace(/;\s*$/, '');
 }
 
-export function loadProducts() {
-  const contents = fs.readFileSync(PATHS.productsFile, 'utf8');
-  const literal = extractProductsLiteral(contents);
-  // eslint-disable-next-line no-new-func
-  const factory = new Function(`return (${literal});`);
-  const products = factory();
+export async function loadProducts() {
+  // Dynamically import the products module and return the exported array
+  const productsModule = await import(PATHS.productsFile);
+  const products = productsModule.allProducts;
   if (!Array.isArray(products)) {
     throw new Error('Product data did not evaluate to an array');
   }
