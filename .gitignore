@@ -6,3 +6,6 @@ node_modules
 tsconfig.tsbuildinfo
 .vercel
 node_modules
+
+# Generated files
+asins.json
