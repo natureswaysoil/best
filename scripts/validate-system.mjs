@@ -44,17 +44,17 @@ export async function runSystemValidation(options = {}) {
       name: 'Environment configuration',
       task: () => {
         const { missing, empty } = requireEnvVars(CORE_ENV_VARS);
-        if ((missing.length || empty.length) && !allowMissingSecrets) {
+        function buildInfoDetails(missing, empty) {
           const info = [];
           if (missing.length) info.push(`missing ${missing.join(', ')}`);
           if (empty.length) info.push(`empty ${empty.join(', ')}`);
-          return { ok: false, details: info.join(' | ') };
+          return info.join(' | ');
+        }
+        if ((missing.length || empty.length) && !allowMissingSecrets) {
+          return { ok: false, details: buildInfoDetails(missing, empty) };
         }
         if (missing.length || empty.length) {
-          const info = [];
-          if (missing.length) info.push(`missing ${missing.join(', ')}`);
-          if (empty.length) info.push(`empty ${empty.join(', ')}`);
-          return { ok: true, skip: true, details: info.join(' | ') };
+          return { ok: true, skip: true, details: buildInfoDetails(missing, empty) };
         }
         return { ok: true, details: 'Required environment variables detected' };
       },
