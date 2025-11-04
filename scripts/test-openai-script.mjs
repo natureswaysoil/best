@@ -77,7 +77,11 @@ export async function runOpenAiScriptSuite(options = {}) {
       name: 'Script tone and CTA checks',
       task: () => {
         const missingCta = Object.entries(asinScripts)
-          .filter(([, config]) => !config.segments.some(seg => /Nature['’]s Way Soil|natureswaysoil/i.test(seg.text)))
+          .filter(([, config]) => !config.segments.some(seg => {
+            // Normalize apostrophe-like characters to straight apostrophe
+            const normalizedText = seg.text.replace(/[\u2019\u2018\u201B\u2032\u2035\u02BC\uFF07\u275C\u275B\uA78C\u0027]/g, "'");
+            return /Nature's Way Soil|natureswaysoil/i.test(normalizedText);
+          }))
           .map(([asin]) => asin);
         if (missingCta.length) {
           return { ok: false, details: `CTA missing brand mention for: ${missingCta.join(', ')}` };
