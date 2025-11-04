@@ -108,7 +108,7 @@ export async function runSuite(title, checks, options = {}) {
 
 export async function runSuitesSequentially(suites) {
   let overallOk = true;
-  for (const { title, runner } of suites) {
+  for (const { runner } of suites) {
     const result = await runner();
     if (!result.ok) {
       overallOk = false;
