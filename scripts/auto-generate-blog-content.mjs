@@ -8,7 +8,6 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 
 const BLOG_DATA_PATH = path.join(process.cwd(), 'data', 'blog.ts');
 const VIDEOS_DIR = path.join(process.cwd(), 'public', 'videos', 'blog');
@@ -529,26 +528,6 @@ async function generateNewContent() {
     await fs.mkdir(imageDir, { recursive: true });
     const imagePath = path.join(imageDir, `${newArticle.slug}.jpg.placeholder`);
     await fs.writeFile(imagePath, `# Generated image for ${newArticle.title}\n# Auto-generated on ${new Date().toISOString()}`);
-
-    // Rebuild the site
-    try {
-      execSync('npm run build', { stdio: 'inherit' });
-      await logActivity('Successfully rebuilt site with new content');
-    } catch (error) {
-      await logActivity(`Build failed: ${error.message}`);
-      throw error;
-    }
-
-    // Commit and push changes (if in git repository)
-    try {
-      execSync('git add .', { stdio: 'inherit' });
-      execSync(`git commit -m "auto: add new blog article '${newArticle.title}'"`, { stdio: 'inherit' });
-      execSync('git push origin main', { stdio: 'inherit' });
-      await logActivity('Successfully committed and pushed changes');
-    } catch (error) {
-      await logActivity(`Git operations failed: ${error.message}`);
-      // Don't throw - this might be expected in some environments
-    }
 
     await logActivity(`🎉 Successfully generated new blog content: ${newArticle.title}`);
 
