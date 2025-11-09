@@ -1,0 +1,36 @@
+{
+  "id": "harvest-and-storage-preserving-your-gardens-bounty",
+  "title": "Harvest and Storage: Preserving Your Garden's Bounty",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Harvest and Storage: Preserving Your Garden's Bounty",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Harvest and Storage: Preserving Your Garden's Bounty"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+      "background": "gardening-techniques",
+      "voiceover": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "harvesting",
+    "food storage",
+    "preservation",
+    "garden to table"
+  ],
+  "category": "Gardening Tips",
+  "generatedAt": "2025-11-09T09:22:12.166Z"
+}
