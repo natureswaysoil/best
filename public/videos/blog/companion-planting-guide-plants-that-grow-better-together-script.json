@@ -1,0 +1,36 @@
+{
+  "id": "companion-planting-guide-plants-that-grow-better-together",
+  "title": "Companion Planting Guide: Plants That Grow Better Together",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Companion Planting Guide: Plants That Grow Better Together",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Companion Planting Guide: Plants That Grow Better Together"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Professional organic gardening advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+      "background": "gardening-techniques",
+      "voiceover": "Professional organic gardening advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "companion planting",
+    "plant relationships",
+    "garden planning",
+    "organic methods"
+  ],
+  "category": "Organic Gardening",
+  "generatedAt": "2025-11-11T09:28:13.684Z"
+}
