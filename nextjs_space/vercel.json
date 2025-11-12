@@ -1,0 +1,7 @@
+{
+  "github": {
+    "enabled": true
+  },
+  "buildCommand": "yarn build",
+  "outputDirectory": ".next"
+}
