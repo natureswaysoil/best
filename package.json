@@ -41,7 +41,15 @@
     "ads:deploy": "node scripts/deploy-ads.mjs",
     "ads:monitor": "node scripts/monitor-ads.mjs",
     "ads:fetch-secrets": "node scripts/fetch-secrets-from-google.mjs fetch",
-    "ads:list-secrets": "node scripts/fetch-secrets-from-google.mjs list"
+    "ads:list-secrets": "node scripts/fetch-secrets-from-google.mjs list",
+    "validate": "node scripts/validate-system.mjs",
+    "test:csv": "node scripts/test-csv-processing.mjs",
+    "test:openai": "node scripts/test-openai-script.mjs",
+    "test:heygen": "node scripts/test-heygen-integration.mjs",
+    "test:platforms": "node scripts/test-all-platforms.mjs",
+    "test:e2e": "node scripts/test-e2e-integration.mjs",
+    "test:e2e:dry": "node scripts/test-e2e-integration.mjs --dry-run",
+    "test:all": "node scripts/test-all.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",

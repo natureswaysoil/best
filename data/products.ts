@@ -86,6 +86,8 @@ export const allProducts: ProductData[] = [
     ],
     inStock: true,
     video: '/videos/NWS_002.mp4',
+    videoWebm: '/videos/NWS_002.webm',
+    videoPoster: '/videos/NWS_002.jpg',
     sizes: [
       { name: '4 Quarts', price: 29.99, sku: 'NWS-4q-ABC' }
     ],
@@ -158,6 +160,8 @@ export const allProducts: ProductData[] = [
     ],
     inStock: true,
     video: '/videos/NWS_004.mp4',
+    videoWebm: '/videos/NWS_004.webm',
+    videoPoster: '/videos/NWS_004.jpg',
     sizes: [
       { name: 'Quart', price: 29.99, sku: '9P-CSA1-NC45' }
     ],

@@ -166,6 +166,38 @@ npm run blog:videos
 
 See [HEYGEN_INTEGRATION.md](HEYGEN_INTEGRATION.md) for detailed setup and customization.
 
+## 🧪 Automation Testing & Validation
+
+The project ships with a dry-run friendly verification suite covering data integrity, script templates, HeyGen readiness, and social media automation. No additional dependencies are required—everything runs through Node.js.
+
+### Quick validation commands
+
+```bash
+# Validate environment configuration and filesystem prerequisites
+npm run validate
+
+# Run fast, offline-friendly checks for data and templates
+npm run test:all
+```
+
+### Individual component checks
+
+```bash
+npm run test:csv        # Ensure product data and video assets are in sync
+npm run test:openai     # Validate script templates and timing windows
+npm run test:heygen     # Confirm HeyGen integration scaffolding and fallbacks
+npm run test:platforms  # Inspect social automation server and credential coverage
+```
+
+### Full workflow verification
+
+```bash
+npm run test:e2e:dry    # Sequentially run all suites without requiring API credentials
+npm run test:e2e        # Full verification (expects HeyGen + platform environment variables)
+```
+
+Each script prints detailed success, failure, and skip summaries so you can quickly address configuration gaps before deployment.
+
 ## 🔧 Key Technologies
 
 - **Next.js 14**: React framework with SSG/SSR
