@@ -15,16 +15,28 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '18' }
 
-      - name: Prepare Google credentials
-        id: prepare-gcp
+      - name: Check GCP availability
+        id: check-gcp
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          if [ -z "$GCP_SA_KEY" ]; then
-            echo "::error::Missing GCP_SA_KEY secret. Add the base64-encoded service account key JSON to repository secrets."
-            exit 1
+          if [ -n "$GCP_SA_KEY" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "✅ GCP credentials available - will use Secret Manager"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️  GCP credentials not available - using fallback mode"
+            echo "   - Video generation will use FFmpeg instead of HeyGen"
+            echo "   - ASIN extraction will create placeholder data"
+            echo "   - To enable full functionality, add GCP_SA_KEY secret to repository"
           fi
 
+      - name: Prepare Google credentials
+        id: prepare-gcp
+        if: steps.check-gcp.outputs.available == 'true'
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
           CREDS_PATH="$HOME/gcp-key.json"
           if [[ "$GCP_SA_KEY" == \{* ]]; then
             printf '%s\n' "$GCP_SA_KEY" > "$CREDS_PATH"
@@ -40,12 +52,14 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Authenticate to Google Cloud
+        if: steps.check-gcp.outputs.available == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ steps.prepare-gcp.outputs.credentials_json }}
 
       - name: Get HeyGen API Key from Secret Manager
         id: secrets
+        if: steps.check-gcp.outputs.available == 'true'
         uses: google-github-actions/get-secretmanager-secrets@v2
         with:
           secrets: |-
@@ -58,11 +72,25 @@ jobs:
         run: |
           node scripts/asin-from-sheet.mjs 1LU2ahpzMqLB5FLYqiyDbXOfjTxbdp8U8 1712974299 asins.json
 
+      - name: Install FFmpeg (fallback mode)
+        if: steps.check-gcp.outputs.available == 'false'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          echo "✅ FFmpeg installed for video generation fallback"
+
       - name: Generate videos
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           HEYGEN_API_KEY: ${{ steps.secrets.outputs.HEYGEN_API_KEY }}
-        run: node scripts/generate-product-videos.mjs
+        run: |
+          if [ "${{ steps.check-gcp.outputs.available }}" = "false" ]; then
+            echo "🎬 Running in fallback mode - using FFmpeg for video generation"
+            echo "   Note: Videos will be generated using FFmpeg instead of HeyGen AI"
+          else
+            echo "🎬 Running with HeyGen AI video generation"
+          fi
+          node scripts/generate-product-videos.mjs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

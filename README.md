@@ -255,5 +255,15 @@ All 12 products now have automated 30-second videos:
 - Regenerate videos: `npm run videos`
 - Check video status: `npm run check:videos`
 
+### 🤖 Automated Video Generation (GitHub Actions)
+
+Videos can be automatically generated via GitHub Actions:
+- **Workflow**: `.github/workflows/build-videos.yml`
+- **Schedule**: Weekdays at 7 AM UTC
+- **Dual Mode**: Works with or without Google Cloud credentials
+  - **Full Mode**: Uses HeyGen AI for professional avatar videos (requires GCP setup)
+  - **Fallback Mode**: Uses FFmpeg for text-based videos (no setup required)
+- **Documentation**: See [.github/workflows/README.md](.github/workflows/README.md) for setup details
+
 The website is now ready to deploy and fully functional with all the issues from the previous build resolved!
 # Trigger deployment to pick up Stripe env vars - Mon Oct 27 14:03:31 UTC 2025
