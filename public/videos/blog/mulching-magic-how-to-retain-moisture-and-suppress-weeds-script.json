@@ -1,0 +1,36 @@
+{
+  "id": "mulching-magic-how-to-retain-moisture-and-suppress-weeds",
+  "title": "Mulching Magic: How to Retain Moisture and Suppress Weeds",
+  "duration": "30",
+  "scenes": [
+    {
+      "duration": "8",
+      "type": "intro",
+      "text": "Mulching Magic: How to Retain Moisture and Suppress Weeds",
+      "background": "nature-garden-landscape",
+      "voiceover": "Welcome to Nature's Way Soil. Today: Mulching Magic: How to Retain Moisture and Suppress Weeds"
+    },
+    {
+      "duration": "14",
+      "type": "main-content",
+      "text": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.",
+      "background": "gardening-techniques",
+      "voiceover": "Professional gardening tips advice for fall. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success...."
+    },
+    {
+      "duration": "8",
+      "type": "cta",
+      "text": "Learn More & Shop Premium Soil",
+      "background": "nature-way-soil-products",
+      "voiceover": "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
+    }
+  ],
+  "tags": [
+    "mulching",
+    "water conservation",
+    "weed control",
+    "soil health"
+  ],
+  "category": "Gardening Tips",
+  "generatedAt": "2025-11-23T09:24:05.332Z"
+}
