@@ -479,6 +479,123 @@ export const allProducts: ProductData[] = [
       'Irrigate or allow rainfall within 24 hours to carry nutrients into the root zone.',
       'Horses and livestock may graze once the spray has dried, typically after 2 hours.'
     ]
+  },
+  {
+    id: 'NWS_022',
+    asin: 'B0D7T3TLQP',
+    name: 'Orchid & African Violet Potting Mix',
+    price: 29.99,
+    image: '/images/products/NWS_022/main.jpg',
+    description: 'Premium coco coir-based potting mix with worm castings, activated biochar, and perlite. Lightweight, nutrient-rich blend specifically formulated for orchids and African violets.',
+    category: 'Soil Mix',
+    tags: ['orchid', 'african-violet', 'potting-mix', 'coco-coir', 'biochar', 'worm-castings', 'indoor-plants'],
+    features: [
+      'Premium coco coir base for optimal moisture retention',
+      'Enriched with nutrient-rich worm castings',
+      'Activated biochar for improved drainage',
+      'Perlite for enhanced aeration',
+      'pH balanced for orchids and African violets',
+      'Lightweight formula prevents root rot',
+      'Perfect for indoor flowering plants',
+      'Ready to use - no mixing required'
+    ],
+    images: [
+      '/images/products/NWS_022/main.jpg',
+      '/images/products/NWS_022/thumb.jpg'
+    ],
+    video: '/videos/NWS_022.mp4',
+    videoWebm: '/videos/NWS_022.webm',
+    videoPoster: '/videos/NWS_022.jpg',
+    inStock: true,
+    sizes: [
+      { name: '4 Quarts', price: 29.99, sku: 'NWS-022-4Q' }
+    ],
+    usage: [
+      'Remove orchid or African violet from old potting medium and trim dead roots.',
+      'Fill container 1/3 with potting mix, position plant at correct height.',
+      'Add mix around roots, gently firming to eliminate air pockets.',
+      'Water thoroughly after repotting and place in appropriate light conditions.',
+      'Repot orchids every 1-2 years or when medium breaks down.',
+      'For African violets, repot annually or when plant becomes root-bound.'
+    ]
+  },
+  {
+    id: 'NWS_023',
+    asin: 'B0D7V76PLY',
+    name: 'Organic Orchid Fertilizer - Ready to Use',
+    price: 24.99,
+    image: '/images/products/NWS_023/main.jpg',
+    description: 'Ready-to-use organic orchid fertilizer in convenient 8-ounce spray bottle. Specially formulated to nurture orchids with nature\'s best nutrients for beautiful, long-lasting blooms.',
+    category: 'Fertilizer',
+    tags: ['orchid', 'organic', 'ready-to-use', 'spray', 'flowering', 'indoor-plants'],
+    features: [
+      'Ready to use - no mixing required',
+      'Specially formulated for orchids',
+      'Promotes beautiful, long-lasting blooms',
+      '100% organic ingredients',
+      'Convenient spray bottle application',
+      'Gentle formula won\'t burn delicate roots',
+      'Safe for all orchid varieties',
+      'Ideal for Phalaenopsis, Cattleya, and Dendrobium'
+    ],
+    images: [
+      '/images/products/NWS_023/main.jpg',
+      '/images/products/NWS_023/thumb.jpg'
+    ],
+    video: '/videos/NWS_023.mp4',
+    videoWebm: '/videos/NWS_023.webm',
+    videoPoster: '/videos/NWS_023.jpg',
+    inStock: true,
+    sizes: [
+      { name: '8 oz Spray', price: 24.99, sku: 'NWS-023-8OZ' }
+    ],
+    usage: [
+      'Shake bottle well before each use to mix natural ingredients.',
+      'Spray directly onto orchid leaves, roots, and potting medium until lightly moistened.',
+      'Apply once weekly during active growth and blooming periods.',
+      'Reduce to twice monthly during dormant periods.',
+      'Best applied in morning hours for optimal absorption.',
+      'Can be used on all types of orchids including epiphytic and terrestrial varieties.'
+    ]
+  },
+  {
+    id: 'NWS_024',
+    asin: 'B0F4NQNTSW',
+    name: 'Spray Pattern Indicator',
+    price: 29.99,
+    image: '/images/products/NWS_024/main.jpg',
+    description: 'Professional spray pattern indicator dye for precise application tracking. Ensures complete coverage and prevents over-application of fertilizers, pesticides, and herbicides.',
+    category: 'Application Tool',
+    tags: ['spray-indicator', 'dye', 'application', 'precision', 'lawn-care', 'professional'],
+    features: [
+      'Highly visible blue dye marks treated areas',
+      'Prevents over-application and waste',
+      'Ensures complete, uniform coverage',
+      'Safe for lawns, gardens, and plants',
+      'Fades naturally within 24-48 hours',
+      'Compatible with all spray applications',
+      'Professional-grade accuracy',
+      'Economical - little needed per application'
+    ],
+    images: [
+      '/images/products/NWS_024/main.jpg',
+      '/images/products/NWS_024/thumb.jpg'
+    ],
+    video: '/videos/NWS_024.mp4',
+    videoWebm: '/videos/NWS_024.webm',
+    videoPoster: '/videos/NWS_024.jpg',
+    inStock: true,
+    sizes: [
+      { name: '32 oz', price: 29.99, sku: 'NWS-024-32OZ' }
+    ],
+    usage: [
+      'Add 1-2 ounces of indicator dye per gallon of spray solution.',
+      'Mix thoroughly before filling sprayer tank.',
+      'Spray evenly across treatment area, watching for blue color.',
+      'Overlap spray patterns slightly to ensure complete coverage.',
+      'Avoid spraying near water features or on surfaces that may stain.',
+      'Dye will fade naturally from grass and plants within 1-2 days.'
+    ]
   }
 ];
 
