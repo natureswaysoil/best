@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ['localhost', 'm.media-amazon.com', 'images.unsplash.com', 'd3uryq9bhgb5qr.cloudfront.net'],
+    domains: ['localhost', 'm.media-amazon.com', 'images.unsplash.com', 'd3uryq9bhgb5qr.cloudfront.net', 'cdn.abacus.ai'],
     formats: ['image/webp', 'image/avif']
   },
   async headers() {

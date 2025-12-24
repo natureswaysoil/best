@@ -16,7 +16,7 @@ function setCookie(name: string, value: string, days = 365) {
 }
 
 export default function HeroVideo() {
-  const HERO_SRC = process.env.NEXT_PUBLIC_HERO_VIDEO_URL || "https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/a2a35808-5743-40eb-8023-22b2c6b6cf2d/VIDEO/soil_symbiosis_hero_video.mp4";
+  const HERO_SRC = process.env.NEXT_PUBLIC_HERO_VIDEO_URL || "https://cdn.abacus.ai/images/c2e4e0e6-7b3e-4d0d-9848-33a1c938db27.png";
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [showHint, setShowHint] = useState(false);

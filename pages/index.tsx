@@ -358,7 +358,7 @@ export default function Home({ featuredProducts }: HomeProps) {
                   preload="auto"
                 >
                   <source
-                    src="https://d3uryq9bhgb5qr.cloudfront.net/Pictory-API-Self-Service-USD-Monthly/6brpmrpiu3k3kud3b4eb7nc1rs/a2a35808-5743-40eb-8023-22b2c6b6cf2d/VIDEO/soil_symbiosis_hero_video.mp4"
+                    src="https://cdn.abacus.ai/images/c2e4e0e6-7b3e-4d0d-9848-33a1c938db27.png"
                     type="video/mp4"
                   />
                   Your browser does not support the video tag.
