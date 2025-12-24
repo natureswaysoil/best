@@ -109,9 +109,9 @@ Options explained:
 - `-vf scale=1920:1080`: Scale to Full HD
 - `-movflags +faststart`: Enable progressive loading
 
-### Create Multiple Formats
+### Create Multiple Formats (Future Enhancement)
 
-For best browser compatibility, provide both MP4 and WebM:
+For best browser compatibility, you can provide both MP4 and WebM formats:
 
 ```bash
 # Create MP4
@@ -121,13 +121,16 @@ ffmpeg -i input.mp4 -c:v libx264 -crf 23 public/videos/website-hero.mp4
 ffmpeg -i input.mp4 -c:v libvpx-vp9 -crf 30 public/videos/website-hero.webm
 ```
 
-Then update `components/HeroVideo.tsx` to use multiple sources:
+**Note**: The current implementation uses a single video source via the `NEXT_PUBLIC_HERO_VIDEO_URL` environment variable. To support multiple formats, you would need to modify `components/HeroVideo.tsx` to use multiple `<source>` elements:
+
 ```jsx
 <video>
   <source src="/videos/website-hero.webm" type="video/webm" />
   <source src="/videos/website-hero.mp4" type="video/mp4" />
 </video>
 ```
+
+This is a suggested future enhancement for improved browser compatibility.
 
 ## Adding Video Captions (Optional)
 
@@ -177,7 +180,7 @@ The system is currently configured as follows:
 ## File Locations
 
 ```
-/home/runner/work/best/best/
+project-root/
 ├── .env.local                    # Environment configuration (not in git)
 ├── .env.local.example            # Example environment file
 ├── components/HeroVideo.tsx      # Hero video component
