@@ -126,7 +126,7 @@ export const allProducts: ProductData[] = [
   videoWebm: '/videos/NWS_003.webm',
   videoPoster: '/videos/NWS_003.jpg',
     sizes: [
-      { name: '1 Gallon', price: 29.99, sku: 'P5-NP0G-5SL7' }
+      { name: 'Quart', price: 29.99, sku: 'P5-NP0G-5SL7' }
     ],
     usage: [
       'Shake well before mixing to distribute nutrients evenly.',
@@ -367,7 +367,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_016',
     asin: 'B0D9HT7ND8',
     name: 'Organic Hydroponic Fertilizer Concentrate',
-    price: 19.99,
+    price: 29.99,
   image: '/images/products/NWS_011/main.jpg',
     description: 'Made fresh weekly - 32 oz makes 512 gallons of nutrient solution. Organic plant food for hydroponic systems and aquaponics.',
     category: 'Fertilizer',
@@ -391,7 +391,7 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_016.jpg',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 19.99, sku: 'FR-IJ8R-6LQK' }
+      { name: '32 oz', price: 29.99, sku: 'FR-IJ8R-6LQK' }
     ],
     usage: [
       'Shake well before measuring concentrate to distribute nutrients evenly.',
@@ -404,7 +404,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_018',
     asin: 'B0FGWSKGCY',
     name: 'Seaweed & Humic Acid Lawn Treatment',
-    price: 11.99,
+    price: 19.99,
   image: '/images/products/NWS_018/main.jpg',
     description: '32 oz concentrate with 4.5% North Atlantic Seaweed and 4.5% Humic Acid. Liquid soil revitalizer for greener lawns and healthier plants.',
     category: 'Lawn Care',
@@ -428,7 +428,6 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_018.jpg',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 11.99, sku: 'BH-NBDZ-TCRT' },
       { name: '1 Gallon', price: 19.99, sku: 'BH-NBDZ-1GAL' },
       { name: '2.5 Gallon', price: 55.97, sku: 'BH-NBDZ-25GAL' }
     ],
