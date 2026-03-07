@@ -27,8 +27,8 @@ export const allProducts: ProductData[] = [
   {
     id: 'NWS_001',
     asin: 'B0822RH5L3',
-    name: 'Natural Liquid Fertilizer for Garden and House Plants',
-    price: 20.99,
+    name: "Nature's Way Soil Liquid Lawn Soil Conditioner – Humic Acid & Kelp Liquid Aeration for Compacted Soil – Root Growth Booster for Grass & Lawns – 32 oz Concentrate",
+    price: 29.99,
     image: '/images/products/NWS_001/main.jpg',
     description: '100% Natural USDA Certified Biobased Product with B-1 Vitamin and Aloe Vera Juice to improve transplants. Made fresh weekly for maximum potency.',
     category: 'Fertilizer',
@@ -52,7 +52,7 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_001.jpg',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 20.99, sku: '3L-3MPJ-6BQM' }
+      { name: '32 oz', price: 29.99, sku: '3L-3MPJ-6BQM' }
     ],
     usage: [
       'Shake well before each use to activate the living microbes.',
