@@ -5,9 +5,11 @@
  * Integrates with the video generation pipeline
  */
 
+import { createReadStream } from 'fs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createHmac } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -262,7 +264,6 @@ class SocialMediaAutoPoster {
     const signingKey = `${encodeURIComponent(TWITTER_API_SECRET)}&${encodeURIComponent(TWITTER_ACCESS_SECRET)}`;
 
     // HMAC-SHA256 using Node crypto
-    const { createHmac } = await import('crypto');
     const signature = createHmac('sha256', signingKey).update(sigBase).digest('base64');
 
     oauthParams.oauth_signature = signature;
@@ -419,7 +420,6 @@ class SocialMediaAutoPoster {
       this.log(`Upload session created, uploading ${(videoSize / 1024 / 1024).toFixed(1)}MB...`);
 
       // Step 3: Upload the actual video file
-      const { createReadStream } = await import('fs');
       const videoStream = createReadStream(videoPath);
 
       const uploadResponse = await fetch(uploadUrl, {
