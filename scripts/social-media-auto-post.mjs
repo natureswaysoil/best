@@ -20,6 +20,10 @@ const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 const YOUTUBE_CLIENT_ID = process.env.YT_CLIENT_ID;
 const YOUTUBE_CLIENT_SECRET = process.env.YT_CLIENT_SECRET;
 const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
+const FACEBOOK_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
+const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
 
 // Configuration
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
@@ -44,7 +48,7 @@ class SocialMediaAutoPoster {
     } catch (e) {
       this.log(`Warning: Could not load posted content file: ${e.message}`);
     }
-    return { instagram: {}, twitter: {}, youtube: {} };
+    return { instagram: {}, twitter: {}, youtube: {}, facebook: {}, pinterest: {} };
   }
 
   savePostedContent() {
@@ -110,7 +114,9 @@ class SocialMediaAutoPoster {
     const hashtags = {
       instagram: '#LawnCare #OrganicGardening #HealthyLawn #PetSafe #GreenLawn #LawnGoals #GardeningLife #SoilHealth #LawnTips #OrganicLawn',
       twitter: '#LawnCare #OrganicGardening #HealthyLawn #PetSafe #GreenLawn #LawnTips',
-      youtube: 'lawn care, organic gardening, healthy lawn, pet safe, green lawn, soil health'
+      youtube: 'lawn care, organic gardening, healthy lawn, pet safe, green lawn, soil health',
+      facebook: '#LawnCare #OrganicGardening #HealthyLawn #PetSafe #NaturesWaySoil',
+      pinterest: '#LawnCare #OrganicGarden #HealthyLawn #PetSafeLawn #GreenLawn #LawnTips #GardenInspiration'
     };
 
     const content = {
@@ -127,6 +133,16 @@ class SocialMediaAutoPoster {
         description: `Transform your lawn with ${product.name}! This natural, pet-safe solution tackles ${randomProblem} to give you ${randomBenefit}.\n\n🌱 What You'll Learn:\n• How to identify ${randomProblem}\n• Safe, organic treatment options\n• Step-by-step application guide\n• Expected results timeline\n\n✅ Product Benefits:\n• Pet & family safe\n• Organic ingredients\n• Fast-acting formula\n• Easy application\n• Proven results\n\n🛒 Shop ${product.name}:\n${WEBSITE_BASE_URL}/product/${product.id}\n\n📧 Questions? Contact us at support@natureswaysoil.com\n\nTags: ${hashtags.youtube}`,
         tags: hashtags.youtube.split(', '),
         category_id: '26' // Howto & Style
+      },
+      facebook: {
+        message: `🌱 Struggling with ${randomProblem}? Nature's Way Soil has you covered!\n\n${product.name} is your organic, pet-safe solution to achieve ${randomBenefit}. Made with natural ingredients that work with your lawn, not against it.\n\n✅ Pet & family safe\n✅ Organic ingredients\n✅ Fast-acting results\n✅ Easy to apply\n\n👉 Shop now: ${WEBSITE_BASE_URL}/product/${product.id}\n\n${hashtags.facebook}`,
+        link: `${WEBSITE_BASE_URL}/product/${product.id}`
+      },
+      pinterest: {
+        title: `${product.name} – Fix ${randomProblem} Naturally`,
+        description: `Tired of ${randomProblem}? ${product.name} delivers ${randomBenefit} using safe, organic ingredients. Perfect for pet owners and families who want a beautiful lawn without harsh chemicals.\n\n✅ Pet & family safe\n✅ Organic & natural\n✅ Easy application\n\nShop here: ${WEBSITE_BASE_URL}/product/${product.id}\n\n${hashtags.pinterest}`,
+        link: `${WEBSITE_BASE_URL}/product/${product.id}`,
+        alt_text: `${product.name} - organic lawn care solution`
       }
     };
 
@@ -448,6 +464,119 @@ class SocialMediaAutoPoster {
     }
   }
 
+  // Facebook Methods
+  async postToFacebook(product) {
+    try {
+      if (!FACEBOOK_PAGE_ID || !FACEBOOK_ACCESS_TOKEN) {
+        throw new Error('Facebook credentials not configured (need FACEBOOK_PAGE_ID, FACEBOOK_ACCESS_TOKEN)');
+      }
+
+      if (this.postedContent.facebook[product.id]) {
+        this.log(`Already posted to Facebook: ${product.id}`);
+        return this.postedContent.facebook[product.id];
+      }
+
+      const content = this.generateSocialContent(product, 'facebook');
+      const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+
+      // Post to Facebook Page with photo
+      const response = await fetch(
+        `https://graph.facebook.com/v19.0/${FACEBOOK_PAGE_ID}/photos`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: imageUrl,
+            caption: content.message,
+            access_token: FACEBOOK_ACCESS_TOKEN
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Facebook API error: ${response.status} - ${err}`);
+      }
+
+      const data = await response.json();
+      const postId = data.post_id || data.id;
+
+      this.postedContent.facebook[product.id] = {
+        postId,
+        url: `https://www.facebook.com/${FACEBOOK_PAGE_ID}/posts/${postId}`,
+        createdAt: new Date().toISOString(),
+        productId: product.id
+      };
+
+      this.savePostedContent();
+      this.log(`✅ Facebook post created: ${product.name} → post ${postId}`);
+      return this.postedContent.facebook[product.id];
+
+    } catch (error) {
+      this.log(`❌ Facebook post failed for ${product.name}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  // Pinterest Methods
+  async postToPinterest(product) {
+    try {
+      if (!PINTEREST_ACCESS_TOKEN || !PINTEREST_BOARD_ID) {
+        throw new Error('Pinterest credentials not configured (need PINTEREST_ACCESS_TOKEN, PINTEREST_BOARD_ID)');
+      }
+
+      if (this.postedContent.pinterest[product.id]) {
+        this.log(`Already posted to Pinterest: ${product.id}`);
+        return this.postedContent.pinterest[product.id];
+      }
+
+      const content = this.generateSocialContent(product, 'pinterest');
+      const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+
+      const response = await fetch('https://api.pinterest.com/v5/pins', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${PINTEREST_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          board_id: PINTEREST_BOARD_ID,
+          title: content.title,
+          description: content.description,
+          link: content.link,
+          media_source: {
+            source_type: 'image_url',
+            url: imageUrl
+          },
+          alt_text: content.alt_text
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(`Pinterest API error: ${response.status} - ${err}`);
+      }
+
+      const data = await response.json();
+      const pinId = data.id;
+
+      this.postedContent.pinterest[product.id] = {
+        pinId,
+        url: `https://www.pinterest.com/pin/${pinId}`,
+        createdAt: new Date().toISOString(),
+        productId: product.id
+      };
+
+      this.savePostedContent();
+      this.log(`✅ Pinterest pin created: ${product.name} → https://www.pinterest.com/pin/${pinId}`);
+      return this.postedContent.pinterest[product.id];
+
+    } catch (error) {
+      this.log(`❌ Pinterest post failed for ${product.name}: ${error.message}`);
+      throw error;
+    }
+  }
+
   async processNewVideos() {
     try {
       this.log('Starting social media auto-posting process...');
@@ -461,9 +590,9 @@ class SocialMediaAutoPoster {
       this.log(`Found ${products.length} products to process`);
 
       const results = {
-        success: { instagram: [], twitter: [], youtube: [] },
-        skipped: { instagram: [], twitter: [], youtube: [] },
-        errors: { instagram: [], twitter: [], youtube: [] }
+        success: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] },
+        skipped: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] },
+        errors: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] }
       };
 
       for (const product of products) {
@@ -512,6 +641,30 @@ class SocialMediaAutoPoster {
             results.errors.youtube.push({ productId: product.id, error: error.message });
           }
 
+          // Facebook posting
+          try {
+            const fbResult = await this.postToFacebook(product);
+            if (fbResult.postId) {
+              results.success.facebook.push({ productId: product.id, postId: fbResult.postId });
+            } else {
+              results.skipped.facebook.push(product.id);
+            }
+          } catch (error) {
+            results.errors.facebook.push({ productId: product.id, error: error.message });
+          }
+
+          // Pinterest posting
+          try {
+            const pinResult = await this.postToPinterest(product);
+            if (pinResult.pinId) {
+              results.success.pinterest.push({ productId: product.id, pinId: pinResult.pinId });
+            } else {
+              results.skipped.pinterest.push(product.id);
+            }
+          } catch (error) {
+            results.errors.pinterest.push({ productId: product.id, error: error.message });
+          }
+
           // Add delay between products to be nice to APIs
           await sleep(3000);
 
@@ -524,7 +677,7 @@ class SocialMediaAutoPoster {
       this.log('\n📊 Social Media Auto-Post Summary:');
       this.log('=====================================');
       
-      ['instagram', 'twitter', 'youtube'].forEach(platform => {
+      ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'].forEach(platform => {
         const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
         this.log(`\n${platformName}:`);
         this.log(`  ✅ Success: ${results.success[platform].length}`);
@@ -559,7 +712,7 @@ class SocialMediaAutoPoster {
       }
 
       // Show errors
-      ['instagram', 'twitter', 'youtube'].forEach(platform => {
+      ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'].forEach(platform => {
         if (results.errors[platform].length > 0) {
           const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
           this.log(`\n❌ ${platformName} Errors:`);
