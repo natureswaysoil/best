@@ -590,8 +590,8 @@ export default function GovernmentPage() {
                 <ul>
                   <li><Link href="/about">About Us</Link></li>
                   <li><Link href="/contact">Contact</Link></li>
-                  <li><Link href="/policies/shipping">Shipping</Link></li>
-                  <li><Link href="/policies/returns">Returns</Link></li>
+                  <li><Link href="/shipping">Shipping</Link></li>
+                  <li><Link href="/returns">Returns</Link></li>
                 </ul>
               </div>
             </div>
