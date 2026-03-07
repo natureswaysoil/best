@@ -128,7 +128,7 @@ export default function Terms() {
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-gray-700">
                   <strong>Nature's Way Soil</strong><br />
-                  Email: hello@natureswaysoil.com<br />
+                  Email: sales@natureswaysoil.com<br />
                   Phone: (252) 560-7390<br />
                   Address: 533 Eden Church Rd., Snow Hill, NC 28580
                 </p>

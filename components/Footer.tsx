@@ -124,7 +124,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-nature-green-400" />
-                <span className="text-gray-300">hello@natureswaysoil.com</span>
+                <span className="text-gray-300">sales@natureswaysoil.com</span>
               </div>
             </div>
           </div>
