@@ -42,8 +42,7 @@ export default function GovernmentPage() {
       <Head>
         <title>Government &amp; Institutional Procurement — Nature&apos;s Way Soil</title>
         <meta name="description" content="USDA BioPreferred certified soil amendments for federal, state, and municipal buyers. Bulk orders, purchase orders, and sustainable land management solutions." />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
       </Head>
 
       <style jsx global>{`

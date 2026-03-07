@@ -26,8 +26,8 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
-  } catch (e: any) {
-    return NextResponse.json({ error: `Bad signature: ${e?.message}` }, { status: 400 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: `Bad signature: ${e instanceof Error ? e.message : String(e)}` }, { status: 400 });
   }
 
   if (event.type === "payment_intent.succeeded") {
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     const orderNumber = (pi.metadata?.orderNumber as string | undefined) || `NWS-${pi.id}`;
 
-    const shipstationOrder: any = {
+    const shipstationOrder: Record<string, unknown> = {
       orderNumber,
       orderDate: new Date().toISOString(),
       orderStatus: "awaiting_shipment",
