@@ -64,18 +64,18 @@ jobs:
             echo "No changes detected"
           fi
           
+      - name: Build and verify BEFORE committing
+        if: steps.verify-changed-files.outputs.changes == 'true'
+        run: |
+          npm run build
+          echo "✅ Site built successfully with new content"
+          
       - name: Commit and push changes
         if: steps.verify-changed-files.outputs.changes == 'true'
         run: |
           git add .
           git commit -m "auto: generate blog content - $(date '+%Y-%m-%d')"
           git push
-          
-      - name: Build and verify
-        if: steps.verify-changed-files.outputs.changes == 'true'
-        run: |
-          npm run build
-          echo "✅ Site built successfully with new content"
           
       - name: Post-generation summary
         if: steps.verify-changed-files.outputs.changes == 'true'
