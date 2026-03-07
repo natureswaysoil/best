@@ -114,17 +114,17 @@ export default function Footer() {
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-nature-green-400 mt-0.5 flex-shrink-0" />
                 <span className="text-gray-300">
-                  123 Farm Road<br />
-                  Green Valley, CA 95945
+                  533 Eden Church Rd.<br />
+                  Snow Hill, NC 28580
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-nature-green-400" />
-                <span className="text-gray-300">(555) 123-4567</span>
+                <span className="text-gray-300">(252) 560-7390</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-nature-green-400" />
-                <span className="text-gray-300">hello@naturesway.com</span>
+                <span className="text-gray-300">hello@natureswaysoil.com</span>
               </div>
             </div>
           </div>

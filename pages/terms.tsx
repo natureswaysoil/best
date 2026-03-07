@@ -128,9 +128,9 @@ export default function Terms() {
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p className="text-gray-700">
                   <strong>Nature's Way Soil</strong><br />
-                  Email: hello@naturesway.com<br />
-                  Phone: (555) 123-4567<br />
-                  Address: 123 Farm Road, Green Valley, CA 95945
+                  Email: hello@natureswaysoil.com<br />
+                  Phone: (252) 560-7390<br />
+                  Address: 533 Eden Church Rd., Snow Hill, NC 28580
                 </p>
               </div>
             </section>

@@ -222,7 +222,7 @@ export const EnhancedCTAButton = ({
       </button>
       
       <button className="secondary-cta border-2 border-green-600 text-green-600 hover:bg-green-50 py-3 px-6 rounded-lg font-medium w-full mt-3">
-        📞 Call Us First - Free Growing Advice: (555) 123-4567
+        📞 Call Us First - Free Growing Advice: (252) 560-7390
       </button>
     </div>
   );
