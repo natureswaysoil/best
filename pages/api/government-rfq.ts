@@ -3,8 +3,13 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = process.env.RESEND_FROM || "Nature's Way Soil <government@natureswaysoil.com>";
-const GOV_INBOX = 'government@natureswaysoil.com';
+// Uses your existing RESEND_FROM variable
+// Notifications go to JAMES_TO (owner) + SALES_TO — same pattern as rest of site
+const FROM = process.env.RESEND_FROM as string;
+const NOTIFY_TO = [
+  process.env.JAMES_TO,
+  process.env.SALES_TO,
+].filter(Boolean) as string[];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -18,21 +23,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing required fields: agency, name, email, message' });
   }
 
+  if (!FROM) {
+    console.error('[government-rfq] RESEND_FROM env var not set');
+    return res.status(500).json({ error: 'Email service not configured' });
+  }
+
   try {
-    // ── 1. Internal notification to government@natureswaysoil.com ──
+    // ── 1. Internal notification ──
     const { error: err1 } = await resend.emails.send({
       from: FROM,
-      to: [GOV_INBOX],
+      to: NOTIFY_TO.length > 0 ? NOTIFY_TO : [FROM],
       replyTo: email,
       subject: `[GOV RFQ] ${agencyType || 'Agency'} — ${agency}`,
       html: `
         <!DOCTYPE html>
-        <html>
-        <head><meta charset="utf-8"/></head>
+        <html><head><meta charset="utf-8"/></head>
         <body style="margin:0;padding:0;background:#f7f3ec;font-family:Georgia,serif;">
           <div style="max-width:600px;margin:0 auto;">
             <div style="background:#0d3522;color:white;padding:24px 32px;">
-              <h2 style="margin:0;font-size:1.3rem;font-weight:700;">New Government RFQ Received</h2>
+              <h2 style="margin:0;font-size:1.3rem;font-weight:700;">New Government RFQ</h2>
               <p style="margin:6px 0 0;opacity:0.7;font-size:0.85rem;">Nature's Way Soil — Government Procurement</p>
             </div>
             <div style="background:white;padding:32px;border:1px solid #ede7da;">
@@ -53,8 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               Reply to this email to respond directly to ${name} at ${email}
             </div>
           </div>
-        </body>
-        </html>
+        </body></html>
       `,
     });
 
@@ -67,8 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       subject: `RFQ Received — Nature's Way Soil Government Sales`,
       html: `
         <!DOCTYPE html>
-        <html>
-        <head><meta charset="utf-8"/></head>
+        <html><head><meta charset="utf-8"/></head>
         <body style="margin:0;padding:0;background:#f7f3ec;font-family:Georgia,serif;">
           <div style="max-width:600px;margin:0 auto;">
             <div style="background:#0d3522;color:white;padding:24px 32px;">
@@ -84,20 +91,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 <li>USDA BioPreferred designation documentation</li>
                 <li>Purchase order and Net-30 terms information</li>
               </ul>
-              <p style="line-height:1.8;margin:20px 0 0;font-size:0.9rem;">For urgent requirements or specific contract vehicle questions, reply to this email directly.</p>
+              <p style="line-height:1.8;margin:20px 0 0;font-size:0.9rem;">For urgent requirements, reply to this email directly.</p>
               <div style="margin-top:24px;padding:18px 20px;background:#f7f3ec;border:1px solid #ede7da;border-radius:3px;">
                 <p style="margin:0 0 3px;font-weight:700;color:#0d3522;font-size:0.9rem;">Nature's Way Soil — Government Sales</p>
-                <p style="margin:0;font-size:0.82rem;color:#6b7280;">government@natureswaysoil.com</p>
                 <p style="margin:5px 0 0;font-size:0.75rem;color:#6b7280;font-family:sans-serif;letter-spacing:0.03em;">USDA BioPreferred Partner · SAM.gov Registered · Buy American Compliant · Made in USA</p>
               </div>
             </div>
             <div style="background:#0d3522;padding:14px 32px;text-align:center;color:rgba(255,255,255,0.4);font-size:0.72rem;font-family:sans-serif;">
-              Nature's Way Soil · natureswaysoil.com<br/>
-              You are receiving this because you submitted a procurement inquiry at natureswaysoil.com
+              Nature's Way Soil · natureswaysoil.com
             </div>
           </div>
-        </body>
-        </html>
+        </body></html>
       `,
     });
 
