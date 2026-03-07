@@ -303,7 +303,7 @@ export default function GovernmentPage() {
           <div className="g-hero-inner">
             <div>
               <div className="g-eyebrow">Government &amp; Institutional Procurement</div>
-              <h1>Organic Soil Amendments<br />for <em>Public Land Management</em></h1>
+              <h1>Natural Soil Amendments<br />for <em>Public Land Management</em></h1>
               <p className="g-hero-sub">
                 Nature&apos;s Way Soil supplies USDA BioPreferred certified fertilizers, biochar blends,
                 and living compost for federal, state, and municipal land stewardship programs.
