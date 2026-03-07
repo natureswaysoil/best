@@ -210,11 +210,61 @@ class SocialMediaAutoPoster {
     }
   }
 
-  // Twitter Methods  
+  // Twitter Methods
+  // FIX: Bearer token is READ-ONLY. Posting tweets requires OAuth 1.0a user context.
+  buildOAuth1Header(method, url, bodyParams = {}) {
+    const TWITTER_API_KEY = process.env.TWITTER_API_KEY;
+    const TWITTER_API_SECRET = process.env.TWITTER_API_SECRET;
+    const TWITTER_ACCESS_TOKEN = process.env.TWITTER_ACCESS_TOKEN;
+    const TWITTER_ACCESS_SECRET = process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET;
+
+    if (!TWITTER_API_KEY || !TWITTER_API_SECRET || !TWITTER_ACCESS_TOKEN || !TWITTER_ACCESS_SECRET) {
+      throw new Error('Twitter OAuth 1.0a credentials missing: need TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET');
+    }
+
+    const oauthParams = {
+      oauth_consumer_key: TWITTER_API_KEY,
+      oauth_nonce: Math.random().toString(36).substring(2) + Date.now().toString(36),
+      oauth_signature_method: 'HMAC-SHA256',
+      oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
+      oauth_token: TWITTER_ACCESS_TOKEN,
+      oauth_version: '1.0'
+    };
+
+    // Build signature base string
+    const allParams = { ...oauthParams, ...bodyParams };
+    const sortedParams = Object.keys(allParams).sort()
+      .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`)
+      .join('&');
+
+    const sigBase = [
+      method.toUpperCase(),
+      encodeURIComponent(url),
+      encodeURIComponent(sortedParams)
+    ].join('&');
+
+    const signingKey = `${encodeURIComponent(TWITTER_API_SECRET)}&${encodeURIComponent(TWITTER_ACCESS_SECRET)}`;
+
+    // HMAC-SHA256 using Node crypto
+    const { createHmac } = await import('crypto');
+    const signature = createHmac('sha256', signingKey).update(sigBase).digest('base64');
+
+    oauthParams.oauth_signature = signature;
+
+    const authHeader = 'OAuth ' + Object.keys(oauthParams).sort()
+      .map(k => `${encodeURIComponent(k)}="${encodeURIComponent(oauthParams[k])}"`)
+      .join(', ');
+
+    return authHeader;
+  }
+
   async postToTwitter(product) {
     try {
-      if (!TWITTER_BEARER_TOKEN) {
-        throw new Error('Twitter credentials not configured');
+      const TWITTER_API_KEY = process.env.TWITTER_API_KEY;
+      const TWITTER_ACCESS_TOKEN = process.env.TWITTER_ACCESS_TOKEN;
+
+      if (!TWITTER_API_KEY || !TWITTER_ACCESS_TOKEN) {
+        throw new Error('Twitter OAuth credentials not configured (need TWITTER_API_KEY + TWITTER_ACCESS_TOKEN)');
       }
 
       if (this.postedContent.twitter[product.id]) {
@@ -223,16 +273,16 @@ class SocialMediaAutoPoster {
       }
 
       const content = this.generateSocialContent(product, 'twitter');
+      const tweetData = { text: content.text };
+      const url = 'https://api.twitter.com/2/tweets';
 
-      // Create tweet using Twitter API v2
-      const tweetData = {
-        text: content.text
-      };
+      // Build OAuth 1.0a header (required for write operations)
+      const authHeader = await this.buildOAuth1Header('POST', url, {});
 
-      const response = await fetch('https://api.twitter.com/2/tweets', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${TWITTER_BEARER_TOKEN}`,
+          'Authorization': authHeader,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(tweetData)
@@ -245,7 +295,6 @@ class SocialMediaAutoPoster {
 
       const result = await response.json();
 
-      // Store posted content info
       this.postedContent.twitter[product.id] = {
         tweetId: result.data.id,
         text: content.text,
@@ -255,7 +304,7 @@ class SocialMediaAutoPoster {
 
       this.savePostedContent();
       this.log(`✅ Posted to Twitter: ${product.name} (${result.data.id})`);
-      
+
       return this.postedContent.twitter[product.id];
 
     } catch (error) {

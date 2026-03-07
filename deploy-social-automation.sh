@@ -152,7 +152,7 @@ if ! gcloud iam service-accounts describe ${SERVICE_ACCOUNT} &> /dev/null; then
 fi
 
 # Morning post job (6 AM UTC / 2 AM EDT)
-if ! gcloud scheduler jobs describe social-automation-morning --location=${REGION} &> /dev/null; then
+if ! gcloud scheduler jobs describe social-automation-morning --location=${REGION} &> /dev/null 2>&1; then
     echo "Creating morning posting schedule..."
     gcloud scheduler jobs create http social-automation-morning \
         --location=${REGION} \
@@ -161,14 +161,20 @@ if ! gcloud scheduler jobs describe social-automation-morning --location=${REGIO
         --uri="${SERVICE_URL}/api/social-automation" \
         --http-method=POST \
         --oidc-service-account-email=${SERVICE_ACCOUNT} \
+        --oidc-token-audience="${SERVICE_URL}" \
         --headers="Content-Type=application/json" \
         --message-body='{"action":"generate_and_post","schedule":"morning"}'
 else
-    echo "Morning posting schedule already exists"
+    echo "Updating morning posting schedule with correct endpoint..."
+    gcloud scheduler jobs update http social-automation-morning \
+        --location=${REGION} \
+        --uri="${SERVICE_URL}/api/social-automation" \
+        --oidc-service-account-email=${SERVICE_ACCOUNT} \
+        --oidc-token-audience="${SERVICE_URL}"
 fi
 
 # Evening post job (6 PM UTC / 2 PM EDT)
-if ! gcloud scheduler jobs describe social-automation-evening --location=${REGION} &> /dev/null; then
+if ! gcloud scheduler jobs describe social-automation-evening --location=${REGION} &> /dev/null 2>&1; then
     echo "Creating evening posting schedule..."
     gcloud scheduler jobs create http social-automation-evening \
         --location=${REGION} \
@@ -177,10 +183,16 @@ if ! gcloud scheduler jobs describe social-automation-evening --location=${REGIO
         --uri="${SERVICE_URL}/api/social-automation" \
         --http-method=POST \
         --oidc-service-account-email=${SERVICE_ACCOUNT} \
+        --oidc-token-audience="${SERVICE_URL}" \
         --headers="Content-Type=application/json" \
         --message-body='{"action":"generate_and_post","schedule":"evening"}'
 else
-    echo "Evening posting schedule already exists"
+    echo "Updating evening posting schedule with correct endpoint..."
+    gcloud scheduler jobs update http social-automation-evening \
+        --location=${REGION} \
+        --uri="${SERVICE_URL}/api/social-automation" \
+        --oidc-service-account-email=${SERVICE_ACCOUNT} \
+        --oidc-token-audience="${SERVICE_URL}"
 fi
 
 echo ""
