@@ -314,10 +314,32 @@ class SocialMediaAutoPoster {
   }
 
   // YouTube Methods
+  async getYouTubeAccessToken() {
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.YT_CLIENT_ID,
+        client_secret: process.env.YT_CLIENT_SECRET,
+        refresh_token: process.env.YT_REFRESH_TOKEN,
+        grant_type: 'refresh_token'
+      })
+    });
+    if (!tokenResponse.ok) {
+      const err = await tokenResponse.text();
+      throw new Error(`YouTube token refresh failed: ${tokenResponse.status} - ${err}`);
+    }
+    const data = await tokenResponse.json();
+    if (!data.access_token) {
+      throw new Error(`YouTube token refresh returned no access_token: ${JSON.stringify(data)}`);
+    }
+    return data.access_token;
+  }
+
   async uploadToYouTube(product) {
     try {
-      if (!YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET || !YOUTUBE_REFRESH_TOKEN) {
-        throw new Error('YouTube credentials not configured');
+      if (!process.env.YT_CLIENT_ID || !process.env.YT_CLIENT_SECRET || !process.env.YT_REFRESH_TOKEN) {
+        throw new Error('YouTube credentials not configured (need YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN)');
       }
 
       if (this.postedContent.youtube[product.id]) {
@@ -325,47 +347,103 @@ class SocialMediaAutoPoster {
         return this.postedContent.youtube[product.id];
       }
 
-      // Get access token using refresh token
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: YOUTUBE_CLIENT_ID,
-          client_secret: YOUTUBE_CLIENT_SECRET,
-          refresh_token: YOUTUBE_REFRESH_TOKEN,
-          grant_type: 'refresh_token'
-        })
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to refresh YouTube access token');
+      // Check if video file exists for this product
+      const videoPath = path.join(PROJECT, 'public', 'videos', `${product.id}.mp4`);
+      if (!fs.existsSync(videoPath)) {
+        throw new Error(`No video file found at ${videoPath} — run HeyGen generation first`);
       }
 
-      await tokenResponse.json(); // Token validation successful
-      
+      this.log(`Uploading ${product.id} to YouTube...`);
+
+      // Step 1: Get fresh access token
+      const accessToken = await this.getYouTubeAccessToken();
+
       const content = this.generateSocialContent(product, 'youtube');
-      
-      // For YouTube upload, we'll create a placeholder entry since video upload requires multipart
-      // In a full implementation, you'd use Google's client library for proper video upload
-      
-      // Store posted content info (placeholder for actual upload)
+      const videoStats = fs.statSync(videoPath);
+      const videoSize = videoStats.size;
+
+      // Step 2: Initialize resumable upload session
+      const initResponse = await fetch(
+        'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Upload-Content-Type': 'video/mp4',
+            'X-Upload-Content-Length': videoSize.toString()
+          },
+          body: JSON.stringify({
+            snippet: {
+              title: content.title,
+              description: content.description,
+              tags: content.tags,
+              categoryId: '26', // Howto & Style
+              defaultLanguage: 'en',
+              defaultAudioLanguage: 'en'
+            },
+            status: {
+              privacyStatus: 'public',
+              selfDeclaredMadeForKids: false
+            }
+          })
+        }
+      );
+
+      if (!initResponse.ok) {
+        const err = await initResponse.text();
+        throw new Error(`YouTube upload init failed: ${initResponse.status} - ${err}`);
+      }
+
+      const uploadUrl = initResponse.headers.get('location');
+      if (!uploadUrl) {
+        throw new Error('YouTube did not return an upload URL');
+      }
+
+      this.log(`Upload session created, uploading ${(videoSize / 1024 / 1024).toFixed(1)}MB...`);
+
+      // Step 3: Upload the actual video file
+      const { createReadStream } = await import('fs');
+      const videoStream = createReadStream(videoPath);
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'video/mp4',
+          'Content-Length': videoSize.toString()
+        },
+        body: videoStream,
+        duplex: 'half'
+      });
+
+      if (!uploadResponse.ok && uploadResponse.status !== 308) {
+        const err = await uploadResponse.text();
+        throw new Error(`YouTube video upload failed: ${uploadResponse.status} - ${err}`);
+      }
+
+      const uploadResult = await uploadResponse.json();
+      const videoId = uploadResult.id;
+
+      if (!videoId) {
+        throw new Error(`YouTube upload completed but no video ID returned: ${JSON.stringify(uploadResult)}`);
+      }
+
       this.postedContent.youtube[product.id] = {
-        videoId: `placeholder_${product.id}_${Date.now()}`,
+        videoId,
         title: content.title,
-        description: content.description,
-        tags: content.tags,
+        url: `https://www.youtube.com/watch?v=${videoId}`,
         createdAt: new Date().toISOString(),
         productId: product.id,
-        status: 'ready_for_upload' // Indicates manual upload needed
+        status: 'uploaded'
       };
 
       this.savePostedContent();
-      this.log(`✅ YouTube upload prepared: ${product.name} (manual upload required)`);
-      
+      this.log(`✅ YouTube upload complete: ${product.name} → https://www.youtube.com/watch?v=${videoId}`);
+
       return this.postedContent.youtube[product.id];
 
     } catch (error) {
-      this.log(`❌ YouTube upload preparation failed for ${product.name}: ${error.message}`);
+      this.log(`❌ YouTube upload failed for ${product.name}: ${error.message}`);
       throw error;
     }
   }
