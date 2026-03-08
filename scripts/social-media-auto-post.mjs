@@ -165,18 +165,17 @@ class SocialMediaAutoPoster {
 
       const content = this.generateSocialContent(product, 'instagram');
       
-      // For Instagram, we'll create a post with the video thumbnail and link in caption
-      // Note: Instagram API has limitations on video uploads, so we use image posts with links
-      const posterUrl = `${WEBSITE_BASE_URL}/videos/${product.id}.jpg`;
+      // Use product image from the website
+      const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
       
       const mediaData = {
-        image_url: posterUrl,
+        image_url: imageUrl,
         caption: content.caption,
         access_token: INSTAGRAM_ACCESS_TOKEN
       };
 
       // Create media object
-      const createResponse = await fetch(`https://graph.facebook.com/v18.0/${INSTAGRAM_IG_ID}/media`, {
+      const createResponse = await fetch(`https://graph.facebook.com/v19.0/${INSTAGRAM_IG_ID}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mediaData)
@@ -188,14 +187,28 @@ class SocialMediaAutoPoster {
       }
 
       const mediaResult = await createResponse.json();
-      
+      const containerId = mediaResult.id;
+
+      // Poll until media container is ready (up to 30s)
+      let ready = false;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        const statusRes = await fetch(
+          `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${INSTAGRAM_ACCESS_TOKEN}`
+        );
+        const statusData = await statusRes.json();
+        if (statusData.status_code === 'FINISHED') { ready = true; break; }
+        if (statusData.status_code === 'ERROR') throw new Error(`Instagram media processing error: ${JSON.stringify(statusData)}`);
+      }
+      if (!ready) throw new Error('Instagram media container timed out waiting to be ready');
+
       // Publish the media
       const publishData = {
-        creation_id: mediaResult.id,
+        creation_id: containerId,
         access_token: INSTAGRAM_ACCESS_TOKEN
       };
 
-      const publishResponse = await fetch(`https://graph.facebook.com/v18.0/${INSTAGRAM_IG_ID}/media_publish`, {
+      const publishResponse = await fetch(`https://graph.facebook.com/v19.0/${INSTAGRAM_IG_ID}/media_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(publishData)
