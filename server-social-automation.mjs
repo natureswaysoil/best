@@ -47,17 +47,24 @@ app.get('/api/status', async (req, res) => {
 // This is the missing endpoint — scheduler was getting 404 on every run
 app.post('/api/social-automation', async (req, res) => {
   console.log('[Scheduler] /api/social-automation triggered', req.body);
-  // Respond immediately so Cloud Scheduler doesn't timeout waiting
-  res.json({
-    status: 'accepted',
-    message: 'Social automation job started',
-    schedule: req.body?.schedule || 'manual',
-    timestamp: new Date().toISOString()
-  });
-  // Run async AFTER responding (non-blocking)
-  runSocialMediaPost().catch(err =>
-    console.error('[Scheduler] Post job error:', err.message)
-  );
+  // Run the job and wait for it — Cloud Run stays alive until we respond
+  try {
+    const result = await runSocialMediaPost();
+    res.json({
+      status: 'completed',
+      message: 'Social automation job finished',
+      schedule: req.body?.schedule || 'manual',
+      timestamp: new Date().toISOString(),
+      result: result?.slice(0, 500)
+    });
+  } catch (err) {
+    console.error('[Scheduler] Post job error:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Manual trigger (also fix: respond first, then run)
