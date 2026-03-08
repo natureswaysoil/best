@@ -602,21 +602,33 @@ class SocialMediaAutoPoster {
 
       this.log(`Found ${products.length} products to process`);
 
+      // Pick ONE product per run — the next one not yet posted to any platform
+      const unposted = products.filter(p => {
+        const hasVideo = fs.existsSync(path.join(VIDEOS_DIR, `${p.id}.mp4`));
+        const alreadyPosted =
+          this.postedContent.instagram[p.id] &&
+          this.postedContent.twitter[p.id] &&
+          this.postedContent.facebook[p.id];
+        return hasVideo && !alreadyPosted;
+      });
+
+      if (!unposted.length) {
+        this.log('All products already posted — resetting posted content for next cycle');
+        this.postedContent = { instagram: {}, twitter: {}, youtube: {}, facebook: {}, pinterest: {} };
+        this.savePostedContent();
+        return;
+      }
+
+      const product = unposted[0];
+      this.log(`Selected product for this run: ${product.name} (${product.id})`);
+
       const results = {
         success: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] },
         skipped: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] },
         errors: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] }
       };
 
-      for (const product of products) {
-        try {
-          const videoPath = path.join(VIDEOS_DIR, `${product.id}.mp4`);
-
-          // Check if video files exist
-          if (!fs.existsSync(videoPath)) {
-            this.log(`Video not found for ${product.id}, skipping...`);
-            continue;
-          }
+      try {
 
           // Instagram posting
           try {
@@ -678,12 +690,8 @@ class SocialMediaAutoPoster {
             results.errors.pinterest.push({ productId: product.id, error: error.message });
           }
 
-          // Add delay between products to be nice to APIs
-          await sleep(3000);
-
-        } catch (error) {
-          this.log(`Error processing ${product.id}: ${error.message}`);
-        }
+      } catch (error) {
+        this.log(`Error processing ${product.id}: ${error.message}`);
       }
 
       // Summary
