@@ -37,6 +37,8 @@ steps:
       '--set-secrets', 'TWITTER_API_SECRET=TWITTER_API_SECRET:latest',
       '--set-secrets', 'TWITTER_ACCESS_TOKEN=TWITTER_ACCESS_TOKEN:latest',
       '--set-secrets', 'TWITTER_ACCESS_TOKEN_SECRET=TWITTER_ACCESS_SECRET:latest',
+      '--set-secrets', 'INSTAGRAM_ACCESS_TOKEN=INSTAGRAM_ACCESS_TOKEN:latest',
+      '--set-secrets', 'INSTAGRAM_IG_ID=INSTAGRAM_IG_ID:latest',
       '--set-secrets', 'YT_CLIENT_ID=YT_CLIENT_ID:latest',
       '--set-secrets', 'YT_CLIENT_SECRET=YT_CLIENT_SECRET:latest',
       '--set-secrets', 'YT_REFRESH_TOKEN=YT_REFRESH_TOKEN:latest',
