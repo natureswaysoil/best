@@ -657,8 +657,8 @@ class SocialMediaAutoPoster {
           // YouTube upload preparation
           try {
             const ytResult = await this.uploadToYouTube(product);
-            if (ytResult.status === 'ready_for_upload') {
-              results.success.youtube.push({ productId: product.id, videoId: ytResult.videoId, status: 'prepared' });
+            if (ytResult.videoId) {
+              results.success.youtube.push({ productId: product.id, videoId: ytResult.videoId, url: ytResult.url });
             } else {
               results.skipped.youtube.push(product.id);
             }
