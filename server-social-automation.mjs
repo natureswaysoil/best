@@ -55,7 +55,7 @@ app.post('/api/social-automation', async (req, res) => {
       message: 'Social automation job finished',
       schedule: req.body?.schedule || 'manual',
       timestamp: new Date().toISOString(),
-      result: result?.slice(0, 500)
+      result: result
     });
   } catch (err) {
     console.error('[Scheduler] Post job error:', err.message);
@@ -159,7 +159,7 @@ async function runSocialMediaPost() {
     const result = await runScript('node', ['scripts/social-media-auto-post.mjs'], 600000);
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
     console.log(`[Post] Completed in ${elapsed}s`);
-    await logActivity('social-post-success', `Completed in ${elapsed}s: ${result.slice(0, 200)}`);
+    await logActivity('social-post-success', `Completed in ${elapsed}s: ${result}`);
     return result;
   } catch (error) {
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
