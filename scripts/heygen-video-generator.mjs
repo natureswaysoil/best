@@ -12,7 +12,8 @@ import path from 'path';
 export class HeyGenVideoGenerator {
   constructor(apiKey) {
     this.apiKey = apiKey || process.env.HEYGEN_API_KEY;
-    this.baseUrl = 'https://api.heygen.com/v1';
+    this.baseUrl = 'https://api.heygen.com/v2';
+    this.baseUrlV1 = 'https://api.heygen.com/v1';
     
     if (!this.apiKey) {
       throw new Error('HeyGen API key is required. Set HEYGEN_API_KEY environment variable.');
@@ -79,7 +80,7 @@ export class HeyGenVideoGenerator {
       const response = await fetch(`${this.baseUrl}/video/generate`, {
         method: 'POST',
         headers: {
-          'X-API-KEY': this.apiKey,
+          'X-Api-Key': this.apiKey,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(videoData)
@@ -110,9 +111,9 @@ export class HeyGenVideoGenerator {
    */
   async getVideoStatus(videoId) {
     try {
-      const response = await fetch(`${this.baseUrl}/video_status.get?video_id=${videoId}`, {
+      const response = await fetch(`${this.baseUrl}/video/${videoId}`, {
         headers: {
-          'X-API-KEY': this.apiKey
+          'X-Api-Key': this.apiKey
         }
       });
 
@@ -122,11 +123,10 @@ export class HeyGenVideoGenerator {
 
       const result = await response.json();
       return {
-        status: result.data.status, // 'processing', 'completed', 'failed'
+        status: result.data.status,
         progress: result.data.progress || 0,
         videoUrl: result.data.video_url || null,
         duration: result.data.duration || null,
-        callback_id: result.data.callback_id || null,
         error: result.data.error || null
       };
 
@@ -191,43 +191,26 @@ export class HeyGenVideoGenerator {
    */
   async getAvatars() {
     try {
-      const response = await fetch(`${this.baseUrl}/avatar.list`, {
-        headers: {
-          'X-API-KEY': this.apiKey
-        }
+      const response = await fetch(`${this.baseUrl}/avatars`, {
+        headers: { 'X-Api-Key': this.apiKey }
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch avatars: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`Failed to fetch avatars: ${response.status}`);
       const result = await response.json();
       return result.data.avatars || [];
-
     } catch (error) {
       this.log(`Failed to get avatars: ${error.message}`);
       throw error;
     }
   }
 
-  /**
-   * List available voices
-   */
   async getVoices() {
     try {
-      const response = await fetch(`${this.baseUrl}/voice.list`, {
-        headers: {
-          'X-API-KEY': this.apiKey
-        }
+      const response = await fetch(`${this.baseUrlV1}/voice.list`, {
+        headers: { 'X-Api-Key': this.apiKey }
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch voices: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`Failed to fetch voices: ${response.status}`);
       const result = await response.json();
       return result.data.voices || [];
-
     } catch (error) {
       this.log(`Failed to get voices: ${error.message}`);
       throw error;
@@ -235,29 +218,51 @@ export class HeyGenVideoGenerator {
   }
 
   /**
-   * Generate script for product video
+   * Generate script using OpenAI (falls back to template if no API key)
    */
-  generateProductScript(product) {
-    const problems = [
-      'yellowing grass', 'brown patches', 'thin lawn', 'bare spots',
-      'poor soil', 'slow growth', 'weak roots', 'stressed plants'
-    ];
-    
-    const benefits = [
-      'lush green growth', 'stronger roots', 'healthier soil',
-      'faster recovery', 'natural nutrition', 'long-lasting results'
-    ];
+  async generateProductScript(product) {
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            max_tokens: 300,
+            messages: [
+              {
+                role: 'system',
+                content: `You write short enthusiastic 30-second video scripts for Nature's Way Soil lawn and garden products. Scripts must be 60-80 words, conversational, mention the product name, one key problem it solves, one benefit, that it's pet-safe and organic, and end with a call to action to visit NaturesWaySoil.com. No emojis. Natural speech only.`
+              },
+              {
+                role: 'user',
+                content: `Write a 30-second video script for: ${product.name}. Description: ${product.description || product.name}.`
+              }
+            ]
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const script = data.choices?.[0]?.message?.content?.trim();
+          if (script) {
+            this.log(`OpenAI script generated for ${product.name}`);
+            return script;
+          }
+        }
+      } catch (e) {
+        this.log(`OpenAI script failed, using template: ${e.message}`);
+      }
+    }
 
+    // Fallback template
+    const problems = ['yellowing grass', 'brown patches', 'thin lawn', 'bare spots', 'poor soil', 'slow growth'];
+    const benefits = ['lush green growth', 'stronger roots', 'healthier soil', 'faster recovery', 'natural nutrition'];
     const randomProblem = problems[Math.floor(Math.random() * problems.length)];
     const randomBenefit = benefits[Math.floor(Math.random() * benefits.length)];
-
-    return `Hi! I'm here to tell you about ${product.name}, the natural solution for ${randomProblem}.
-
-This organic formula delivers ${randomBenefit} without harsh chemicals. It's completely pet-safe and kid-friendly.
-
-Simply mix with water and apply to your lawn or garden. You'll see results in just days, with full benefits in 2-3 weeks.
-
-${product.name} works with nature, not against it. Get yours today at NaturesWaySoil.com and transform your outdoor space naturally!`;
+    return `Hi! I'm here to tell you about ${product.name}, the natural solution for ${randomProblem}. This organic formula delivers ${randomBenefit} without harsh chemicals. It's completely pet-safe and kid-friendly. Simply apply to your lawn or garden and you'll see results in just days. ${product.name} works with nature, not against it. Get yours today at NaturesWaySoil.com!`;
   }
 
   /**
@@ -265,7 +270,7 @@ ${product.name} works with nature, not against it. Get yours today at NaturesWay
    */
   async generateProductVideo(product, outputDir = './public/videos') {
     try {
-      const script = this.generateProductScript(product);
+      const script = await this.generateProductScript(product);
       const title = `${product.name} - Natural Lawn Care Solution`;
       
       // Create video

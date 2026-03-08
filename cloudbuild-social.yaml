@@ -32,6 +32,7 @@ steps:
       '--max-instances', '1',
       '--set-env-vars', 'NODE_ENV=production',
       '--set-secrets', 'HEYGEN_API_KEY=HEYGEN_API_KEY:latest',
+      '--set-secrets', 'OPENAI_API_KEY=OPENAI_API_KEY:latest',
       '--set-secrets', 'TWITTER_BEARER_TOKEN=TWITTER_BEARER_TOKEN:latest',
       '--set-secrets', 'TWITTER_API_KEY=TWITTER_API_KEY:latest',
       '--set-secrets', 'TWITTER_API_SECRET=TWITTER_API_SECRET:latest',
