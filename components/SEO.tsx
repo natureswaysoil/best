@@ -164,6 +164,12 @@ export default function SEO({
           }}
         />
       )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(localBusinessSchema)
+        }}
+      />
     </Head>
   );
 }
