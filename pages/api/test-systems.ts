@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `;
 
     for (const [key, addr] of [
-      ['natureswaysoil_gmail', 'natureswaysoil@gmail.com'],
+      ['natureswaysoil', 'natureswaysoil@natureswaysoil.com'],
       ['james', 'james@natureswaysoil.com'],
       ['sales', 'sales@natureswaysoil.com'],
     ]) {
