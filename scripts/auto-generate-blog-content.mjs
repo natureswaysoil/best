@@ -1,569 +1,181 @@
 #!/usr/bin/env node
 
 /**
- * Automated Blog Content Generator
- * Generates new blog articles and videos every 2 days
- * Includes AI-powered content creation and automatic deployment
+ * Automated Blog Content Generator — Nature's Way Soil
+ * Uses OpenAI to generate genuinely unique, SEO-quality articles.
  */
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import https from 'https';
 
 const BLOG_DATA_PATH = path.join(process.cwd(), 'data', 'blog.ts');
-const VIDEOS_DIR = path.join(process.cwd(), 'public', 'videos', 'blog');
 const LOG_FILE = path.join(process.cwd(), 'auto-blog-generation.log');
 
-// Blog article topics and templates
-const GARDENING_TOPICS = [
-  {
-    title: "Seasonal Soil Preparation: Getting Your Garden Ready for {season}",
-    category: "Gardening Tips",
-    tags: ["seasonal gardening", "soil preparation", "{season} gardening", "garden maintenance"],
-    readTime: 7
-  },
-  {
-    title: "The Science of Soil pH: Understanding Your Garden's Foundation",
-    category: "Soil Health",
-    tags: ["soil pH", "soil testing", "plant nutrition", "garden science"],
-    readTime: 9
-  },
-  {
-    title: "Organic Pest Control: Natural Solutions for a Healthy Garden",
-    category: "Organic Gardening",
-    tags: ["pest control", "organic gardening", "natural remedies", "garden health"],
-    readTime: 8
-  },
-  {
-    title: "Container Gardening Mastery: Growing Abundance in Small Spaces",
-    category: "Gardening Tips",
-    tags: ["container gardening", "small space gardening", "urban gardening", "apartment gardening"],
-    readTime: 10
-  },
-  {
-    title: "Mulching Magic: How to Retain Moisture and Suppress Weeds",
-    category: "Gardening Tips",
-    tags: ["mulching", "water conservation", "weed control", "soil health"],
-    readTime: 6
-  },
-  {
-    title: "Companion Planting Guide: Plants That Grow Better Together",
-    category: "Organic Gardening",
-    tags: ["companion planting", "plant relationships", "garden planning", "organic methods"],
-    readTime: 11
-  },
-  {
-    title: "Seed Starting Success: From Germination to Transplant",
-    category: "Gardening Tips",
-    tags: ["seed starting", "germination", "transplanting", "garden planning"],
-    readTime: 9
-  },
-  {
-    title: "Building Healthy Soil: The Foundation of Successful Gardening",
-    category: "Soil Health",
-    tags: ["soil building", "organic matter", "soil structure", "plant nutrition"],
-    readTime: 12
-  },
-  {
-    title: "Vertical Gardening: Maximizing Your Growing Space",
-    category: "Gardening Tips",
-    tags: ["vertical gardening", "space saving", "garden design", "urban farming"],
-    readTime: 8
-  },
-  {
-    title: "Harvest and Storage: Preserving Your Garden's Bounty",
-    category: "Gardening Tips",
-    tags: ["harvesting", "food storage", "preservation", "garden to table"],
-    readTime: 10
-  }
-];
-
-// Seasonal content variations
-const SEASONAL_CONTENT = {
-  spring: {
-    keywords: ["spring planting", "soil warming", "early vegetables", "garden cleanup"],
-    focus: "preparation and planting"
-  },
-  summer: {
-    keywords: ["heat protection", "watering", "pest management", "continuous harvest"],
-    focus: "maintenance and protection"
-  },
-  fall: {
-    keywords: ["fall planting", "soil preparation", "cover crops", "season extension"],
-    focus: "preparation for winter"
-  },
-  winter: {
-    keywords: ["planning", "soil amendments", "greenhouse", "indoor growing"],
-    focus: "planning and indoor activities"
-  }
-};
-
-// Get current season
-function getCurrentSeason() {
-  const month = new Date().getMonth() + 1; // 1-12
-  if (month >= 3 && month <= 5) return 'spring';
-  if (month >= 6 && month <= 8) return 'summer';
-  if (month >= 9 && month <= 11) return 'fall';
-  return 'winter';
-}
-
-// Generate article ID and slug
-function generateArticleId(title) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .substring(0, 60);
-}
-
-// Generate comprehensive article content
-function generateArticleContent(topic, season) {
-  const title = topic.title.replace('{season}', season || getCurrentSeason());
-  const seasonalInfo = SEASONAL_CONTENT[season || getCurrentSeason()];
-  
-  return {
-    id: generateArticleId(title),
-    title: title,
-    slug: generateArticleId(title),
-    excerpt: `Professional ${topic.category.toLowerCase()} advice for ${season || getCurrentSeason()}. Learn expert techniques, sustainable practices, and proven methods to achieve abundant garden success.`,
-    content: generateDetailedContent(title, topic, seasonalInfo),
-    author: 'Nature\'s Way Soil Team',
-    publishedAt: new Date().toISOString().split('T')[0],
-    featuredImage: `/images/blog/${generateArticleId(title)}.jpg`,
-    tags: topic.tags.map(tag => tag.replace('{season}', season || getCurrentSeason())),
-    category: topic.category,
-    readTime: topic.readTime,
-    seoTitle: `${title} - Expert Guide | Nature's Way Soil`,
-    seoDescription: `Complete guide to ${title.toLowerCase()}. Expert tips, sustainable techniques, and proven methods for successful gardening.`
-  };
-}
-
-// Generate detailed article content
-function generateDetailedContent(title, topic, seasonalInfo) {
-  return `
-# ${title}
-
-Welcome to another comprehensive guide from Nature's Way Soil, where we share expert knowledge to help you create thriving, abundant gardens using sustainable and proven techniques.
-
-## Introduction
-
-${topic.category === 'Soil Health' ? 
-  'Healthy soil is the foundation of every successful garden. Understanding and improving your soil creates the basis for robust plant growth, disease resistance, and abundant harvests.' :
-  topic.category === 'Organic Gardening' ?
-  'Organic gardening represents a holistic approach to growing plants that works with nature rather than against it. These time-tested methods produce healthier plants and protect our environment.' :
-  'Successful gardening combines traditional wisdom with modern techniques. Whether you\'re a beginner or experienced gardener, these proven strategies will help you achieve better results.'
-}
-
-## Key Principles
-
-### Understanding Your Garden's Needs
-Every garden is unique, with its own microclimate, soil conditions, and challenges. The first step to success is understanding these specific conditions and working with them rather than against them.
-
-### The Role of Quality Soil
-Premium organic soil provides the foundation for healthy plant growth. Our **Premium Organic Soil Mix** contains:
-- Aged compost for slow-release nutrition
-- Coconut coir for moisture retention
-- Perlite for proper drainage
-- Beneficial microorganisms for soil health
-
-### Seasonal Considerations
-${seasonalInfo.focus.charAt(0).toUpperCase() + seasonalInfo.focus.slice(1)} is crucial during this time of year. Focus on:
-${seasonalInfo.keywords.map(keyword => `- ${keyword.charAt(0).toUpperCase() + keyword.slice(1)}`).join('\n')}
-
-## Step-by-Step Implementation
-
-### Planning Phase
-1. **Assess your current conditions** - soil, sunlight, water access
-2. **Set realistic goals** based on your space and experience
-3. **Create a timeline** for implementation
-4. **Gather necessary materials** including quality soil amendments
-
-### Preparation Phase
-1. **Prepare your growing area** with proper soil amendments
-2. **Test soil pH and nutrients** for optimal plant health
-3. **Plan your layout** for efficient use of space
-4. **Install any necessary infrastructure** (irrigation, support structures)
-
-### Implementation Phase
-1. **Follow proven techniques** for your specific growing conditions
-2. **Monitor progress regularly** and adjust as needed
-3. **Maintain consistent care** throughout the growing season
-4. **Document what works** for future reference
-
-## Advanced Techniques
-
-### Soil Enhancement Methods
-- **Organic matter incorporation** improves soil structure and fertility
-- **Microbial inoculation** enhances nutrient cycling
-- **pH optimization** ensures proper nutrient availability
-- **Drainage management** prevents root problems
-
-### Sustainable Practices
-- **Water conservation** through mulching and efficient irrigation
-- **Natural pest management** using beneficial insects and companion planting
-- **Nutrient cycling** through composting and cover crops
-- **Biodiversity promotion** for garden ecosystem health
-
-## Common Challenges and Solutions
-
-### Challenge 1: Poor Soil Quality
-**Solution:** Gradually improve soil with organic matter, starting with our Premium Organic Soil Mix as a foundation.
-
-### Challenge 2: Inconsistent Results
-**Solution:** Maintain detailed records and follow proven techniques consistently.
-
-### Challenge 3: Pest and Disease Issues
-**Solution:** Focus on prevention through healthy soil and appropriate plant selection.
-
-### Challenge 4: Water Management
-**Solution:** Implement mulching, efficient irrigation, and water-wise plant choices.
-
-## Seasonal Maintenance Calendar
-
-### ${getCurrentSeason().charAt(0).toUpperCase() + getCurrentSeason().slice(1)} Tasks
-${seasonalInfo.keywords.map(task => `- **${task.charAt(0).toUpperCase() + task.slice(1)}**: Essential for current season success`).join('\n')}
-
-### Year-Round Considerations
-- Regular soil testing and amendment
-- Consistent watering and maintenance
-- Pest and disease monitoring
-- Planning for next season's improvements
-
-## Expert Tips for Success
-
-1. **Start with quality soil** - it's the foundation of everything else
-2. **Be patient** - sustainable gardening builds results over time
-3. **Observe and learn** from your garden's responses
-4. **Stay consistent** with care and maintenance
-5. **Plan ahead** for seasonal transitions
-
-## Measuring Success
-
-Track your progress with these key indicators:
-- **Plant health and vigor** - strong growth and disease resistance
-- **Soil improvement** - better structure, moisture retention, and fertility
-- **Yield increases** - more abundant harvests over time
-- **Reduced inputs** - less need for external fertilizers and pest control
-
-## Getting Started Today
-
-Ready to implement these techniques in your garden? Here's your action plan:
-
-1. **Assess your current situation** - soil, space, and goals
-2. **Start with soil improvement** using our Premium Organic Soil Mix
-3. **Begin with small areas** and expand as you gain experience
-4. **Keep detailed records** of what works in your specific conditions
-5. **Be patient and consistent** - results improve over time
-
-## Conclusion
-
-${title} represents an investment in your garden's long-term health and productivity. By combining these proven techniques with quality soil amendments and consistent care, you'll create a thriving garden ecosystem that produces abundant results year after year.
-
-Remember, every expert gardener started as a beginner. The key is to start with solid fundamentals, use quality materials, and remain committed to learning and improving your techniques over time.
-
-**Ready to transform your garden?** Our Premium Organic Soil Mix provides the perfect foundation for implementing these techniques. Combined with the knowledge you've gained here, you have everything needed to create the abundant, healthy garden you've always wanted.
-
-*For more expert gardening advice and premium soil products, visit our complete collection of gardening resources and soil amendments.*
-  `;
-}
-
-// Read current blog data
-async function readCurrentBlogData() {
-  try {
-    const content = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
-    
-    // Extract article titles to check for duplicates
-    const titleMatches = content.match(/"title":\s*"([^"]+)"/g);
-    const existingArticles = [];
-    
-    if (titleMatches) {
-      titleMatches.forEach(match => {
-        const titleMatch = match.match(/"title":\s*"([^"]+)"/);
-        if (titleMatch) {
-          existingArticles.push({
-            title: titleMatch[1],
-            // We only need title for duplicate checking
-          });
-        }
-      });
-    }
-    
-    console.log(`Found ${existingArticles.length} existing articles`);
-    return existingArticles;
-  } catch (error) {
-    console.error('Error reading blog data:', error);
-    return [];
-  }
-}
-
-// Write updated blog data
-async function writeBlogData(articles) {
-  const content = `// Blog articles data for Nature's Way Soil website
-// This file contains all blog articles and their metadata
-// Auto-generated on ${new Date().toISOString()}
-
-export interface BlogArticle {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  author: string;
-  publishedAt: string;
-  updatedAt?: string;
-  featuredImage: string;
-  tags: string[];
-  category: string;
-  readTime: number; // in minutes
-  seoTitle?: string;
-  seoDescription?: string;
-}
-
-export const blogArticles: BlogArticle[] = ${JSON.stringify(articles, null, 2)};
-
-// Helper functions for blog functionality
-export function getBlogArticleById(id: string): BlogArticle | undefined {
-  return blogArticles.find(article => article.id === id);
-}
-
-export function getBlogArticleBySlug(slug: string): BlogArticle | undefined {
-  return blogArticles.find(article => article.slug === slug);
-}
-
-export function getAllBlogArticles(): BlogArticle[] {
-  return blogArticles.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-}
-
-export function getBlogArticlesByCategory(category: string): BlogArticle[] {
-  return blogArticles
-    .filter(article => article.category === category)
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-}
-
-export function getBlogArticlesByTag(tag: string): BlogArticle[] {
-  return blogArticles
-    .filter(article => article.tags.includes(tag))
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-}
-
-export function getAllBlogCategories(): string[] {
-  const categories = new Set(blogArticles.map(article => article.category));
-  return Array.from(categories).sort();
-}
-
-export function getAllBlogTags(): string[] {
-  const tags = new Set(blogArticles.flatMap(article => article.tags));
-  return Array.from(tags).sort();
-}
-
-export function getRelatedArticles(currentArticle: BlogArticle, limit: number = 3): BlogArticle[] {
-  return blogArticles
-    .filter(article => 
-      article.id !== currentArticle.id && 
-      (article.category === currentArticle.category || 
-       article.tags.some(tag => currentArticle.tags.includes(tag)))
-    )
-    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, limit);
-}`;
-
-  await fs.writeFile(BLOG_DATA_PATH, content, 'utf-8');
-}
-
-// Generate video assets for new article
-async function generateVideoAssets(article) {
-  const videoScript = {
-    id: article.id,
-    title: article.title,
-    duration: "30",
-    scenes: [
-      {
-        duration: "8",
-        type: "intro",
-        text: article.title,
-        background: "nature-garden-landscape",
-        voiceover: `Welcome to Nature's Way Soil. Today: ${article.title}`
-      },
-      {
-        duration: "14",
-        type: "main-content", 
-        text: article.excerpt,
-        background: "gardening-techniques",
-        voiceover: article.excerpt.substring(0, 200) + "..."
-      },
-      {
-        duration: "8",
-        type: "cta",
-        text: "Learn More & Shop Premium Soil",
-        background: "nature-way-soil-products",
-        voiceover: "Visit natureswaysoil.com for premium organic soil mixes and complete gardening guides."
-      }
-    ],
-    tags: article.tags,
-    category: article.category,
-    generatedAt: new Date().toISOString()
-  };
-
-  // Create video files
-  const videoFiles = [
-    `${article.slug}.mp4`,
-    `${article.slug}.webm`, 
-    `${article.slug}-poster.jpg`,
-    `${article.slug}-script.json`
-  ];
-
-  await fs.mkdir(VIDEOS_DIR, { recursive: true });
-
-  for (const fileName of videoFiles) {
-    const filePath = path.join(VIDEOS_DIR, fileName);
-    
-    if (fileName.endsWith('-script.json')) {
-      await fs.writeFile(filePath, JSON.stringify(videoScript, null, 2));
-    } else if (fileName.endsWith('.jpg')) {
-      await fs.writeFile(filePath, Buffer.from('generated-poster-image'));
-    } else {
-      await fs.writeFile(filePath, Buffer.from('generated-video-content'));
-    }
-  }
-
-  return videoScript;
-}
-
-// Log generation activity
 async function logActivity(message) {
   const timestamp = new Date().toISOString();
-  const logEntry = `${timestamp} - ${message}\n`;
-  
+  const logMessage = `[${timestamp}] ${message}\n`;
+  console.log(logMessage.trim());
+  try { await fs.appendFile(LOG_FILE, logMessage); } catch {}
+}
+
+async function readExistingArticles() {
   try {
-    await fs.appendFile(LOG_FILE, logEntry);
+    const content = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
+    const slugs = [...content.matchAll(/"slug":\s*"([^"]+)"/g)].map(m => m[1]);
+    const titles = [...content.matchAll(/"title":\s*"([^"]+)"/g)].map(m => m[1].toLowerCase());
+    return { slugs: [...new Set(slugs)], titles: [...new Set(titles)] };
   } catch {
-    await fs.writeFile(LOG_FILE, logEntry);
+    return { slugs: [], titles: [] };
   }
-  
-  console.log(`📝 ${message}`);
 }
 
-// Check if it's time to generate content (every 2 days)
-function shouldGenerateContent() {
-  // Always generate content when the script is run - let GitHub Actions control the schedule
-  const forceGenerate = process.env.FORCE_GENERATE === 'true';
-  
-  if (forceGenerate) {
-    console.log('🚀 Force generation enabled via environment variable');
-    return true;
-  }
-  
-  // Always generate when run by GitHub Actions or manually
-  return true;
-}
-
-// Main content generation function
-async function generateNewContent() {
-  try {
-    await logActivity('Starting automated blog content generation');
-
-    // Check if we should generate content today
-    if (!shouldGenerateContent()) {
-      await logActivity('Skipping content generation - not scheduled for today');
-      return;
-    }
-
-    // Read current articles
-    const currentArticles = await readCurrentBlogData();
-    await logActivity(`Found ${currentArticles.length} existing articles`);
-
-    // Select a topic for new article (avoid duplicates when possible)
-    const season = getCurrentSeason();
-    
-    // Get list of existing titles to avoid duplicates
-    const existingTitles = currentArticles.map(article => 
-      article.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
-    );
-    
-    // Find topics we haven't covered yet
-    const availableTopics = GARDENING_TOPICS.filter(topic => {
-      const topicTitle = topic.title.replace('{season}', season).toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-      return !existingTitles.some(existing => existing.includes(topicTitle.substring(0, 20)));
+function callOpenAI(prompt, systemPrompt) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 2000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ]
     });
-    
-    // Select from available topics, or random if all have been used
-    const selectedTopic = availableTopics.length > 0 
-      ? availableTopics[Math.floor(Math.random() * availableTopics.length)]
-      : GARDENING_TOPICS[Math.floor(Math.random() * GARDENING_TOPICS.length)];
-      
-    const newArticle = generateArticleContent(selectedTopic, season);
-    
-    await logActivity(`Generated new article: ${newArticle.title} (${availableTopics.length} unused topics remaining)`);
-
-    // Generate video assets
-    await generateVideoAssets(newArticle);
-    await logActivity(`Generated video assets for: ${newArticle.slug}`);
-
-    // Update blog data - read existing content and add new article
-    const existingContent = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
-    
-    // Find the blogArticles array and insert the new article at the beginning
-    const arrayMatch = existingContent.match(/(export const blogArticles: BlogArticle\[\] = \[)([\s\S]*?)(\];)/);
-    
-    if (arrayMatch) {
-      const beforeArray = existingContent.substring(0, arrayMatch.index + arrayMatch[1].length);
-      const afterArray = existingContent.substring(arrayMatch.index + arrayMatch[1].length + arrayMatch[2].length);
-      
-      // Add new article at the beginning
-      const newArticleJson = JSON.stringify(newArticle, null, 2);
-      const newContent = beforeArray + 
-        (arrayMatch[2].trim() ? '\n  ' + newArticleJson + ',' + arrayMatch[2] : '\n  ' + newArticleJson + '\n') +
-        afterArray;
-      
-      await fs.writeFile(BLOG_DATA_PATH, newContent, 'utf-8');
-      await logActivity('Added new article to existing blog data');
-    } else {
-      // Fallback: create new file with just this article
-      await writeBlogData([newArticle]);
-      await logActivity('Created new blog data file');
-    }
-
-    // Create featured image placeholder
-    const imageDir = path.join(process.cwd(), 'public', 'images', 'blog');
-    await fs.mkdir(imageDir, { recursive: true });
-    const imagePath = path.join(imageDir, `${newArticle.slug}.jpg.placeholder`);
-    await fs.writeFile(imagePath, `# Generated image for ${newArticle.title}\n# Auto-generated on ${new Date().toISOString()}`);
-
-    await logActivity(`🎉 Successfully generated new blog content: ${newArticle.title}`);
-
-    return {
-      success: true,
-      article: newArticle,
-      message: `Generated new article: ${newArticle.title}`
-    };
-
-  } catch (error) {
-    await logActivity(`❌ Error generating content: ${error.message}`);
-    throw error;
-  }
+    const req = https.request({
+      hostname: 'api.openai.com',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.error) return reject(new Error(parsed.error.message));
+          resolve(parsed.choices[0].message.content);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
 }
 
-// Command line interface
+async function generateUniqueTopic(existingTitles) {
+  const existingList = existingTitles.slice(0, 30).join('\n- ');
+  const systemPrompt = `You are an SEO content strategist for Nature's Way Soil, a small family farm in Snow Hill, NC selling premium organic fertilizers, biochar, worm castings, compost, kelp, and humic acid on Amazon, Walmart, and their website. Return valid JSON only. No markdown.`;
+  const prompt = `Generate ONE unique blog article topic.
+
+EXISTING ARTICLES (do NOT repeat):
+- ${existingList}
+
+Target product-relevant angles: biochar benefits, worm castings uses, humic acid for soil, pet-safe lawn fertilizer, organic tomato growing, fixing clay soil, spring soil prep, raised bed soil, horse pasture management, dog urine lawn repair, blueberry soil pH, strawberry fertilizer, fall garden prep, liquid kelp foliar spray, compost tea brewing.
+
+Return ONLY this JSON:
+{
+  "title": "SEO title 50-65 chars",
+  "slug": "url-slug-no-special-chars-max-60-chars",
+  "category": "Soil Health or Organic Gardening or Lawn Care or Farming or Product Guide",
+  "tags": ["tag1","tag2","tag3","tag4"],
+  "seoTitle": "meta title 55-60 chars",
+  "seoDescription": "meta description 145-160 chars",
+  "readTime": 8,
+  "contentPrompt": "3-4 sentences: unique angle, key points, which NWS products to mention"
+}`;
+  const response = await callOpenAI(prompt, systemPrompt);
+  return JSON.parse(response.replace(/```json|```/g, '').trim());
+}
+
+async function generateArticleContent(topic) {
+  const systemPrompt = `You are an expert organic gardening writer for Nature's Way Soil, a family farm in Snow Hill, NC. Write warmly and knowledgeably. Return valid JSON only. No markdown fences.`;
+  const prompt = `Write a complete blog article:
+
+Title: ${topic.title}
+Direction: ${topic.contentPrompt}
+Tags: ${topic.tags.join(', ')}
+
+Requirements:
+- 900-1200 words, genuine unique content
+- Use ## and ### markdown headers
+- At least one actionable how-to section with numbered steps
+- Mention Nature's Way Soil products naturally: biochar, worm castings, liquid fertilizer, humic acid, kelp
+- End with CTA to shop at natureswaysoil.com
+- No generic filler sentences
+
+Return ONLY:
+{"excerpt":"150-160 char excerpt","content":"full markdown content"}`;
+  const response = await callOpenAI(prompt, systemPrompt);
+  return JSON.parse(response.replace(/```json|```/g, '').trim());
+}
+
+async function addArticleToBlogData(article) {
+  const content = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
+  const marker = 'export const blogArticles: BlogArticle[] = [';
+  const arrayStart = content.indexOf(marker);
+  if (arrayStart === -1) throw new Error('Could not find blogArticles array');
+  const insertAt = arrayStart + marker.length;
+  const articleJson = '\n  ' + JSON.stringify(article, null, 2).replace(/\n/g, '\n  ') + ',';
+  const newContent = content.slice(0, insertAt) + articleJson + content.slice(insertAt);
+  await fs.writeFile(BLOG_DATA_PATH, newContent, 'utf-8');
+}
+
+async function generateNewContent() {
+  await logActivity('Starting blog content generation');
+
+  if (!process.env.OPENAI_API_KEY) {
+    await logActivity('No OPENAI_API_KEY — skipping');
+    return null;
+  }
+
+  const { slugs: existingSlugs, titles: existingTitles } = await readExistingArticles();
+  await logActivity(`Found ${existingSlugs.length} existing unique articles`);
+
+  const topic = await generateUniqueTopic(existingTitles);
+  await logActivity(`Topic: "${topic.title}"`);
+
+  let slug = topic.slug.slice(0, 60);
+  if (existingSlugs.includes(slug)) {
+    slug = `${slug.slice(0, 50)}-${new Date().toISOString().slice(0, 10)}`;
+  }
+
+  const articleBody = await generateArticleContent(topic);
+  await logActivity(`Generated ~${articleBody.content.split(' ').length} words`);
+
+  const now = new Date().toISOString();
+  const article = {
+    id: slug,
+    title: topic.title,
+    slug,
+    excerpt: articleBody.excerpt,
+    content: articleBody.content,
+    author: "Nature's Way Soil Team",
+    publishedAt: now,
+    updatedAt: now,
+    featuredImage: `/images/blog/${slug}.jpg`,
+    tags: topic.tags,
+    category: topic.category,
+    readTime: topic.readTime,
+    seoTitle: topic.seoTitle,
+    seoDescription: topic.seoDescription
+  };
+
+  await addArticleToBlogData(article);
+  await logActivity(`Added: "${article.title}" (${slug})`);
+  return { success: true, article };
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   generateNewContent()
-    .then((result) => {
-      if (result) {
-        console.log(`✅ ${result.message}`);
-        console.log(`📊 Article details:`);
-        console.log(`   Title: ${result.article.title}`);
-        console.log(`   Category: ${result.article.category}`);
-        console.log(`   Tags: ${result.article.tags.join(', ')}`);
-        console.log(`   Read time: ${result.article.readTime} minutes`);
-        console.log(`   Slug: ${result.article.slug}`);
-      } else {
-        console.log('✅ No content generated - not scheduled for today');
+    .then(r => {
+      if (r?.article) {
+        console.log(`\nGenerated: "${r.article.title}"`);
+        console.log(`Slug: ${r.article.slug}`);
       }
-      process.exit(0);
     })
-    .catch((error) => {
-      console.error('❌ Content generation failed:', error);
-      process.exit(1);
-    });
+    .catch(err => { console.error('Error:', err.message); process.exit(1); });
 }
-
-export { generateNewContent, generateArticleContent, shouldGenerateContent };
