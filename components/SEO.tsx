@@ -17,7 +17,7 @@ interface SEOProps {
 export default function SEO({
   title = 'Nature\'s Way Soil - Premium Organic Fertilizer & Soil Amendments | Pet & Kid Safe',
   description = 'Premium organic liquid fertilizers, activated biochar, and living compost. Made fresh weekly on our family farm. Safe for kids, pets & pollinators. Free shipping on orders $50+.',
-  image = '/images/og-image.jpg',
+  image = 'https://natureswaysoil.com/images/og-image.jpg',
   url = 'https://natureswaysoil.com',
   type = 'website',
   productData
@@ -79,6 +79,35 @@ export default function SEO({
     }
   } : null;
 
+
+  const localBusinessSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: siteName,
+    url: 'https://natureswaysoil.com',
+    telephone: '+1-252-560-7390',
+    email: 'sales@natureswaysoil.com',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '533 Eden Church Rd.',
+      addressLocality: 'Snow Hill',
+      addressRegion: 'NC',
+      postalCode: '28580',
+      addressCountry: 'US'
+    },
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: 35.4579,
+      longitude: -77.7077
+    },
+    description: 'Premium organic fertilizers, biochar, and living compost made fresh weekly on our family farm.',
+    priceRange: '$$',
+    openingHours: 'Mo-Fr 08:00-17:00',
+    sameAs: [
+      'https://www.instagram.com/natureswaysoil',
+      'https://twitter.com/natureswaysoil'
+    ]
+  };
   return (
     <Head>
       {/* Basic Meta Tags */}

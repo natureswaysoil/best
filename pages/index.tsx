@@ -347,22 +347,14 @@ export default function Home({ featuredProducts }: HomeProps) {
             
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
               <div className="aspect-video w-full">
-                <video
-                  className="w-full h-full object-cover"
-                  controls
-                  autoPlay
-                  muted
-                  playsInline
-                  loop
-                  poster="https://images.unsplash.com/photo-1582719478315-1bfa973d8f65?auto=format&fit=crop&w=1200&q=80"
-                  preload="auto"
-                >
-                  <source
-                    src="https://cdn.abacus.ai/images/c2e4e0e6-7b3e-4d0d-9848-33a1c938db27.png"
-                    type="video/mp4"
-                  />
-                  Your browser does not support the video tag.
-                </video>
+                <iframe
+                  className="w-full h-full"
+                  src="https://www.youtube.com/embed/RokXnrzFl3M?controls=1&rel=0&modestbranding=1&playsinline=1"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="Nature's Way Soil - See the Living Soil Difference"
+                  style={{ border: 0 }}
+                />
               </div>
               
               <div className="p-8 text-center border-t border-gray-200">
@@ -646,10 +638,17 @@ export default function Home({ featuredProducts }: HomeProps) {
                 </div>
               </div>
 
-              {/* Hero Video */}
+              {/* YouTube Video */}
               <div className="relative">
-                <div className="rounded-2xl overflow-hidden shadow-2xl">
-                  <HeroVideo />
+                <div className="rounded-2xl overflow-hidden shadow-2xl aspect-video">
+                  <iframe
+                    className="w-full h-full"
+                    src="https://www.youtube.com/embed/RokXnrzFl3M?controls=1&rel=0&modestbranding=1&playsinline=1"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Nature's Way Soil transforms gardens"
+                    style={{ border: 0 }}
+                  />
                 </div>
                 <div className="text-center mt-4">
                   <p className="text-sm text-gray-600">
