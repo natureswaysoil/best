@@ -86,6 +86,37 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
           <meta key={tag} property="article:tag" content={tag} />
         ))}
         <link rel="canonical" href={`https://natureswaysoil.com/blog/${article.slug}`} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            "headline": article.title,
+            "description": article.seoDescription || article.excerpt,
+            "datePublished": article.publishedAt,
+            "dateModified": article.updatedAt || article.publishedAt,
+            "image": article.featuredImage,
+            "url": `https://natureswaysoil.com/blog/${article.slug}`,
+            "author": {
+              "@type": "Organization",
+              "name": "Nature's Way Soil",
+              "url": "https://natureswaysoil.com"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Nature's Way Soil",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://natureswaysoil.com/images/logo.png"
+              }
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": `https://natureswaysoil.com/blog/${article.slug}`
+            },
+            "keywords": article.tags.join(', ')
+          })}}
+        />
       </Head>
 
       {/* Reading Progress Bar */}

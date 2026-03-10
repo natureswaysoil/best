@@ -14,6 +14,7 @@ export default function Document() {
           href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
           rel="stylesheet"
         />
+        <meta name="google-site-verification" content="e08ddb8a6ca06506" />
       </Head>
       <body>
         <Main />
