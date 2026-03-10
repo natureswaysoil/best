@@ -15,6 +15,18 @@ export default function Document() {
           rel="stylesheet"
         />
         <meta name="google-site-verification" content="e08ddb8a6ca06506" />
+        {/* Google Analytics GA4 */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-77PH70WC64" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-77PH70WC64');
+            `,
+          }}
+        />
       </Head>
       <body>
         <Main />
