@@ -59,6 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch (e: any) {
         results.email[key] = `❌ ${e.message}`;
       }
+      await new Promise(resolve => setTimeout(resolve, 600));
     }
   } else {
     results.email = { error: '❌ RESEND_API_KEY not set on Vercel — no emails sent' };
