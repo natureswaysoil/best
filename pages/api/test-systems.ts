@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 2. Send real test emails
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const from = process.env.RESEND_FROM || "Nature's Way Soil <no-reply@natureswaysoil.com>";
+    const from = "Nature's Way Soil <no-reply@natureswaysoil.com>";
     const html = `
       <h2 style="color:#2d5016;">🧪 Email System Test</h2>
       <p>This is a live test from Nature's Way Soil order notification system.</p>

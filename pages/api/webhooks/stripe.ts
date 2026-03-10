@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
             if (resendClient) {
               await resendClient.emails.send({
-                from: process.env.RESEND_FROM || "Nature's Way Soil <no-reply@natureswaysoil.com>",
+                from: "Nature's Way Soil <no-reply@natureswaysoil.com>",
                 to: ['natureswaysoil@gmail.com', 'james@natureswaysoil.com', 'sales@natureswaysoil.com'],
                 subject: `🛒 New Order — $${(paymentIntent.amount / 100).toFixed(2)} from ${metadata.customer_name || paymentIntent.receipt_email}`,
                 html: `
