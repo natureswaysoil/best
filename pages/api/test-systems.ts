@@ -70,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const supabase = getServiceSupabase();
     const { data, error, count } = await supabase
       .from('orders')
-      .select('id, email, name, total, status, created_at', { count: 'exact' })
+      .select('id, total, tax, shipping_city, shipping_state, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .limit(5);
 
@@ -108,3 +108,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json(results);
 }
+
+// This won't append correctly, use view first
