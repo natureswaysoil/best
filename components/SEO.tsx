@@ -80,6 +80,7 @@ export default function SEO({
   } : null;
 
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',

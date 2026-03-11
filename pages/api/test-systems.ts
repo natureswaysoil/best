@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Resend } from 'resend';
-import { getServiceSupabase } from '../../lib/supabase';
 
 const TEST_SECRET = 'nws-test-2026';
 
