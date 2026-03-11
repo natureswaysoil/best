@@ -65,28 +65,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     results.email = { error: '❌ RESEND_API_KEY not set on Vercel — no emails sent' };
   }
 
-  // 3. Test Supabase + show recent orders
+  // 3. Test Supabase via raw HTTP (bypass client library)
   try {
-    const supabase = getServiceSupabase();
-    const { data, error, count } = await supabase
-      .from('orders')
-      .select('id, total, tax, shipping_city, shipping_state, created_at', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (error) {
-      results.supabase.orders = `❌ ${error.message} (code: ${error.code})`;
-    } else {
-      results.supabase.connection = '✅ Connected';
-      results.supabase.total_orders = count;
-      results.supabase.recent_orders = data?.map(o => ({
+    const SUPABASE_URL = 'https://gixjfavlefeldoostsij.supabase.co';
+    const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpeGpmYXZsZWZlbGRvb3N0c2lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTg4NTU1OSwiZXhwIjoyMDc1NDYxNTU5fQ.tUkgA14BmnB6B-xN9xlvEW6WpXvfYx9N5q6o2i-q2iE';
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,total,created_at&order=created_at.desc&limit=5`, {
+      headers: {
+        'apikey': SERVICE_KEY,
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    const text = await resp.text();
+    if (resp.ok) {
+      const data = JSON.parse(text);
+      results.supabase.connection = '✅ Connected (raw HTTP)';
+      results.supabase.status = resp.status;
+      results.supabase.total_orders = data.length;
+      results.supabase.recent_orders = data.map((o: any) => ({
         id: o.id?.slice(0, 8) + '...',
         total: `$${o.total}`,
         date: o.created_at?.slice(0, 10),
       }));
+    } else {
+      results.supabase.connection = `❌ HTTP ${resp.status}`;
+      results.supabase.error = text.slice(0, 300);
     }
   } catch (e: any) {
-    results.supabase.connection = `❌ Failed: ${e.message}`;
+    results.supabase.connection = `❌ Fetch failed: ${e.message}`;
   }
 
   // Return as pretty HTML if browser, JSON otherwise
