@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gixjfavlefeldoostsij.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpeGpmYXZsZWZlbGRvb3N0c2lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODU1NTksImV4cCI6MjA3NTQ2MTU1OX0.PyqZqTyqazmzAppsLxjG52kGVcxJfpX1hofq-lLPgM4';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // For server-side operations with service role
 export const getServiceSupabase = () => {
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpeGpmYXZsZWZlbGRvb3N0c2lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTg4NTU1OSwiZXhwIjoyMDc1NDYxNTU5fQ.tUkgA14BmnB6B-xN9xlvEW6WpXvfYx9N5q6o2i-q2iE';
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { persistSession: false }
   });
