@@ -81,10 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       results.supabase.total_orders = count;
       results.supabase.recent_orders = data?.map(o => ({
         id: o.id?.slice(0, 8) + '...',
-        email: o.email,
-        name: o.name,
         total: `$${o.total}`,
-        status: o.status,
         date: o.created_at?.slice(0, 10),
       }));
     }
