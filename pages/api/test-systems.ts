@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     RESEND_API_KEY: process.env.RESEND_API_KEY ? '✅ set' : '❌ MISSING',
     RESEND_FROM: process.env.RESEND_FROM || '(not set — using default)',
     SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder') ? '✅ set' : '❌ MISSING/placeholder',
-    SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('placeholder') ? '✅ set' : '❌ MISSING/placeholder',
+    SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? (process.env.SUPABASE_SERVICE_ROLE_KEY.includes('placeholder') ? '❌ still placeholder' : `✅ set (starts: ${process.env.SUPABASE_SERVICE_ROLE_KEY.slice(0,12)}...)`) : '❌ NOT SET — variable missing entirely',
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ? '✅ set' : '❌ MISSING',
   };
 
