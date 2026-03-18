@@ -1,610 +1,651 @@
-import { useState } from 'react';
-import Head from 'next/head';
-import Link from 'next/link';
-
-interface FormState {
-  agency: string;
-  name: string;
-  email: string;
-  phone: string;
-  agencyType: string;
-  useCase: string;
-  message: string;
-}
-
-const INITIAL: FormState = { agency: '', name: '', email: '', phone: '', agencyType: '', useCase: '', message: '' };
-
-export default function GovernmentPage() {
-  const [form, setForm] = useState<FormState>(INITIAL);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-
-  const handle = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('sending');
-    try {
-      const res = await fetch('/api/government-rfq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      setStatus(res.ok ? 'success' : 'error');
-      if (res.ok) setForm(INITIAL);
-    } catch {
-      setStatus('error');
-    }
-  };
-
-  return (
-    <>
-      <Head>
-        <title>Government &amp; Institutional Procurement — Nature&apos;s Way Soil</title>
-        <meta name="description" content="USDA BioPreferred certified soil amendments for federal, state, and municipal buyers. Bulk orders, purchase orders, and sustainable land management solutions." />
-
-      </Head>
-
-      <style jsx global>{`
-        .gov-page { font-family: 'IBM Plex Sans', sans-serif; color: #1e2022; background: #f7f3ec; }
-        .gov-page *, .gov-page *::before, .gov-page *::after { box-sizing: border-box; }
-        .gov-page h1, .gov-page h2, .gov-page h3 { font-family: 'Libre Baskerville', serif; }
-
-        /* Gov info bar */
-        .g-bar { background: #0d3522; color: rgba(255,255,255,0.8); font-size: 0.68rem;
-          letter-spacing: 0.09em; text-transform: uppercase; padding: 7px 2rem;
-          display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
-        .g-bar-item { padding: 0 1.2rem; border-right: 1px solid rgba(255,255,255,0.18); white-space: nowrap; }
-        .g-bar-item:first-child { padding-left: 0; }
-        .g-bar-link { margin-left: auto; color: #e8c97a; text-decoration: none; font-weight: 600; padding-right: 0; border: none; }
-        .g-bar-link:hover { text-decoration: underline; }
-
-        /* Nav */
-        .g-nav { background: white; border-bottom: 1px solid #ede7da; padding: 0 2rem;
-          display: flex; align-items: center; justify-content: space-between;
-          height: 64px; position: sticky; top: 0; z-index: 100;
-          box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
-        .g-logo { display: flex; align-items: center; gap: 10px; font-family: 'Libre Baskerville', serif;
-          font-weight: 700; font-size: 1.05rem; color: #0d3522; text-decoration: none; }
-        .g-logo img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-        .g-nav-links { display: flex; gap: 1.8rem; list-style: none; margin: 0; padding: 0;
-          font-size: 0.84rem; font-weight: 500; }
-        .g-nav-links a { color: #1e2022; text-decoration: none; }
-        .g-nav-links a:hover { color: #1a5c42; }
-        .g-nav-cta { background: #0d3522; color: white; padding: 9px 20px; border-radius: 3px;
-          font-size: 0.84rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
-        .g-nav-cta:hover { background: #1a5c42; }
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government & Federal Procurement - Nature's Way Soil</title>
+    <meta name="description" content="HUBZone certified soil restoration solutions for federal construction, military bases, and land management. USDA BioPreferred. SAM.gov registered.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+        
+        /* Header */
+        header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+        .header-content { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #1F4E78; text-decoration: none; }
+        nav a { margin-left: 2rem; color: #555; text-decoration: none; font-size: 0.95rem; }
+        nav a:hover { color: #2E75B6; }
+        
+        /* Certifications Bar */
+        .cert-bar { background: #F0F8FF; border-bottom: 2px solid #2E75B6; padding: 0.75rem 0; }
+        .cert-bar-content { max-width: 1200px; margin: 0 auto; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .cert-badge { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; color: #1F4E78; }
+        .cert-badge::before { content: "✓"; color: #0F6E56; font-weight: 700; font-size: 1.1rem; }
+        
         /* Hero */
-        .g-hero { background: linear-gradient(138deg, #0a2c1c 0%, #0d3522 55%, #164d37 100%);
-          color: white; padding: 5rem 2rem 4.5rem; position: relative; overflow: hidden; }
-        .g-hero::after { content: ''; position: absolute; inset: 0;
-          background: radial-gradient(ellipse at 78% 50%, rgba(200,168,75,0.13) 0%, transparent 58%);
-          pointer-events: none; }
-        .g-hero-inner { max-width: 1100px; margin: 0 auto; display: grid;
-          grid-template-columns: 1fr auto; gap: 4rem; align-items: center; position: relative; z-index: 1; }
-        .g-eyebrow { display: inline-block; background: rgba(200,168,75,0.15);
-          border: 1px solid rgba(200,168,75,0.35); color: #e8c97a; font-size: 0.68rem;
-          font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
-          padding: 5px 13px; border-radius: 2px; margin-bottom: 1.4rem;
-          font-family: 'IBM Plex Sans', sans-serif; }
-        .g-hero h1 { font-size: clamp(1.9rem, 3.5vw, 3rem); line-height: 1.2; margin: 0 0 1.2rem; }
-        .g-hero h1 em { font-style: italic; color: #e8c97a; }
-        .g-hero-sub { font-size: 0.975rem; color: rgba(255,255,255,0.78); max-width: 540px;
-          margin-bottom: 2.4rem; line-height: 1.8; }
-        .g-hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .btn-gold { background: #c8a84b; color: #0d3522; padding: 13px 28px; border-radius: 3px;
-          font-weight: 700; font-size: 0.875rem; text-decoration: none;
-          letter-spacing: 0.03em; transition: background 0.2s; display: inline-block; }
-        .btn-gold:hover { background: #e8c97a; }
-        .btn-wht { border: 1.5px solid rgba(255,255,255,0.42); color: white; padding: 13px 28px;
-          border-radius: 3px; font-weight: 500; font-size: 0.875rem; text-decoration: none;
-          transition: background 0.2s; display: inline-block; }
-        .btn-wht:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.7); }
-        .g-creds { display: flex; flex-direction: column; gap: 0.9rem; }
-        .g-cred { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.17);
-          border-radius: 5px; padding: 0.85rem 1.2rem; min-width: 160px; }
-        .g-cred-label { font-size: 0.62rem; color: rgba(255,255,255,0.52); text-transform: uppercase;
-          letter-spacing: 0.1em; margin-bottom: 3px; font-family: 'IBM Plex Sans', sans-serif; }
-        .g-cred-val { font-size: 0.85rem; font-weight: 600; }
-
-        /* Trust bar */
-        .g-trust { background: white; border-bottom: 2px solid #ede7da; padding: 1.1rem 2rem; }
-        .g-trust-inner { max-width: 1100px; margin: 0 auto; display: flex;
-          align-items: center; gap: 2.2rem; flex-wrap: wrap; justify-content: center; }
-        .g-trust-item { font-size: 0.79rem; font-weight: 500; color: #1e2022;
-          white-space: nowrap; display: flex; align-items: center; gap: 7px; }
-        .g-dot { width: 6px; height: 6px; border-radius: 50%; background: #1a5c42; flex-shrink: 0; }
-
-        /* Section base */
-        .g-sec { padding: 4.5rem 2rem; }
-        .g-in { max-width: 1100px; margin: 0 auto; }
-        .g-slabel { font-size: 0.67rem; font-weight: 600; letter-spacing: 0.16em;
-          text-transform: uppercase; color: #1a5c42; margin-bottom: 0.4rem;
-          font-family: 'IBM Plex Sans', sans-serif; }
-        .g-stitle { font-size: clamp(1.5rem, 2.8vw, 2.2rem); color: #0d3522;
-          margin-bottom: 0.85rem; line-height: 1.25; }
-        .g-slead { font-size: 0.935rem; color: #6b7280; max-width: 580px; line-height: 1.78; }
-
-        /* Use cases */
-        .g-uses { background: #ede7da; }
-        .g-use-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
-          gap: 1.2rem; margin-top: 2.4rem; }
-        .g-use-card { background: white; border-radius: 3px; padding: 1.7rem;
-          border-top: 3px solid #0d3522; transition: transform 0.2s, box-shadow 0.2s; }
-        .g-use-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.09); }
-        .g-use-title { font-family: 'IBM Plex Sans', sans-serif; font-weight: 700;
-          font-size: 0.93rem; margin-bottom: 0.5rem; color: #0d3522; }
-        .g-use-desc { font-size: 0.84rem; color: #6b7280; line-height: 1.65; }
-        .g-use-tag { display: inline-block; margin-top: 0.85rem; background: #eef5f1;
-          color: #1a5c42; font-size: 0.67rem; font-weight: 600; letter-spacing: 0.07em;
-          padding: 3px 9px; border-radius: 2px; text-transform: uppercase;
-          font-family: 'IBM Plex Sans', sans-serif; }
-
-        /* Certs */
-        .g-certs { background: white; }
-        .g-cert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-          gap: 1.2rem; margin-top: 2.4rem; }
-        .g-cert-card { border: 1.5px solid #ede7da; border-radius: 3px; padding: 1.35rem;
-          display: flex; gap: 1rem; align-items: flex-start; }
-        .g-cert-icon { width: 38px; height: 38px; background: #0d3522; border-radius: 3px;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .g-cert-icon svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; }
-        .g-cert-name { font-family: 'IBM Plex Sans', sans-serif; font-weight: 700;
-          font-size: 0.87rem; color: #0d3522; margin-bottom: 3px; }
-        .g-cert-desc { font-size: 0.78rem; color: #6b7280; line-height: 1.6; }
-
+        .hero { background: linear-gradient(135deg, #1F4E78 0%, #2E75B6 100%); color: white; padding: 4rem 2rem; text-align: center; }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; font-weight: 700; }
+        .hero p { font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.95; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 0.875rem 2rem; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; transition: all 0.3s; }
+        .btn-primary { background: #0F6E56; color: white; }
+        .btn-primary:hover { background: #0D5A47; }
+        .btn-secondary { background: white; color: #1F4E78; }
+        .btn-secondary:hover { background: #F0F8FF; }
+        
+        /* Key Info Bar */
+        .key-info { background: #FFF8E1; border-left: 4px solid #F9A825; padding: 1.5rem 2rem; margin: 2rem auto; max-width: 1200px; }
+        .key-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+        .key-info-item { font-size: 0.9rem; }
+        .key-info-item strong { display: block; color: #1F4E78; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem; }
+        .key-info-item span { font-size: 1rem; font-weight: 600; color: #333; }
+        
+        /* Container */
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+        
+        /* Section */
+        section { padding: 4rem 0; }
+        .section-title { font-size: 2rem; margin-bottom: 1rem; color: #1F4E78; font-weight: 700; }
+        .section-subtitle { font-size: 1.1rem; color: #666; margin-bottom: 2.5rem; }
+        
+        /* Applications Grid */
+        .app-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .app-card { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 2rem; transition: all 0.3s; }
+        .app-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: #2E75B6; }
+        .app-card h3 { color: #1F4E78; margin-bottom: 0.75rem; font-size: 1.3rem; }
+        .app-card p { color: #666; margin-bottom: 1rem; line-height: 1.7; }
+        .app-card .tag { display: inline-block; background: #E8F4F8; color: #1F4E78; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+        
+        /* Contractor Value Props */
+        .value-props { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin: 2rem 0; }
+        .value-prop { background: #F0F8FF; border-left: 4px solid #2E75B6; padding: 1.5rem; }
+        .value-prop h4 { color: #1F4E78; margin-bottom: 0.75rem; font-size: 1.1rem; }
+        .value-prop ul { list-style: none; }
+        .value-prop li { padding-left: 1.5rem; position: relative; margin-bottom: 0.5rem; color: #555; }
+        .value-prop li::before { content: "→"; position: absolute; left: 0; color: #0F6E56; font-weight: 700; }
+        
+        /* Certifications Grid */
+        .cert-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .cert-card { background: white; border: 2px solid #e5e5e5; border-radius: 8px; padding: 1.5rem; text-align: center; }
+        .cert-card h4 { color: #1F4E78; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .cert-card p { color: #666; font-size: 0.9rem; line-height: 1.6; }
+        .cert-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        
         /* Products */
-        .g-prods { background: #f7f3ec; }
-        .g-prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
-          gap: 1.2rem; margin-top: 2.4rem; }
-        .g-prod-card { background: white; border-radius: 3px; border: 1px solid #ede7da;
-          overflow: hidden; transition: box-shadow 0.2s; }
-        .g-prod-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.09); }
-        .g-prod-img { background: #f1f0ee; height: 165px; display: flex;
-          align-items: center; justify-content: center; }
-        .g-prod-ico { width: 58px; height: 58px; background: #ede7da; border-radius: 50%;
-          display: flex; align-items: center; justify-content: center; }
-        .g-prod-ico svg { width: 28px; height: 28px; stroke: #1a5c42; fill: none; stroke-width: 1.5; }
-        .g-prod-body { padding: 1.15rem; }
-        .g-prod-title { font-family: 'IBM Plex Sans', sans-serif; font-weight: 700;
-          font-size: 0.89rem; margin-bottom: 0.35rem; }
-        .g-prod-desc { font-size: 0.77rem; color: #6b7280; margin-bottom: 0.85rem; }
-        .g-prod-specs { list-style: none; padding: 0; font-size: 0.74rem;
-          color: #1a5c42; margin-bottom: 0.85rem; }
-        .g-prod-specs li::before { content: '— '; }
-        .g-prod-foot { display: flex; align-items: center; justify-content: space-between;
-          border-top: 1px solid #ede7da; padding-top: 0.85rem; }
-        .g-prod-price { font-size: 0.97rem; font-weight: 700; color: #0d3522; }
-        .g-prod-price span { font-size: 0.67rem; color: #6b7280; font-weight: 400; display: block; }
-        .btn-sm { background: #0d3522; color: white; padding: 7px 14px; border-radius: 3px;
-          font-size: 0.77rem; font-weight: 600; text-decoration: none; }
-        .btn-sm:hover { background: #1a5c42; }
-
-        /* Procurement + RFQ */
-        .g-proc { background: #0d3522; color: white; }
-        .g-proc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem;
-          margin-top: 2.4rem; align-items: start; }
-        .g-step { display: flex; gap: 1.2rem; padding: 1rem 0;
-          border-bottom: 1px solid rgba(255,255,255,0.1); align-items: flex-start; }
-        .g-step:last-child { border: none; }
-        .g-step-n { width: 29px; height: 29px; border: 1.5px solid #c8a84b; color: #c8a84b;
-          border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          font-size: 0.73rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;
-          font-family: 'IBM Plex Sans', sans-serif; }
-        .g-step-title { font-family: 'IBM Plex Sans', sans-serif; font-weight: 600;
-          font-size: 0.88rem; margin-bottom: 3px; }
-        .g-step-desc { font-size: 0.79rem; color: rgba(255,255,255,0.58); line-height: 1.65; }
-        .g-rfq-box { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.18);
-          border-radius: 5px; padding: 1.9rem; }
-        .g-rfq-box h3 { font-size: 1.2rem; margin: 0 0 0.35rem; }
-        .g-rfq-box > p { font-size: 0.84rem; color: rgba(255,255,255,0.62); margin: 0 0 1.3rem; }
-        .g-form input, .g-form select, .g-form textarea {
-          width: 100%; padding: 10px 13px; background: rgba(255,255,255,0.09);
-          border: 1px solid rgba(255,255,255,0.22); border-radius: 3px; color: white;
-          font-size: 0.84rem; margin-bottom: 0.6rem; font-family: 'IBM Plex Sans', sans-serif;
-          outline: none; transition: border-color 0.2s; }
-        .g-form input::placeholder, .g-form textarea::placeholder { color: rgba(255,255,255,0.36); }
-        .g-form input:focus, .g-form select:focus, .g-form textarea:focus { border-color: #c8a84b; }
-        .g-form select option { color: #1e2022; background: white; }
-        .g-form textarea { resize: vertical; min-height: 82px; }
-        .g-form button { width: 100%; background: #c8a84b; color: #0d3522; border: none;
-          padding: 12px; border-radius: 3px; font-weight: 700; font-size: 0.875rem;
-          cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; letter-spacing: 0.03em;
-          transition: background 0.2s; }
-        .g-form button:hover:not(:disabled) { background: #e8c97a; }
-        .g-form button:disabled { opacity: 0.55; cursor: not-allowed; }
-        .g-success { background: rgba(45,122,90,0.22); border: 1px solid rgba(45,122,90,0.45);
-          border-radius: 3px; padding: 1rem 1.2rem; font-size: 0.875rem; color: #a7f3d0; line-height: 1.7; }
-        .g-err { background: rgba(200,50,50,0.18); border: 1px solid rgba(200,50,50,0.38);
-          border-radius: 3px; padding: 1rem 1.2rem; font-size: 0.875rem; color: #fca5a5;
-          margin-top: 0.8rem; }
-
-        /* Sustainability */
-        .g-sus { background: #ede7da; }
-        .g-sus-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 3.5rem;
-          align-items: start; margin-top: 2.4rem; }
-        .g-metric { background: white; border-radius: 3px; padding: 1rem 1.35rem;
-          border-left: 4px solid #1a5c42; margin-bottom: 0.95rem; }
-        .g-metric-label { font-size: 0.7rem; color: #6b7280; text-transform: uppercase;
-          letter-spacing: 0.07em; margin-bottom: 3px; font-family: 'IBM Plex Sans', sans-serif; }
-        .g-metric-val { font-size: 1.5rem; font-weight: 700; color: #0d3522;
-          font-family: 'Libre Baskerville', serif; line-height: 1.2; }
-        .g-metric-note { font-size: 0.74rem; color: #6b7280; }
-        .g-sus-text h3 { font-size: 1.4rem; color: #0d3522; margin: 0 0 0.85rem; }
-        .g-sus-text p { font-size: 0.875rem; color: #6b7280; line-height: 1.8; margin-bottom: 0.85rem; }
-        .g-sus-list { list-style: none; padding: 0; margin-top: 1.1rem; }
-        .g-sus-list li { display: flex; gap: 10px; padding: 0.5rem 0;
-          border-bottom: 1px solid #ede7da; font-size: 0.845rem; }
-        .g-sus-list li::before { content: '—'; color: #1a5c42; font-weight: 700; flex-shrink: 0; }
-
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem; }
+        .product-card { background: white; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; }
+        .product-card-content { padding: 1.5rem; }
+        .product-card h4 { color: #1F4E78; margin-bottom: 0.5rem; font-size: 1.2rem; }
+        .product-card .specs { color: #0F6E56; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; }
+        .product-card ul { list-style: none; margin-bottom: 1rem; }
+        .product-card li { font-size: 0.9rem; color: #666; margin-bottom: 0.4rem; padding-left: 1.25rem; position: relative; }
+        .product-card li::before { content: "•"; position: absolute; left: 0; color: #2E75B6; }
+        .product-price { font-size: 1.3rem; font-weight: 700; color: #1F4E78; margin-bottom: 0.5rem; }
+        .product-note { font-size: 0.85rem; color: #0F6E56; margin-bottom: 1rem; }
+        
+        /* Pricing Tiers */
+        .pricing-tiers { background: #F9FAFB; border-radius: 8px; padding: 2rem; margin: 2rem 0; }
+        .pricing-tiers h3 { color: #1F4E78; margin-bottom: 1.5rem; }
+        .tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .tier { background: white; border: 2px solid #e5e5e5; border-radius: 6px; padding: 1.25rem; }
+        .tier h4 { color: #2E75B6; margin-bottom: 0.5rem; }
+        .tier .price { font-size: 1.5rem; font-weight: 700; color: #1F4E78; margin-bottom: 0.25rem; }
+        .tier .description { font-size: 0.9rem; color: #666; }
+        
+        /* Process Steps */
+        .process-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin: 2rem 0; }
+        .step { text-align: center; }
+        .step-number { width: 60px; height: 60px; background: #2E75B6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 1rem; }
+        .step h4 { color: #1F4E78; margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .step p { color: #666; font-size: 0.9rem; }
+        
+        /* Form */
+        .rfq-form { background: white; border: 2px solid #2E75B6; border-radius: 8px; padding: 2rem; max-width: 700px; margin: 2rem auto; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: #1F4E78; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .submit-btn { background: #0F6E56; color: white; border: none; padding: 1rem 2.5rem; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; width: 100%; }
+        .submit-btn:hover { background: #0D5A47; }
+        
+        /* Stats */
+        .stats { background: #1F4E78; color: white; padding: 3rem 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; text-align: center; }
+        .stat-item { }
+        .stat-value { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .stat-label { font-size: 1rem; opacity: 0.9; }
+        
         /* Footer */
-        .g-footer { background: #1e2022; color: rgba(255,255,255,0.62); padding: 3.5rem 2rem 2rem; }
-        .g-footer-in { max-width: 1100px; margin: 0 auto; }
-        .g-footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
-          gap: 2.5rem; margin-bottom: 2.5rem; }
-        .g-footer-brand { font-family: 'Libre Baskerville', serif; color: white;
-          font-size: 1.05rem; margin-bottom: 0.6rem; }
-        .g-footer-tag { font-size: 0.77rem; color: rgba(255,255,255,0.42);
-          margin-bottom: 1.2rem; line-height: 1.7; }
-        .g-footer-badges { display: flex; gap: 5px; flex-wrap: wrap; }
-        .g-badge { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.13);
-          border-radius: 2px; padding: 3px 9px; font-size: 0.6rem; font-weight: 600;
-          letter-spacing: 0.07em; text-transform: uppercase; color: #e8c97a;
-          font-family: 'IBM Plex Sans', sans-serif; }
-        .g-footer-col h5 { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
-          color: rgba(255,255,255,0.32); margin: 0 0 0.9rem; font-family: 'IBM Plex Sans', sans-serif; }
-        .g-footer-col ul { list-style: none; padding: 0; margin: 0; }
-        .g-footer-col li { margin-bottom: 0.42rem; }
-        .g-footer-col a { color: rgba(255,255,255,0.58); text-decoration: none; font-size: 0.82rem; }
-        .g-footer-col a:hover { color: white; }
-        .g-footer-bot { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;
-          display: flex; justify-content: space-between; align-items: center;
-          flex-wrap: wrap; gap: 1rem; font-size: 0.73rem; color: rgba(255,255,255,0.28); }
-        .g-footer-bot a { color: rgba(255,255,255,0.42); text-decoration: none; margin-left: 1.4rem; }
-
+        footer { background: #2C3E50; color: white; padding: 3rem 2rem 2rem; }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
+        .footer-section h5 { margin-bottom: 1rem; font-size: 1.1rem; }
+        .footer-section ul { list-style: none; }
+        .footer-section a { color: rgba(255,255,255,0.8); text-decoration: none; display: block; margin-bottom: 0.5rem; }
+        .footer-section a:hover { color: white; }
+        .footer-bottom { text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-          .g-hero-inner, .g-proc-grid, .g-sus-grid { grid-template-columns: 1fr; }
-          .g-creds { flex-direction: row; flex-wrap: wrap; }
-          .g-footer-top { grid-template-columns: 1fr 1fr; }
-          .g-nav-links { display: none; }
-          .g-bar-item:nth-child(n+3) { display: none; }
+            .hero h1 { font-size: 2rem; }
+            .section-title { font-size: 1.6rem; }
+            nav { display: none; }
+            .cert-bar-content { justify-content: center; }
         }
-      `}</style>
-
-      <div className="gov-page">
-        {/* Info Bar */}
-        <div className="g-bar">
-          <span className="g-bar-item">SAM.gov Registered Vendor</span>
-          <span className="g-bar-item">USDA BioPreferred Partner</span>
-          <span className="g-bar-item">Buy American Act Compliant</span>
-          <span className="g-bar-item">NAICS: 325314 · 111419</span>
-          <a href="#rfq" className="g-bar-item g-bar-link">Request Bulk Quote &rarr;</a>
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="/" class="logo">Nature's Way Soil</a>
+            <nav>
+                <a href="#applications">Applications</a>
+                <a href="#certifications">Certifications</a>
+                <a href="#products">Products</a>
+                <a href="#rfq">Request Quote</a>
+                <a href="/shop">All Products</a>
+            </nav>
         </div>
+    </header>
 
-        {/* Nav */}
-        <nav className="g-nav">
-          <Link href="/" className="g-logo">
-            <img src="/logo.png" alt="Nature's Way Soil" />
-            Nature&apos;s Way Soil
-          </Link>
-          <ul className="g-nav-links">
-            <li><a href="#use-cases">Applications</a></li>
-            <li><a href="#certifications">Certifications</a></li>
-            <li><a href="#products">Products</a></li>
-            <li><a href="#sustainability">Sustainability</a></li>
-            <li><Link href="/shop">All Products</Link></li>
-          </ul>
-          <a href="#rfq" className="g-nav-cta">Request Bulk Quote</a>
-        </nav>
-
-        {/* Hero */}
-        <section className="g-hero">
-          <div className="g-hero-inner">
-            <div>
-              <div className="g-eyebrow">Government &amp; Institutional Procurement</div>
-              <h1>Natural Soil Amendments<br />for <em>Public Land Management</em></h1>
-              <p className="g-hero-sub">
-                Nature&apos;s Way Soil supplies USDA BioPreferred certified fertilizers, biochar blends,
-                and living compost for federal, state, and municipal land stewardship programs.
-              </p>
-              <div className="g-hero-btns">
-                <a href="#rfq" className="btn-gold">Request an RFQ</a>
-                <a href="#products" className="btn-wht">View Product Catalog</a>
-              </div>
-            </div>
-            <div className="g-creds">
-              {[
-                { label: 'Program', val: 'USDA BioPreferred' },
-                { label: 'Origin', val: 'Made in USA' },
-                { label: 'Orders', val: '50 lbs – Pallet+' },
-                { label: 'Payment', val: 'Net-30 / PO' },
-              ].map(c => (
-                <div className="g-cred" key={c.label}>
-                  <div className="g-cred-label">{c.label}</div>
-                  <div className="g-cred-val">{c.val}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Trust Bar */}
-        <div className="g-trust">
-          <div className="g-trust-inner">
-            {['Buy American Act Compliant', 'SAM.gov Registered', 'USDA BioPreferred Partner',
-              'Net-30 Terms Available', 'Purchase Orders Accepted', 'Dedicated Gov Account Manager'].map(t => (
-              <div className="g-trust-item" key={t}>
-                <span className="g-dot" />
-                {t}
-              </div>
-            ))}
-          </div>
+    <div class="cert-bar">
+        <div class="cert-bar-content">
+            <div class="cert-badge">HUBZone Certified</div>
+            <div class="cert-badge">USDA BioPreferred</div>
+            <div class="cert-badge">SAM.gov Registered</div>
+            <div class="cert-badge">Buy American Compliant</div>
+            <div class="cert-badge">Micro-Purchase Ready</div>
         </div>
+    </div>
 
-        {/* Use Cases */}
-        <section className="g-sec g-uses" id="use-cases">
-          <div className="g-in">
-            <p className="g-slabel">Applications</p>
-            <h2 className="g-stitle">Built for Public Sector Land Management</h2>
-            <p className="g-slead">Our products are used across federal, state, and municipal properties requiring sustainable soil health solutions that align with conservation mandates.</p>
-            <div className="g-use-grid">
-              {[
-                { t: 'Federal Parks & Forests', d: 'Restore native plant ecosystems and rehabilitate disturbed soils in national parks, wilderness areas, and federal land management projects.', tag: 'USFS / NPS / BLM' },
-                { t: 'Municipal Parks & Greenways', d: 'Appropriate for public spaces including community parks, athletic fields, and urban green infrastructure programs.', tag: 'City & County Parks' },
-                { t: 'Erosion & Watershed Control', d: 'Biochar and mycorrhizae amendments help stabilize disturbed soils along roads, waterways, and restoration sites, reducing runoff.', tag: 'Corps of Engineers / DOT' },
-                { t: 'Military Base Landscaping', d: 'Maintain base grounds and community spaces with products that align with DoD environmental standards and require fewer synthetic inputs.', tag: 'DoD / Military Bases' },
-                { t: 'School & University Grounds', d: 'Reduce synthetic fertilizer use on educational campuses. Appropriate for school gardens and student-accessible green spaces.', tag: 'K–12 / Higher Ed' },
-                { t: 'USDA Conservation Programs', d: 'Align with USDA NRCS soil health initiatives and EQIP program requirements, supporting conservation practice standards for soil carbon building.', tag: 'NRCS / EQIP Eligible' },
-              ].map(u => (
-                <div className="g-use-card" key={u.t}>
-                  <div className="g-use-title">{u.t}</div>
-                  <div className="g-use-desc">{u.d}</div>
-                  <span className="g-use-tag">{u.tag}</span>
+    <section class="hero">
+        <h1>Biobased Soil Restoration Solutions</h1>
+        <p>For Federal Construction, Military Installations & Land Management Programs</p>
+        <div class="hero-buttons">
+            <a href="#rfq" class="btn btn-primary">Request Bulk Quote</a>
+            <a href="#products" class="btn btn-secondary">View Products</a>
+        </div>
+    </section>
+
+    <div class="key-info">
+        <div class="key-info-grid">
+            <div class="key-info-item">
+                <strong>SAM UEI</strong>
+                <span>MM7NWZETLWR3</span>
+            </div>
+            <div class="key-info-item">
+                <strong>CAGE Code</strong>
+                <span>9TYW7</span>
+            </div>
+            <div class="key-info-item">
+                <strong>Primary NAICS</strong>
+                <span>325314</span>
+            </div>
+            <div class="key-info-item">
+                <strong>Contact</strong>
+                <span><a href="mailto:government@natureswaysoil.com" style="color: #2E75B6; text-decoration: none;">government@natureswaysoil.com</a></span>
+            </div>
+            <div class="key-info-item">
+                <strong>Phone</strong>
+                <span>(252) 560-7390</span>
+            </div>
+            <div class="key-info-item">
+                <strong>Location</strong>
+                <span>Snow Hill, NC (HUBZone)</span>
+            </div>
+        </div>
+    </div>
+
+    <section id="applications">
+        <div class="container">
+            <h2 class="section-title">Federal Applications</h2>
+            <p class="section-subtitle">Soil restoration solutions for construction, remediation, and land management across federal agencies</p>
+            
+            <div class="app-grid">
+                <div class="app-card">
+                    <h3>Federal Construction & Site Work</h3>
+                    <p>Post-construction site restoration for new federal facilities, military base construction, and VA hospital projects. Meet erosion control requirements and LEED sustainable materials credits.</p>
+                    <span class="tag">NAVFAC / USACE / GSA</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Certifications */}
-        <section className="g-sec g-certs" id="certifications">
-          <div className="g-in">
-            <p className="g-slabel">Certifications &amp; Compliance</p>
-            <h2 className="g-stitle">Meeting Government Procurement Standards</h2>
-            <p className="g-slead">Products manufactured to meet federal and state regulatory requirements for bio-based inputs and responsible environmental practices.</p>
-            <div className="g-cert-grid">
-              {[
-                { n: 'USDA BioPreferred Partner', d: 'Select products carry the USDA BioPreferred designation, directly supporting federal agencies\' mandatory bio-based purchasing requirements.' },
-                { n: 'SAM.gov Registered Vendor', d: 'Active registration in the System for Award Management. CAGE code and UEI available upon request for contract documentation.' },
-                { n: 'Buy American Compliant', d: 'All products manufactured domestically on our family farm, fully compliant with Buy American Act and Build America, Buy America provisions.' },
-                { n: 'SDS & TDS on Request', d: 'Full Safety Data Sheets and Technical Data Sheets provided for all products to support procurement and compliance documentation packages.' },
-                { n: 'Net-30 / Purchase Orders', d: 'Government purchase orders accepted. Net-30 payment terms available for qualifying agencies and institutions upon application.' },
-                { n: 'Contract Supply Agreements', d: 'Able to support multi-year supply agreements, scheduled delivery programs, and volume-based contract pricing for consistent program needs.' },
-              ].map(c => (
-                <div className="g-cert-card" key={c.n}>
-                  <div className="g-cert-icon">
-                    <svg viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  </div>
-                  <div>
-                    <div className="g-cert-name">{c.n}</div>
-                    <div className="g-cert-desc">{c.d}</div>
-                  </div>
+                
+                <div class="app-card">
+                    <h3>Military Base Landscaping</h3>
+                    <p>Grounds maintenance and new installation landscaping for DoD facilities. Soil amendments that align with environmental standards and reduce synthetic inputs.</p>
+                    <span class="tag">DoD / Military Bases</span>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Products */}
-        <section className="g-sec g-prods" id="products">
-          <div className="g-in">
-            <p className="g-slabel">Product Catalog</p>
-            <h2 className="g-stitle">Soil Solutions for Every Scale</h2>
-            <p className="g-slead">Available in standard retail sizes through full pallet orders. Custom blends and bulk formulations available for institutional contracts.</p>
-            <div className="g-prod-grid">
-              {[
-                { t: 'Enhanced Living Compost Blend', d: '20% worm castings · 20% activated biochar · 60% aged compost', s: ['High microbial activity', 'Improves water retention and aeration', '25 lb, 50 lb, and bulk tote options'], p: 'From $24.99' },
-                { t: 'Liquid Seaweed & Humic Acid', d: '4.5% North Atlantic Kelp · 4.5% Humic Acid concentrate', s: ['Cold-pressed North Atlantic kelp', 'Stimulates root development', 'Gallon and 5-gallon sizes available'], p: 'From $24.99' },
-                { t: 'Activated Biochar Amendment', d: 'Premium wood-source biochar pre-charged with microbes', s: ['Permanently improves soil structure', 'Net carbon-negative input', 'Pallet quantities available'], p: 'Quote-based' },
-                { t: 'Premium Worm Castings', d: 'Pure vermicompost from on-farm worm beds', s: ['Slow-release NPK profile', 'Odor-free, safe for all plant types', '5 lb through 50 lb bags'], p: 'From $19.99' },
-                { t: 'Fermented Duckweed Fertilizer', d: 'High-protein aquatic plant extract', s: ['High organic nitrogen source', 'Increased nutrient bioavailability', 'Bulk drums available'], p: 'Quote-based' },
-                { t: 'Custom Bulk Blends', d: 'Tailored formulations for specific soil types and program goals', s: ['Soil analysis consultation included', 'Custom NPK ratios available', 'Minimum order: 1 pallet'], p: 'Custom pricing' },
-              ].map(p => (
-                <div className="g-prod-card" key={p.t}>
-                  <div className="g-prod-img">
-                    <div className="g-prod-ico">
-                      <svg viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1M4.22 4.22l.707.707M18.364 18.364l.707.707M1 12h1m20 0h1M4.22 19.78l.707-.707M18.364 5.636l.707-.707M12 8a4 4 0 110 8 4 4 0 010-8z"/></svg>
-                    </div>
-                  </div>
-                  <div className="g-prod-body">
-                    <div className="g-prod-title">{p.t}</div>
-                    <div className="g-prod-desc">{p.d}</div>
-                    <ul className="g-prod-specs">{p.s.map(s => <li key={s}>{s}</li>)}</ul>
-                    <div className="g-prod-foot">
-                      <div className="g-prod-price">{p.p}<span>Bulk pricing available</span></div>
-                      <a href="#rfq" className="btn-sm">Get Quote</a>
-                    </div>
-                  </div>
+                
+                <div class="app-card">
+                    <h3>Environmental Restoration</h3>
+                    <p>Post-remediation soil rebuild, habitat restoration, and range sustainment. Support NAVFAC EV-2 and EV-3 programs with biobased carbon amendments.</p>
+                    <span class="tag">NAVFAC / EPA</span>
                 </div>
-              ))}
+                
+                <div class="app-card">
+                    <h3>Erosion & Stormwater Control</h3>
+                    <p>Biochar and microbial amendments for disturbed soils along roads, waterways, and construction sites. Stabilize soil and reduce runoff to meet BMP compliance.</p>
+                    <span class="tag">Corps of Engineers / DOT</span>
+                </div>
+                
+                <div class="app-card">
+                    <h3>Federal Parks & Forests</h3>
+                    <p>Restore native ecosystems and rehabilitate disturbed soils in national parks, wilderness areas, and federal land management projects.</p>
+                    <span class="tag">USFS / NPS / BLM</span>
+                </div>
+                
+                <div class="app-card">
+                    <h3>Municipal & Institutional Grounds</h3>
+                    <p>Public spaces including parks, athletic fields, school grounds, and urban green infrastructure. Reduce synthetic fertilizer dependency.</p>
+                    <span class="tag">State / County / Municipal</span>
+                </div>
             </div>
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <Link href="/shop" className="btn-gold">View Complete Product Catalog</Link>
-            </div>
-          </div>
-        </section>
+        </div>
+    </section>
 
-        {/* Procurement + RFQ */}
-        <section className="g-sec g-proc" id="rfq">
-          <div className="g-in">
-            <p className="g-slabel" style={{ color: 'rgba(200,168,75,0.85)' }}>Procurement</p>
-            <h2 className="g-stitle" style={{ color: 'white' }}>Simple Government Purchasing Process</h2>
-            <p className="g-slead" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              Streamlined to align with government procurement requirements, from micro-purchases to multi-year supply contracts.
-            </p>
-            <div className="g-proc-grid">
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {[
-                  { n: '1', t: 'Submit Your RFQ or Requirements', d: 'Use the form or email your RFQ document directly to government@natureswaysoil.com. All government inquiries receive a response within one business day.' },
-                  { n: '2', t: 'Receive Quote & Documentation', d: 'Itemized pricing, product specifications, SDS/TDS documents, and USDA BioPreferred certifications for your procurement package.' },
-                  { n: '3', t: 'Issue Purchase Order or Contract', d: 'Government purchase orders accepted directly. Net-30 payment terms available for approved agencies. GSA-compatible pricing on request.' },
-                  { n: '4', t: 'Scheduled Delivery', d: 'Delivery across the contiguous US. Multi-year supply agreements and standing orders available for consistent program needs.' },
-                  { n: '5', t: 'Technical Support & Reporting', d: 'Dedicated account manager, soil consultation services, and outcome data available to support program documentation and reporting.' },
-                ].map(s => (
-                  <li className="g-step" key={s.n}>
-                    <div className="g-step-n">{s.n}</div>
-                    <div>
-                      <div className="g-step-title">{s.t}</div>
-                      <div className="g-step-desc">{s.d}</div>
+    <section style="background: #F9FAFB;">
+        <div class="container">
+            <h2 class="section-title">Why Federal Contractors Choose Nature's Way Soil</h2>
+            
+            <div class="value-props">
+                <div class="value-prop">
+                    <h4>For Prime Contractors</h4>
+                    <ul>
+                        <li>Fulfills HUBZone subcontracting requirements</li>
+                        <li>Qualifies for BioPreferred product mandates</li>
+                        <li>Turnkey material supply with no vendor management</li>
+                        <li>Fixed pricing for accurate project budgets</li>
+                        <li>Technical support and compliance documentation</li>
+                    </ul>
+                </div>
+                
+                <div class="value-prop">
+                    <h4>For Site Work Subcontractors</h4>
+                    <ul>
+                        <li>Consistent quality from batch-controlled manufacturing</li>
+                        <li>Fast turnaround on orders (1-2 week lead time)</li>
+                        <li>Flexible packaging from 1 qt to 275 gal totes</li>
+                        <li>Regional delivery across NC/SC/VA/GA</li>
+                        <li>Soil consultation and application guidance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pricing-tiers">
+                <h3>Typical Project Pricing (Micro-Purchase Friendly)</h3>
+                <div class="tier-grid">
+                    <div class="tier">
+                        <h4>Small Site</h4>
+                        <div class="price">$500 - $1,500</div>
+                        <div class="description">1,000 - 5,000 sq ft restoration<br>Perfect for micro-purchases</div>
                     </div>
-                  </li>
-                ))}
-              </ul>
+                    <div class="tier">
+                        <h4>Medium Site</h4>
+                        <div class="price">$2,500 - $5,000</div>
+                        <div class="description">5,000 - 20,000 sq ft<br>Credit card purchases accepted</div>
+                    </div>
+                    <div class="tier">
+                        <h4>Large Site</h4>
+                        <div class="price">$8,000 - $15,000</div>
+                        <div class="description">1+ acre projects<br>Purchase orders & Net-30 available</div>
+                    </div>
+                    <div class="tier">
+                        <h4>Contract Supply</h4>
+                        <div class="price">Custom</div>
+                        <div class="description">Multi-year agreements<br>Volume-based pricing</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-              <div className="g-rfq-box">
-                <h3>Request a Bulk Quote</h3>
-                <p>A government procurement specialist will respond within one business day.</p>
-                {status === 'success' ? (
-                  <div className="g-success">
-                    Your RFQ has been received. A member of our government sales team will contact you
-                    within one business day with pricing, product documentation, and next steps.
-                  </div>
-                ) : (
-                  <form className="g-form" onSubmit={submit}>
-                    <input name="agency" value={form.agency} onChange={handle} placeholder="Agency or Organization Name" required />
-                    <input name="name" value={form.name} onChange={handle} placeholder="Your Name and Title" required />
-                    <input name="email" value={form.email} onChange={handle} placeholder="Email Address (.gov preferred)" type="email" required />
-                    <input name="phone" value={form.phone} onChange={handle} placeholder="Phone Number" type="tel" />
-                    <select name="agencyType" value={form.agencyType} onChange={handle}>
-                      <option value="">Agency Type</option>
-                      <option>Federal Agency</option>
-                      <option>State Government</option>
-                      <option>County / Municipal</option>
-                      <option>Military / DoD</option>
-                      <option>School / University</option>
-                      <option>Tribal Government</option>
-                      <option>Other Public Entity</option>
+    <section id="certifications">
+        <div class="container">
+            <h2 class="section-title">Certifications & Registrations</h2>
+            <p class="section-subtitle">Meeting federal procurement standards for small business and biobased products</p>
+            
+            <div class="cert-grid">
+                <div class="cert-card">
+                    <div class="cert-icon">🎯</div>
+                    <h4>HUBZone Certified</h4>
+                    <p>Small Business Administration certified. Helps prime contractors meet small business subcontracting goals on federal projects.</p>
+                    <p style="margin-top: 0.75rem; font-weight: 600; color: #1F4E78;">UEI: MM7NWZETLWR3<br>CAGE: 9TYW7</p>
+                </div>
+                
+                <div class="cert-card">
+                    <div class="cert-icon">🌱</div>
+                    <h4>USDA BioPreferred</h4>
+                    <p>Select products carry USDA BioPreferred designation, supporting federal agencies' mandatory biobased purchasing requirements.</p>
+                </div>
+                
+                <div class="cert-card">
+                    <div class="cert-icon">📋</div>
+                    <h4>SAM.gov Registered</h4>
+                    <p>Active registration in System for Award Management. Ready for federal contract awards and payment processing.</p>
+                </div>
+                
+                <div class="cert-card">
+                    <div class="cert-icon">🇺🇸</div>
+                    <h4>Buy American Compliant</h4>
+                    <p>All products manufactured domestically on our NC family farm. Fully compliant with Buy American Act and Build America provisions.</p>
+                </div>
+                
+                <div class="cert-card">
+                    <div class="cert-icon">💳</div>
+                    <h4>Micro-Purchase Ready</h4>
+                    <p>Orders under $10K accepted via credit card for fast procurement. No contract vehicle required for micro-purchases.</p>
+                </div>
+                
+                <div class="cert-card">
+                    <div class="cert-icon">📄</div>
+                    <h4>Documentation Support</h4>
+                    <p>Full SDS, TDS, and BioPreferred certificates provided. Technical support for procurement and compliance packages.</p>
+                </div>
+            </div>
+
+            <div style="background: #FFF8E1; border-left: 4px solid #F9A825; padding: 1.5rem; margin-top: 2rem; border-radius: 4px;">
+                <p style="font-weight: 600; color: #1F4E78; margin-bottom: 0.5rem;">NAICS Codes</p>
+                <p style="color: #666;">325314 (Fertilizer Manufacturing - Primary) | 325998 (Miscellaneous Chemical) | 562910 (Remediation Services) | 541620 (Environmental Consulting) | 561730 (Landscaping Services)</p>
+                <p style="font-weight: 600; color: #1F4E78; margin: 1rem 0 0.5rem;">PSC Codes</p>
+                <p style="color: #666;">6810 (Chemicals) | 6840 (Pest Control / Soil Treatment) | F999 (Environmental Services) | S208 (Landscaping/Grounds Maintenance)</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="products" style="background: #F9FAFB;">
+        <div class="container">
+            <h2 class="section-title">Product Catalog</h2>
+            <p class="section-subtitle">Available in standard retail through full pallet orders. Custom blends for institutional contracts.</p>
+            
+            <div class="product-grid">
+                <div class="product-card">
+                    <div class="product-card-content">
+                        <h4>Enhanced Living Compost</h4>
+                        <div class="specs">20% worm castings • 20% biochar • 60% aged compost</div>
+                        <ul>
+                            <li>High microbial activity</li>
+                            <li>Improves water retention</li>
+                            <li>Carbon-negative amendment</li>
+                            <li>25 lb, 50 lb, bulk totes</li>
+                        </ul>
+                        <div class="product-price">From $24.99</div>
+                        <div class="product-note">Bulk pricing available</div>
+                        <a href="#rfq" class="btn btn-primary" style="display: block; text-align: center;">Get Quote</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-card-content">
+                        <h4>Liquid Seaweed & Humic Acid</h4>
+                        <div class="specs">4.5% North Atlantic Kelp • 4.5% Humic Acid</div>
+                        <ul>
+                            <li>Cold-pressed kelp extract</li>
+                            <li>Stimulates root development</li>
+                            <li>Enhances nutrient uptake</li>
+                            <li>1 gal, 5 gal, 55 gal drums</li>
+                        </ul>
+                        <div class="product-price">From $24.99</div>
+                        <div class="product-note">Bulk pricing available</div>
+                        <a href="#rfq" class="btn btn-primary" style="display: block; text-align: center;">Get Quote</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-card-content">
+                        <h4>Activated Biochar Amendment</h4>
+                        <div class="specs">Premium wood-source • Pre-charged with microbes</div>
+                        <ul>
+                            <li>Permanent soil structure improvement</li>
+                            <li>Carbon sequestration</li>
+                            <li>Increases water retention 20-35%</li>
+                            <li>Pallet quantities available</li>
+                        </ul>
+                        <div class="product-price">Quote-based</div>
+                        <div class="product-note">Project-specific pricing</div>
+                        <a href="#rfq" class="btn btn-primary" style="display: block; text-align: center;">Get Quote</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-card-content">
+                        <h4>Premium Worm Castings</h4>
+                        <div class="specs">Pure vermicompost • On-farm production</div>
+                        <ul>
+                            <li>Slow-release NPK profile</li>
+                            <li>Odor-free application</li>
+                            <li>Safe for all plant types</li>
+                            <li>5 lb through 50 lb bags</li>
+                        </ul>
+                        <div class="product-price">From $19.99</div>
+                        <div class="product-note">Bulk pricing available</div>
+                        <a href="#rfq" class="btn btn-primary" style="display: block; text-align: center;">Get Quote</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-card-content">
+                        <h4>Microbial Soil Conditioner</h4>
+                        <div class="specs">5+ billion CFU/gallon • Made fresh weekly</div>
+                        <ul>
+                            <li>Living beneficial microbes</li>
+                            <li>Restores soil biology</li>
+                            <li>Increases nutrient availability</li>
+                            <li>1 qt, 1 gal, bulk containers</li>
+                        </ul>
+                        <div class="product-price">From $29.99</div>
+                        <div class="product-note">Bulk pricing available</div>
+                        <a href="#rfq" class="btn btn-primary" style="display: block; text-align: center;">Get Quote</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-card-content">
+                        <h4>Custom Bulk Blends</h4>
+                        <div class="specs">Tailored formulations for specific projects</div>
+                        <ul>
+                            <li>Soil analysis consultation</li>
+                            <li>Custom NPK ratios</li>
+                            <li>Project-specific amendments</li>
+                            <li>Minimum: 1 pallet</li>
+                        </ul>
+                        <div class="product-price">Custom</div>
+                        <div class="product-note">Contact for consultation</div>
+                        <a href="#rfq" class="btn btn-primary" style="display: block; text-align: center;">Get Quote</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem;">
+                <a href="/shop" class="btn btn-secondary">View Complete Product Catalog</a>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <h2 class="section-title">Government Procurement Process</h2>
+            <p class="section-subtitle">Streamlined for federal purchasing requirements</p>
+            
+            <div class="process-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>Submit RFQ</h4>
+                    <p>Use form below or email government@natureswaysoil.com. Response within 1 business day.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Receive Quote</h4>
+                    <p>Itemized pricing, specs, SDS/TDS, and BioPreferred certificates for procurement package.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>Issue PO</h4>
+                    <p>Purchase orders accepted. Net-30 terms for approved agencies. Credit cards under $10K.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h4>Delivery</h4>
+                    <p>1-2 week lead time. Regional freight (NC/SC/VA/GA), LTL nationwide.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <h4>Support</h4>
+                    <p>Dedicated account manager, technical consultation, and application guidance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="rfq" style="background: #F9FAFB;">
+        <div class="container">
+            <h2 class="section-title">Request a Bulk Quote</h2>
+            <p class="section-subtitle">Government procurement specialist will respond within one business day</p>
+            
+            <form class="rfq-form" action="#" method="POST">
+                <div class="form-group">
+                    <label for="agency">Agency / Organization *</label>
+                    <input type="text" id="agency" name="agency" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-name">Contact Name *</label>
+                    <input type="text" id="contact-name" name="contact-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                
+                <div class="form-group">
+                    <label for="agency-type">Agency Type *</label>
+                    <select id="agency-type" name="agency-type" required>
+                        <option value="">Select...</option>
+                        <option value="federal">Federal Agency</option>
+                        <option value="military">Military / DoD</option>
+                        <option value="state">State Government</option>
+                        <option value="county">County / Municipal</option>
+                        <option value="school">School / University</option>
+                        <option value="tribal">Tribal Government</option>
+                        <option value="contractor">Prime Contractor</option>
+                        <option value="subcontractor">Subcontractor</option>
+                        <option value="other">Other</option>
                     </select>
-                    <select name="useCase" value={form.useCase} onChange={handle}>
-                      <option value="">Primary Use Case</option>
-                      <option>Parks &amp; Recreation</option>
-                      <option>Land Restoration</option>
-                      <option>Road / Highway Landscaping</option>
-                      <option>Watershed / Erosion Control</option>
-                      <option>Athletic Fields</option>
-                      <option>Community Gardens</option>
-                      <option>Agricultural Program</option>
-                      <option>Other</option>
-                    </select>
-                    <textarea name="message" value={form.message} onChange={handle}
-                      placeholder="Describe your project, estimated quantities, and any specific certification or contract vehicle requirements..."
-                      required />
-                    <button type="submit" disabled={status === 'sending'}>
-                      {status === 'sending' ? 'Submitting...' : 'Submit RFQ Request'}
-                    </button>
-                    {status === 'error' && (
-                      <div className="g-err">
-                        Submission failed. Please email us directly at government@natureswaysoil.com
-                      </div>
-                    )}
-                  </form>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Sustainability */}
-        <section className="g-sec g-sus" id="sustainability">
-          <div className="g-in">
-            <p className="g-slabel">Environmental Impact</p>
-            <h2 className="g-stitle">Supporting Federal Sustainability Goals</h2>
-            <p className="g-slead">Our products help agencies meet goals under federal sustainability mandates, bio-based procurement requirements, and environmental stewardship programs.</p>
-            <div className="g-sus-grid">
-              <div>
-                {[
-                  { l: 'Carbon Profile', v: 'Net Negative', n: 'Biochar permanently sequesters carbon in soil' },
-                  { l: 'Water Retention Improvement', v: '20–35%', n: 'Reduces irrigation requirements on treated land' },
-                  { l: 'Domestic Manufacturing', v: '100% USA', n: 'Family farm, all lower 48 states' },
-                  { l: 'USDA BioPreferred', v: 'Designated', n: 'Qualifying products carry federal designation' },
-                ].map(m => (
-                  <div className="g-metric" key={m.l}>
-                    <div className="g-metric-label">{m.l}</div>
-                    <div className="g-metric-val">{m.v}</div>
-                    <div className="g-metric-note">{m.n}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="g-sus-text">
-                <h3>Aligned with Federal Sustainability Mandates</h3>
-                <p>Nature&apos;s Way Soil products help agencies meet goals established under Executive Orders on Federal Sustainability, the Inflation Reduction Act&apos;s conservation provisions, and USDA soil health initiatives.</p>
-                <p>Biochar amendments provide one of the most measurable strategies for permanent carbon sequestration in managed soils, supporting EPA greenhouse gas reduction goals and USDA soil carbon programs.</p>
-                <ul className="g-sus-list">
-                  <li>Supports EO 14057 (Federal Sustainability) procurement goals</li>
-                  <li>USDA BioPreferred designation on qualifying products</li>
-                  <li>Compatible with USDA NRCS Practice Standard 336 (Soil Carbon)</li>
-                  <li>Supports LEED and Sustainable Sites certification projects</li>
-                  <li>Reduces nutrient runoff — supports Clean Water Act compliance</li>
-                  <li>No hazardous waste streams generated in production</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="g-footer">
-          <div className="g-footer-in">
-            <div className="g-footer-top">
-              <div>
-                <div className="g-footer-brand">Nature&apos;s Way Soil</div>
-                <div className="g-footer-tag">From our family farm to public lands across America.</div>
-                <div className="g-footer-badges">
-                  {['USDA BioPreferred', 'SAM.gov', 'Buy American', 'Made in USA'].map(b => (
-                    <span className="g-badge" key={b}>{b}</span>
-                  ))}
                 </div>
-              </div>
-              <div className="g-footer-col">
+                
+                <div class="form-group">
+                    <label for="use-case">Primary Use Case *</label>
+                    <select id="use-case" name="use-case" required>
+                        <option value="">Select...</option>
+                        <option value="construction">Post-Construction Site Restoration</option>
+                        <option value="military">Military Base Landscaping</option>
+                        <option value="remediation">Environmental Remediation</option>
+                        <option value="erosion">Erosion / Stormwater Control</option>
+                        <option value="parks">Parks & Recreation</option>
+                        <option value="athletic">Athletic Fields</option>
+                        <option value="gardens">Community Gardens</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="project-details">Project Details / Requirements *</label>
+                    <textarea id="project-details" name="project-details" required placeholder="Include: project location, approximate area/acreage, timeline, specific products of interest, and any special requirements"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="budget">Estimated Budget Range</label>
+                    <select id="budget" name="budget">
+                        <option value="">Select...</option>
+                        <option value="under-1k">Under $1,000</option>
+                        <option value="1k-5k">$1,000 - $5,000</option>
+                        <option value="5k-10k">$5,000 - $10,000</option>
+                        <option value="10k-25k">$10,000 - $25,000</option>
+                        <option value="25k-plus">$25,000+</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="submit-btn">Submit RFQ Request</button>
+                
+                <p style="text-align: center; margin-top: 1rem; color: #666; font-size: 0.9rem;">
+                    Or email directly: <a href="mailto:government@natureswaysoil.com" style="color: #2E75B6;">government@natureswaysoil.com</a> | Phone: (252) 560-7390
+                </p>
+            </form>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">Made in USA</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">20-35%</div>
+                <div class="stat-label">Water Retention Improvement</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">1-2 Weeks</div>
+                <div class="stat-label">Standard Lead Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">Net Negative</div>
+                <div class="stat-label">Carbon Profile</div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h5>Nature's Way Soil</h5>
+                <p style="color: rgba(255,255,255,0.8); margin-bottom: 1rem;">HUBZone certified biobased soil solutions for federal and institutional procurement.</p>
+                <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem;">533 Eden Church Rd<br>Snow Hill, NC 28580</p>
+            </div>
+            
+            <div class="footer-section">
                 <h5>Products</h5>
                 <ul>
-                  <li><Link href="/shop">All Products</Link></li>
-                  <li><Link href="/shop">Living Compost</Link></li>
-                  <li><Link href="/shop">Biochar</Link></li>
-                  <li><Link href="/shop">Worm Castings</Link></li>
-                  <li><a href="#rfq">Bulk Orders</a></li>
+                    <li><a href="/shop">All Products</a></li>
+                    <li><a href="/shop">Living Compost</a></li>
+                    <li><a href="/shop">Biochar</a></li>
+                    <li><a href="/shop">Worm Castings</a></li>
+                    <li><a href="#rfq">Bulk Orders</a></li>
                 </ul>
-              </div>
-              <div className="g-footer-col">
+            </div>
+            
+            <div class="footer-section">
                 <h5>Government</h5>
                 <ul>
-                  <li><a href="#rfq">Request an RFQ</a></li>
-                  <li><a href="#certifications">Certifications</a></li>
-                  <li><a href="#sustainability">Sustainability</a></li>
-                  <li><a href="mailto:government@natureswaysoil.com">government@natureswaysoil.com</a></li>
+                    <li><a href="#rfq">Request RFQ</a></li>
+                    <li><a href="#certifications">Certifications</a></li>
+                    <li><a href="#applications">Applications</a></li>
+                    <li><a href="mailto:government@natureswaysoil.com">government@natureswaysoil.com</a></li>
+                    <li><a href="tel:+12525607390">(252) 560-7390</a></li>
                 </ul>
-              </div>
-              <div className="g-footer-col">
+            </div>
+            
+            <div class="footer-section">
                 <h5>Company</h5>
                 <ul>
-                  <li><Link href="/about">About Us</Link></li>
-                  <li><Link href="/contact">Contact</Link></li>
-                  <li><Link href="/shipping">Shipping</Link></li>
-                  <li><Link href="/returns">Returns</Link></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/policies/privacy">Privacy Policy</a></li>
+                    <li><a href="/policies/terms">Terms of Service</a></li>
                 </ul>
-              </div>
             </div>
-            <div className="g-footer-bot">
-              <span>&copy; 2025 Nature&apos;s Way Soil. All rights reserved.</span>
-              <div>
-                <Link href="/policies/privacy" style={{ color: 'rgba(255,255,255,0.42)', textDecoration: 'none', marginLeft: '1.4rem' }}>Privacy Policy</Link>
-                <Link href="/policies/terms" style={{ color: 'rgba(255,255,255,0.42)', textDecoration: 'none', marginLeft: '1.4rem' }}>Terms of Service</Link>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
-  );
-}
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Nature's Way Soil. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
