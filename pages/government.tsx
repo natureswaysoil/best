@@ -30,7 +30,7 @@ export default function Government() {
       } else {
         setSubmitStatus('error');
       }
-    } catch (error) {
+    } catch {
       setSubmitStatus('error');
     }
   };
