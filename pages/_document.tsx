@@ -16,6 +16,7 @@ export default function Document() {
           rel="stylesheet"
         />
         <meta name="google-site-verification" content="e08ddb8a6ca06506" />
+        <meta name="p:domain_verify" content="609356bd405406f090ba7f8ae642db5c" />
       </Head>
       <body>
         <Main />
