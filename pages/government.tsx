@@ -1,396 +1,593 @@
-import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-export default function Government() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    organization: '',
-    project: '',
-    phone: '',
-    message: ''
-  });
-  const [submitStatus, setSubmitStatus] = useState('');
+const contact = {
+  phone: '(252) 560-7390',
+  phoneHref: 'tel:+12525607390',
+  email: 'sales@natureswaysoil.com',
+  emailHref: 'mailto:sales@natureswaysoil.com',
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitStatus('sending');
-    
-    try {
-      const response = await fetch('/api/government-rfq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      
-      if (response.ok) {
-        setSubmitStatus('success');
-        setFormData({ name: '', email: '', organization: '', project: '', phone: '', message: '' });
-      } else {
-        setSubmitStatus('error');
-      }
-    } catch {
-      setSubmitStatus('error');
-    }
-  };
+const credentials = [
+  'Government Purchase Cards (GPC) accepted',
+  'Micro-purchase ready for orders under $15,000',
+  'Invoice and ACH options available',
+  'Tax-exempt purchasing supported',
+  'HUBZone Certified Small Business',
+  'USDA BioPreferred product supplier',
+  'SAM registered - active and compliant',
+  'Fast nationwide shipping',
+];
 
+const registrationDetails = {
+  cage: '9TYW7',
+  uei: 'MM7NWZETLWR3',
+  primaryNaics: '325314',
+  primaryNaicsLabel: 'Fertilizer Manufacturing',
+  additionalNaics: ['325998', '562910', '541620', '561730'],
+};
+
+const orderingOptions = [
+  {
+    title: 'Order Online',
+    text: 'Use your Government Purchase Card to place eligible orders directly through our secure Stripe checkout.',
+  },
+  {
+    title: 'Request Invoice',
+    text: 'Send us your item list, quantity, and shipping address. We can issue an invoice for card or ACH payment.',
+  },
+  {
+    title: 'Bulk / Institutional Orders',
+    text: 'Contact us for larger quantities, pallet shipments, recurring supply needs, or public-sector buying questions.',
+  },
+];
+
+const featuredProducts = [
+  {
+    name: 'Dog Urine Neutralizer & Lawn Repair',
+    href: '#quote-request',
+    useCase: 'Base housing, common areas, pet relief areas, and kennel-adjacent turf',
+    blurb: 'Helps address yellow spots and lawn stress from pet urine in high-use outdoor areas.',
+    cta: 'Request Pricing',
+  },
+  {
+    name: 'Seaweed & Humic Acid Lawn Treatment',
+    href: '#quote-request',
+    useCase: 'Grounds crews, athletic fields, golf, and routine turf support',
+    blurb: 'Liquid soil revitalizer for greener lawns, stronger root systems, and healthier turf.',
+    cta: 'Request Pricing',
+  },
+  {
+    name: 'Liquid Humic & Fulvic Acid with Kelp',
+    href: '#quote-request',
+    useCase: 'Soil conditioning, root-zone support, and large-area lawn care',
+    blurb: 'Professional-grade liquid humic and fulvic acid blend enriched with organic kelp extract.',
+    cta: 'Request Pricing',
+  },
+  {
+    name: 'Liquid Biochar',
+    href: '#quote-request',
+    useCase: 'Soil restoration, sustainability initiatives, grounds improvement, and environmental land-care programs',
+    blurb: 'Liquid biochar for public-sector land care and soil-building programs. A strong fit for sustainability-focused grounds maintenance, planting projects, and soil health improvement.',
+    cta: 'Request Liquid Biochar Pricing',
+  },
+  {
+    name: 'Hay, Pasture & Lawn Fertilizer',
+    href: '#quote-request',
+    useCase: 'Large turf areas, pastures, recreation areas, and facility grounds',
+    blurb: 'Microbial fertilizer blend designed for healthy grass growth and greener grounds.',
+    cta: 'Request Pricing',
+  },
+  {
+    name: 'Enhanced Living Compost with Fermented Duckweed',
+    href: '#quote-request',
+    useCase: 'Landscape beds, planting projects, and soil restoration work',
+    blurb: 'A living compost blend with worm castings, activated biochar, and weed-free aged compost.',
+    cta: 'Request Pricing',
+  },
+];
+
+const useCases = [
+  {
+    title: 'Base Housing & Grounds',
+    text: 'Products for lawn recovery, soil support, and visible outdoor areas where durability and appearance matter.',
+  },
+  {
+    title: 'Golf, Recreation & Athletic Areas',
+    text: 'Turf-support products for maintained public spaces, recreation areas, and higher-visibility landscapes.',
+  },
+  {
+    title: 'Animal Facilities & Kennels',
+    text: 'Outdoor odor and turf-support products for pet and working-animal environments.',
+  },
+  {
+    title: 'Sustainability & Land Care',
+    text: 'Biobased, soil-focused products including Liquid Biochar for agencies and institutions prioritizing long-term soil improvement, restoration, and environmental stewardship.',
+  },
+];
+
+const biocharUses = [
+  {
+    title: 'Grounds & Landscape Recovery',
+    text: 'Useful for planting areas, landscape beds, and grounds projects where improving soil structure and biological activity matters.',
+  },
+  {
+    title: 'Sustainability Programs',
+    text: 'A natural fit for agencies, schools, campuses, and facilities that want biobased, soil-building products in their land-care toolkit.',
+  },
+  {
+    title: 'Soil Building',
+    text: 'Supports long-term soil improvement by complementing broader soil health and regenerative maintenance practices.',
+  },
+  {
+    title: 'Project-Based Purchasing',
+    text: 'Well suited for direct card purchases or invoice-based ordering for planting, restoration, and grounds-improvement projects.',
+  },
+];
+
+export default function GovernmentPage() {
   return (
     <>
       <Head>
-        <title>Federal Contracting | Nature's Way Soil</title>
-        <meta name="description" content="HUBZone certified organic soil solutions for federal construction and site restoration projects. CAGE: 9TYW7, UEI: MM7NWZETLWR3." />
+        <title>Government Purchases | Nature's Way Soil</title>
+        <meta
+          name="description"
+          content="Government Purchase Cards accepted. Nature's Way Soil supports federal, state, local, school, and institutional buyers with fast ordering, invoice options, and environmentally focused products."
+        />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-        {/* Header */}
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex justify-between items-center">
-              <Link href="/" className="text-2xl font-bold text-green-800">
-                Nature's Way Soil
-              </Link>
-              <div className="text-sm text-gray-600">
-                <span className="font-semibold">CAGE:</span> 9TYW7 | <span className="font-semibold">UEI:</span> MM7NWZETLWR3
-              </div>
-            </div>
-          </div>
-        </header>
+      <main className="bg-[#f7f8f3] text-[#1f2a1f]">
+        <div className="bg-[#2f4d25] px-4 py-2 text-center text-sm font-medium text-white">
+          Government Purchase Cards Accepted | Micro-Purchase Ready | Request Invoice or Quote
+        </div>
 
-        {/* Hero Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Federal Contracting & Government Solutions
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              HUBZone certified organic soil amendments and liquid fertilizers for federal construction, 
-              site restoration, and erosion control projects
-            </p>
-          </div>
+        <section className="border-b border-[#d8dfcf] bg-gradient-to-b from-[#edf4e6] to-[#f7f8f3]">
+          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <div className="max-w-4xl">
+              <p className="inline-flex rounded-full border border-[#bfd1b4] bg-white px-4 py-1 text-sm font-medium text-[#365c2b]">
+                Government & Institutional Purchasing
+              </p>
 
-          {/* Certifications Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-center">
-              <div className="text-blue-600 font-bold text-lg mb-1">HUBZone</div>
-              <div className="text-sm text-gray-600">Certified Small Business</div>
-            </div>
-            <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 text-center">
-              <div className="text-green-600 font-bold text-lg mb-1">BioPreferred</div>
-              <div className="text-sm text-gray-600">USDA Certified Product</div>
-            </div>
-            <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 text-center">
-              <div className="text-purple-600 font-bold text-lg mb-1">SAM Registered</div>
-              <div className="text-sm text-gray-600">Active & Compliant</div>
-            </div>
-            <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 text-center">
-              <div className="text-orange-600 font-bold text-lg mb-1">Micro-Purchase</div>
-              <div className="text-sm text-gray-600">Ready for Orders &lt;$10K</div>
-            </div>
-          </div>
+              <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">
+                Government Purchase Cards Accepted
+              </h1>
 
-          {/* Key Information */}
-          <div className="bg-white rounded-lg shadow-md p-8 mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Registration Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="text-sm font-semibold text-gray-500 uppercase mb-1">CAGE Code</div>
-                <div className="text-xl font-bold text-gray-900">9TYW7</div>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-500 uppercase mb-1">UEI</div>
-                <div className="text-xl font-bold text-gray-900">MM7NWZETLWR3</div>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-500 uppercase mb-1">Primary NAICS</div>
-                <div className="text-xl font-bold text-gray-900">325314</div>
-                <div className="text-sm text-gray-600">Fertilizer Manufacturing</div>
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-500 uppercase mb-1">Additional NAICS</div>
-                <div className="text-sm text-gray-700">325998, 562910, 541620, 561730</div>
-              </div>
-            </div>
-          </div>
+              <p className="mt-5 max-w-3xl text-lg leading-8 text-[#445044]">
+                Nature&apos;s Way Soil supports federal, state, local, school, and
+                institutional buyers with HUBZone-certified, SAM-registered,
+                BioPreferred product solutions for grounds, housing, turf, and
+                outdoor facility care.
+              </p>
 
-          {/* Applications Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Federal Construction & Site Work</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  Post-construction site restoration
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  Erosion control and slope stabilization
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  Disturbed soil remediation
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  Military base landscaping projects
-                </li>
-              </ul>
-            </div>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  href="#featured-products"
+                  className="rounded-xl bg-[#3e6b2f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#335826]"
+                >
+                  View Government-Friendly Products
+                </Link>
+                <Link
+                  href="#quote-request"
+                  className="rounded-xl border border-[#c6cebc] bg-white px-5 py-3 text-sm font-semibold text-[#1f2a1f] transition hover:bg-[#f1f4ec]"
+                >
+                  Request Invoice / Quote
+                </Link>
+              </div>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Environmental Programs</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  NAVFAC environmental initiatives
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  Native vegetation establishment
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  Sustainable grounds management
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-2">✓</span>
-                  BioPreferred procurement compliance
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Value Propositions */}
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-8 mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Why Work With Us</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-bold text-blue-900 mb-3">For Prime Contractors</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>✓ Meet HUBZone subcontracting goals</li>
-                  <li>✓ BioPreferred products for sustainable procurement</li>
-                  <li>✓ Fast micro-purchase process (&lt;$10K)</li>
-                  <li>✓ Direct credit card acceptance available</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-bold text-green-900 mb-3">For Site Work Subcontractors</h3>
-                <ul className="space-y-2 text-gray-700">
-                  <li>✓ Bulk pricing for large projects</li>
-                  <li>✓ LTL freight delivery available</li>
-                  <li>✓ Net-30 terms for qualified contractors</li>
-                  <li>✓ Technical support and product guidance</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Product Overview */}
-          <div className="bg-white rounded-lg shadow-md p-8 mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Core Products</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-bold text-lg text-gray-900 mb-2">Liquid Fertilizers</h3>
-                <p className="text-sm text-gray-600 mb-3">Organic nitrogen and micronutrient solutions</p>
-                <div className="text-sm text-gray-700">
-                  <div>• Fish & Kelp formulations</div>
-                  <div>• Microbe-enhanced options</div>
-                  <div>• Ready-to-use concentrates</div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-bold text-lg text-gray-900 mb-2">Activated Biochar</h3>
-                <p className="text-sm text-gray-600 mb-3">Carbon-rich soil amendment for structure and retention</p>
-                <div className="text-sm text-gray-700">
-                  <div>• Improves water retention</div>
-                  <div>• Enhances nutrient availability</div>
-                  <div>• Long-term soil building</div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="font-bold text-lg text-gray-900 mb-2">Living Compost</h3>
-                <p className="text-sm text-gray-600 mb-3">Microbially active organic matter</p>
-                <div className="text-sm text-gray-700">
-                  <div>• Biological soil activation</div>
-                  <div>• Erosion control support</div>
-                  <div>• Native plant establishment</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing Examples */}
-          <div className="bg-gray-50 rounded-lg p-8 mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Micro-Purchase Pricing Examples</h2>
-            <p className="text-gray-600 mb-6">Typical project pricing for orders under $10,000 (freight included)</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="text-lg font-bold text-gray-900 mb-2">Small Site</div>
-                <div className="text-3xl font-bold text-green-600 mb-2">$500-$1,500</div>
-                <div className="text-sm text-gray-600">
-                  <div>• 1-5 acres</div>
-                  <div>• Basic restoration</div>
-                  <div>• 10-30 gallons liquid</div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-green-500">
-                <div className="text-lg font-bold text-gray-900 mb-2">Medium Project</div>
-                <div className="text-3xl font-bold text-green-600 mb-2">$2,500-$5,000</div>
-                <div className="text-sm text-gray-600">
-                  <div>• 5-15 acres</div>
-                  <div>• Erosion control focus</div>
-                  <div>• 50-100 gallons + biochar</div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="text-lg font-bold text-gray-900 mb-2">Large Application</div>
-                <div className="text-3xl font-bold text-green-600 mb-2">$8,000-$15,000</div>
-                <div className="text-sm text-gray-600">
-                  <div>• 15+ acres</div>
-                  <div>• Comprehensive program</div>
-                  <div>• Bulk liquid + amendments</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* RFQ Form */}
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Request a Quote</h2>
-            <p className="text-gray-600 mb-6">
-              Submit your project details and we'll respond within 24 hours with a detailed quote and technical specifications.
-            </p>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.organization}
-                    onChange={(e) => setFormData({...formData, organization: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Type *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., Site restoration, erosion control, landscaping"
-                  value={formData.project}
-                  onChange={(e) => setFormData({...formData, project: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Details *
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Please include: acreage, timeline, specific requirements, and any relevant contract or solicitation numbers"
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <button
-                type="submit"
-                disabled={submitStatus === 'sending'}
-                className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400 transition-colors"
-              >
-                {submitStatus === 'sending' ? 'Sending...' : 'Submit RFQ'}
-              </button>
-              
-              {submitStatus === 'success' && (
-                <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
-                  Thank you! We'll respond to your RFQ within 24 hours.
-                </div>
-              )}
-              
-              {submitStatus === 'error' && (
-                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-                  There was an error submitting your request. Please email us directly at natureswaysoil@natureswaysoil.com
-                </div>
-              )}
-            </form>
-          </div>
-
-          {/* Contact Information */}
-          <div className="mt-12 text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Direct Contact</h2>
-            <div className="text-gray-700">
-              <div className="mb-2">
-                <strong>Email:</strong> natureswaysoil@natureswaysoil.com
-              </div>
-              <div className="mb-2">
-                <strong>Location:</strong> Snow Hill, NC 28580
-              </div>
-              <div>
-                <strong>Website:</strong> <Link href="/" className="text-green-600 hover:text-green-700">natureswaysoil.com</Link>
+              <div className="mt-6 flex flex-wrap gap-3 text-sm font-medium text-[#365c2b]">
+                <span className="rounded-full border border-[#bfd1b4] bg-white px-3 py-1">
+                  CAGE: {registrationDetails.cage}
+                </span>
+                <span className="rounded-full border border-[#bfd1b4] bg-white px-3 py-1">
+                  UEI: {registrationDetails.uei}
+                </span>
+                <span className="rounded-full border border-[#bfd1b4] bg-white px-3 py-1">
+                  NAICS {registrationDetails.primaryNaics}
+                </span>
               </div>
             </div>
           </div>
         </section>
-      </div>
+
+        <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+            <div className="rounded-3xl border border-[#d6decd] bg-white p-8 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-wide text-[#567547]">
+                Naturally Stronger Soil Starts Here
+              </p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight">
+                A simpler buying path for public-sector customers
+              </h2>
+              <p className="mt-4 text-base leading-7 text-[#485348]">
+                Nature&apos;s Way Soil makes it easy for cardholders, grounds teams,
+                facility managers, and purchasing staff to order practical,
+                soil-focused products without a complicated sales process.
+              </p>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {credentials.map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-[#d6decd] bg-[#f4f7ef] px-4 py-4 text-sm font-medium text-[#2d3a2d]"
+                  >
+                    ✓ {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-[#d6decd] bg-[#2f4d25] p-8 text-white shadow-sm">
+              <h3 className="text-xl font-semibold">Registration Details</h3>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                {[
+                  ['HUBZone', 'Certified Small Business'],
+                  ['BioPreferred', 'USDA Certified Product'],
+                  ['SAM Registered', 'Active & Compliant'],
+                  ['Micro-Purchase', 'Ready for Orders < $15K'],
+                ].map(([title, text]) => (
+                  <div key={title} className="rounded-2xl border border-white/20 bg-white/10 p-4">
+                    <p className="text-xs uppercase tracking-wide text-[#dfead8]">{title}</p>
+                    <p className="mt-1 text-sm font-semibold text-white">{text}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 rounded-2xl bg-white p-5 text-[#1f2a1f]">
+                <h4 className="text-base font-semibold">Registration Details</h4>
+
+                <dl className="mt-4 space-y-4 text-sm">
+                  <div className="border-b border-[#e3e8dc] pb-3">
+                    <dt className="font-medium text-[#5a655a]">CAGE Code</dt>
+                    <dd className="mt-1 text-base font-semibold text-[#1f2a1f]">
+                      {registrationDetails.cage}
+                    </dd>
+                  </div>
+
+                  <div className="border-b border-[#e3e8dc] pb-3">
+                    <dt className="font-medium text-[#5a655a]">UEI</dt>
+                    <dd className="mt-1 text-base font-semibold text-[#1f2a1f]">
+                      {registrationDetails.uei}
+                    </dd>
+                  </div>
+
+                  <div className="border-b border-[#e3e8dc] pb-3">
+                    <dt className="font-medium text-[#5a655a]">Primary NAICS</dt>
+                    <dd className="mt-1 text-base font-semibold text-[#1f2a1f]">
+                      {registrationDetails.primaryNaics}
+                    </dd>
+                    <dd className="mt-1 text-sm text-[#4f5a4f]">
+                      {registrationDetails.primaryNaicsLabel}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="font-medium text-[#5a655a]">Additional NAICS</dt>
+                    <dd className="mt-1 text-sm leading-6 text-[#1f2a1f]">
+                      {registrationDetails.additionalNaics.join(', ')}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="mt-6 space-y-3 text-sm leading-6 text-[#edf3e7]">
+                <p>
+                  <span className="font-semibold text-white">Phone:</span>{' '}
+                  <a href={contact.phoneHref} className="underline underline-offset-2">
+                    {contact.phone}
+                  </a>
+                </p>
+                <p>
+                  <span className="font-semibold text-white">Email:</span>{' '}
+                  <a
+                    href={contact.emailHref}
+                    className="underline underline-offset-2"
+                  >
+                    {contact.email}
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-[#eef3e8]">
+          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <h2 className="text-3xl font-bold tracking-tight">How to order</h2>
+            <div className="mt-8 grid gap-6 md:grid-cols-3">
+              {orderingOptions.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm"
+                >
+                  <h3 className="text-lg font-semibold">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">{item.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 rounded-3xl border border-[#c9d8bd] bg-white p-6 shadow-sm">
+              <p className="text-sm leading-7 text-[#435143]">
+                <span className="font-semibold">Note for buyers:</span> We accept
+                Government Purchase Cards through secure Stripe checkout. Tax-exempt
+                purchasing can be supported when requested before invoicing or checkout.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+          <h2 className="text-3xl font-bold tracking-tight">
+            Common government and institutional use cases
+          </h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {useCases.map((item) => (
+              <div
+                key={item.title}
+                className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm"
+              >
+                <h3 className="text-lg font-semibold">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-[#eef3e8]">
+          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <div className="grid gap-8 lg:grid-cols-[1.1fr_.9fr]">
+              <div className="rounded-3xl border border-[#d6decd] bg-white p-8 shadow-sm">
+                <p className="text-sm font-semibold uppercase tracking-wide text-[#567547]">
+                  Featured Sustainability Product
+                </p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight">
+                  Liquid Biochar for Soil Health & Restoration
+                </h2>
+                <p className="mt-4 text-base leading-7 text-[#495549]">
+                  Liquid Biochar is a strong fit for public-sector buyers looking
+                  to support soil health, improve degraded ground conditions, and
+                  align with sustainability-minded land-care programs.
+                </p>
+
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  {biocharUses.map((item) => (
+                    <div key={item.title} className="rounded-2xl bg-[#f4f7ef] p-5">
+                      <h3 className="font-semibold">{item.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-[#4f5a4f]">
+                        {item.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8">
+                  <Link
+                    href="#quote-request"
+                    className="rounded-xl bg-[#3e6b2f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#335826]"
+                  >
+                    Request Liquid Biochar Pricing
+                  </Link>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-[#d6decd] bg-white p-8 shadow-sm">
+                <h3 className="text-xl font-semibold">Best-fit government uses</h3>
+                <div className="mt-6 space-y-4 text-sm leading-6 text-[#4f5a4f]">
+                  <p>
+                    <strong>• Grounds departments:</strong> soil improvement for
+                    maintained public landscapes
+                  </p>
+                  <p>
+                    <strong>• Housing/common areas:</strong> support for soil
+                    recovery in high-use outdoor spaces
+                  </p>
+                  <p>
+                    <strong>• Campuses and schools:</strong> sustainability-minded
+                    landscape care
+                  </p>
+                  <p>
+                    <strong>• Environmental land care:</strong> soil-focused
+                    restoration and improvement projects
+                  </p>
+                </div>
+
+                <div className="mt-8 rounded-2xl bg-[#f4f7ef] p-5">
+                  <p className="text-sm leading-6 text-[#4f5a4f]">
+                    Liquid Biochar can be quoted directly for project-based orders,
+                    pilot programs, or recurring grounds-maintenance needs.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="featured-products" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+          <div className="max-w-3xl">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Featured products for public-sector buyers
+            </h2>
+            <p className="mt-4 text-base leading-7 text-[#495549]">
+              These products align well with grounds, housing, outdoor care,
+              and routine facility use cases. All links currently route to the
+              quote form until product-page slugs are finalized.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {featuredProducts.map((product) => (
+              <div
+                key={product.name}
+                className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm"
+              >
+                <h3 className="text-xl font-semibold text-[#1f2a1f]">{product.name}</h3>
+                <p className="mt-3 text-sm font-medium text-[#567547]">
+                  Best fit: {product.useCase}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">{product.blurb}</p>
+                <Link
+                  href={product.href}
+                  className="mt-5 inline-flex rounded-xl border border-[#c8d2bf] bg-[#f7f8f3] px-4 py-2 text-sm font-semibold text-[#2d3a2d] transition hover:bg-[#edf2e7]"
+                >
+                  {product.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="quote-request" className="bg-[#eef3e8]">
+          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">
+                  Request an invoice or quote
+                </h2>
+                <p className="mt-4 text-base leading-7 text-[#495549]">
+                  Send us the products, quantities, shipping destination, and your
+                  need-by date. We can respond with a quote or invoice for card or
+                  ACH payment.
+                </p>
+
+                <div className="mt-8 rounded-3xl border border-[#d6decd] bg-white p-6">
+                  <h3 className="font-semibold">Helpful details to include</h3>
+                  <div className="mt-3 space-y-2 text-sm leading-6 text-[#4f5a4f]">
+                    <p>• Agency or organization name</p>
+                    <p>• Contact name, email, and phone</p>
+                    <p>• Product name(s) and quantity</p>
+                    <p>• Shipping address</p>
+                    <p>• Need-by date</p>
+                    <p>• Tax-exempt status, if applicable</p>
+                    <p>• Popular request: Liquid Biochar for sustainability and soil-restoration projects</p>
+                  </div>
+                </div>
+              </div>
+
+              <form
+                action="https://formsubmit.co/sales@natureswaysoil.com"
+                method="POST"
+                className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm"
+              >
+                <input type="hidden" name="_subject" value="Government Quote Request" />
+                <input type="hidden" name="_captcha" value="false" />
+
+                <div className="grid gap-4">
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium">Name</span>
+                    <input
+                      name="name"
+                      required
+                      className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium">Agency / Organization</span>
+                    <input
+                      name="organization"
+                      className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium">Email</span>
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium">Phone</span>
+                    <input
+                      name="phone"
+                      className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium">Products / Quantity</span>
+                    <textarea
+                      name="products"
+                      rows={4}
+                      className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
+                      placeholder="Example: Liquid Biochar - 12 gallons"
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
+                    <span className="text-sm font-medium">
+                      Shipping Address / Need-by Date
+                    </span>
+                    <textarea
+                      name="shipping"
+                      rows={4}
+                      className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
+                    />
+                  </label>
+
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-[#3e6b2f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#335826]"
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl px-6 py-16 lg:px-8">
+          <h2 className="text-3xl font-bold tracking-tight">
+            Frequently asked questions
+          </h2>
+
+          <div className="mt-8 space-y-4">
+            <details className="rounded-2xl border border-[#d6decd] bg-white p-5 shadow-sm">
+              <summary className="cursor-pointer font-semibold">
+                Do you accept Government Purchase Cards?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">
+                Yes. Eligible orders can be placed directly through our secure
+                Stripe checkout.
+              </p>
+            </details>
+
+            <details className="rounded-2xl border border-[#d6decd] bg-white p-5 shadow-sm">
+              <summary className="cursor-pointer font-semibold">
+                Can we request pricing before ordering?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">
+                Yes. Use the quote form on this page for product pricing,
+                invoice requests, quantities, or project-based needs.
+              </p>
+            </details>
+
+            <details className="rounded-2xl border border-[#d6decd] bg-white p-5 shadow-sm">
+              <summary className="cursor-pointer font-semibold">
+                Can we buy tax-exempt?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">
+                Yes. Contact us before checkout or request an invoice so we can
+                help process the order correctly.
+              </p>
+            </details>
+
+            <details className="rounded-2xl border border-[#d6decd] bg-white p-5 shadow-sm">
+              <summary className="cursor-pointer font-semibold">
+                Do you support larger orders?
+              </summary>
+              <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">
+                Yes. We can help with larger institutional quantities, recurring
+                needs, and pallet-scale requests where available.
+              </p>
+            </details>
+          </div>
+        </section>
+      </main>
     </>
   );
 }
