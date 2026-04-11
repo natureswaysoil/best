@@ -80,6 +80,9 @@ const nextConfig = {
       { source: '/policies/privacy', destination: '/privacy', permanent: true },
       { source: '/privacy-policy', destination: '/privacy', permanent: true },
       { source: '/refund-policy', destination: '/returns', permanent: true },
+
+      // Government page legacy typo
+      { source: '/governement', destination: '/government', permanent: true },
     ];
   },
 }

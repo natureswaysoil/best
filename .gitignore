@@ -9,3 +9,4 @@ node_modules
 
 # Generated files
 asins.json
+.env*.local
