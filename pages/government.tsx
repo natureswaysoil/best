@@ -48,42 +48,49 @@ const featuredProducts = [
     name: 'Dog Urine Neutralizer & Lawn Repair',
     href: '#quote-request',
     useCase: 'Base housing, common areas, pet relief areas, and kennel-adjacent turf',
-    blurb: 'Helps address yellow spots and lawn stress from pet urine in high-use outdoor areas.',
+    blurb: 'Helps address yellow spots and lawn stress from pet urine in high-use outdoor areas. Starting at $29.99/qt · $59.99/gal.',
     cta: 'Request Pricing',
   },
   {
     name: 'Seaweed & Humic Acid Lawn Treatment',
     href: '#quote-request',
     useCase: 'Grounds crews, athletic fields, golf, and routine turf support',
-    blurb: 'Liquid soil revitalizer for greener lawns, stronger root systems, and healthier turf.',
+    blurb: 'Liquid soil revitalizer for greener lawns, stronger root systems, and healthier turf. Starting at $19.00/qt.',
     cta: 'Request Pricing',
   },
   {
     name: 'Liquid Humic & Fulvic Acid with Kelp',
     href: '#quote-request',
     useCase: 'Soil conditioning, root-zone support, and large-area lawn care',
-    blurb: 'Professional-grade liquid humic and fulvic acid blend enriched with organic kelp extract.',
+    blurb: 'Professional-grade liquid humic and fulvic acid blend enriched with organic kelp extract. Starting at $69.99/2.5 gal.',
     cta: 'Request Pricing',
   },
   {
     name: 'Liquid Biochar',
     href: '#quote-request',
-    useCase: 'Soil restoration, sustainability initiatives, grounds improvement, and environmental land-care programs',
-    blurb: 'Liquid biochar for public-sector land care and soil-building programs. A strong fit for sustainability-focused grounds maintenance, planting projects, and soil health improvement.',
+    useCase: 'Soil restoration, NPDES stormwater compliance, PFAS-impacted sites, new construction, and environmental land-care programs',
+    blurb: 'Activated liquid biochar for public-sector soil and water programs. Peer-reviewed research supports biochar for PFAS immobilization, stormwater filtration, and disturbed-soil restoration on construction sites. $79.99/gal · Volume pricing available.',
     cta: 'Request Liquid Biochar Pricing',
+  },
+  {
+    name: 'Horticultural Activated Charcoal (Dry Biochar)',
+    href: '#quote-request',
+    useCase: 'In-soil amendment, bioretention systems, stormwater filter media, new construction soil restoration, and PFAS-impacted site remediation',
+    blurb: 'Activated charcoal/biochar for direct soil incorporation. Ideal for bioretention cells, bioslopes, filter strips, and post-construction soil restoration. Research demonstrates up to 98–100% reduction in PFAS leaching at 5% soil amendment rates. $29.99/4 qt · Bulk/project quantities quoted.',
+    cta: 'Request Dry Biochar Pricing',
   },
   {
     name: 'Hay, Pasture & Lawn Fertilizer',
     href: '#quote-request',
     useCase: 'Large turf areas, pastures, recreation areas, and facility grounds',
-    blurb: 'Microbial fertilizer blend designed for healthy grass growth and greener grounds.',
+    blurb: 'Microbial fertilizer blend designed for healthy grass growth and greener grounds. Covers up to 5 acres per gallon at 1:50 dilution — approximately $20/acre at retail, less than half the cost of comparable granular options. Starting at $99.99/2.5 gal · Bulk/pallet pricing available.',
     cta: 'Request Pricing',
   },
   {
     name: 'Enhanced Living Compost with Fermented Duckweed',
     href: '#quote-request',
     useCase: 'Landscape beds, planting projects, and soil restoration work',
-    blurb: 'A living compost blend with worm castings, activated biochar, and weed-free aged compost.',
+    blurb: 'A living compost blend with worm castings, activated biochar, and weed-free aged compost. Starting at $29.99/10 lbs · Project quantities quoted.',
     cta: 'Request Pricing',
   },
 ];
@@ -109,20 +116,20 @@ const useCases = [
 
 const biocharUses = [
   {
-    title: 'Grounds & Landscape Recovery',
-    text: 'Useful for planting areas, landscape beds, and grounds projects where improving soil structure and biological activity matters.',
+    title: 'PFAS Immobilization',
+    text: 'Peer-reviewed research shows activated biochar at 5% soil amendment rates reduces PFAS leaching by 98–100% in contaminated soils — a priority issue at military installations nationwide.',
   },
   {
-    title: 'Sustainability Programs',
-    text: 'A natural fit for agencies, schools, campuses, and facilities that want biobased, soil-building products in their land-care toolkit.',
+    title: 'Stormwater & NPDES Compliance',
+    text: 'Biochar is a recognized stormwater Best Management Practice (BMP) in multiple states. Research shows 60%+ removal of nitrogen and phosphorus from highway and construction-site runoff at low amendment rates.',
   },
   {
-    title: 'Soil Building',
-    text: 'Supports long-term soil improvement by complementing broader soil health and regenerative maintenance practices.',
+    title: 'New Construction & Disturbed Soils',
+    text: 'Construction site soil compaction reduces infiltration and increases runoff. Biochar-amended soils restore porosity, reduce stormwater volume, and support vegetation establishment — recognized by NC DEQ as a stormwater BMP.',
   },
   {
-    title: 'Project-Based Purchasing',
-    text: 'Well suited for direct card purchases or invoice-based ordering for planting, restoration, and grounds-improvement projects.',
+    title: 'Grounds & Sustainability Programs',
+    text: 'A natural fit for agencies pursuing biobased purchasing, carbon sequestration goals, and long-term soil health programs. USDA BioPreferred designated.',
   },
 ];
 
@@ -412,12 +419,10 @@ export default function GovernmentPage() {
                   Featured Sustainability Product
                 </p>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight">
-                  Liquid Biochar for Soil Health & Restoration
+                  Biochar for PFAS, Stormwater & Soil Restoration
                 </h2>
                 <p className="mt-4 text-base leading-7 text-[#495549]">
-                  Liquid Biochar is a strong fit for public-sector buyers looking
-                  to support soil health, improve degraded ground conditions, and
-                  align with sustainability-minded land-care programs.
+                  Available in liquid and dry activated forms. Peer-reviewed research supports biochar for PFAS immobilization, NPDES stormwater compliance, post-construction soil restoration, and long-term sustainability programs. USDA BioPreferred designated · HUBZone certified supplier.
                 </p>
 
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -445,27 +450,24 @@ export default function GovernmentPage() {
                 <h3 className="text-xl font-semibold">Best-fit government uses</h3>
                 <div className="mt-6 space-y-4 text-sm leading-6 text-[#4f5a4f]">
                   <p>
-                    <strong>• Grounds departments:</strong> soil improvement for
-                    maintained public landscapes
+                    <strong>• Military installations:</strong> PFAS-impacted soil and groundwater mitigation programs
                   </p>
                   <p>
-                    <strong>• Housing/common areas:</strong> support for soil
-                    recovery in high-use outdoor spaces
+                    <strong>• Construction & DOT projects:</strong> post-construction soil restoration and NPDES stormwater BMP compliance
                   </p>
                   <p>
-                    <strong>• Campuses and schools:</strong> sustainability-minded
-                    landscape care
+                    <strong>• Grounds & environmental staff:</strong> bioslope amendment, bioretention filter media, and sediment control
                   </p>
                   <p>
-                    <strong>• Environmental land care:</strong> soil-focused
-                    restoration and improvement projects
+                    <strong>• Sustainability programs:</strong> USDA BioPreferred, carbon sequestration, and biobased purchasing goals
                   </p>
                 </div>
 
                 <div className="mt-8 rounded-2xl bg-[#f4f7ef] p-5">
-                  <p className="text-sm leading-6 text-[#4f5a4f]">
-                    Liquid Biochar can be quoted directly for project-based orders,
-                    pilot programs, or recurring grounds-maintenance needs.
+                  <p className="text-sm font-semibold text-[#3e6b2f]">Available in two forms:</p>
+                  <p className="mt-2 text-sm leading-6 text-[#4f5a4f]">
+                    <strong>Liquid Biochar</strong> — $79.99/gal · Volume pricing available<br />
+                    <strong>Dry Activated Charcoal</strong> — $29.99/4 qt · Bulk/project quantities quoted
                   </p>
                 </div>
               </div>
