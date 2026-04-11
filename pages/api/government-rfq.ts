@@ -1,15 +1,33 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 // Uses your existing RESEND_FROM variable
 // Notifications go to JAMES_TO (owner) + SALES_TO — same pattern as rest of site
+const DEFAULT_FROM = "Nature's Way Soil <no-reply@natureswaysoil.com>";
 const FROM = process.env.RESEND_FROM as string;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const NOTIFY_TO = [
   process.env.JAMES_TO,
   process.env.SALES_TO,
 ].filter(Boolean) as string[];
+
+function getFromAddress() {
+  const trimmed = FROM?.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const isPlainEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+  const isNamedEmail = /^[^<>\n]+<[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>$/.test(trimmed);
+
+  if (isPlainEmail || isNamedEmail) {
+    return trimmed;
+  }
+
+  console.warn('[government-rfq] Invalid RESEND_FROM value, falling back to default sender');
+  return DEFAULT_FROM;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -23,16 +41,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing required fields: agency, name, email, message' });
   }
 
-  if (!FROM) {
+  const fromAddress = getFromAddress();
+
+  if (!fromAddress) {
     console.error('[government-rfq] RESEND_FROM env var not set');
     return res.status(500).json({ error: 'Email service not configured' });
   }
 
+  if (!RESEND_API_KEY) {
+    console.error('[government-rfq] RESEND_API_KEY env var not set');
+    return res.status(500).json({ error: 'Email service not configured' });
+  }
+
+  const resend = new Resend(RESEND_API_KEY);
+
   try {
     // ── 1. Internal notification ──
     const { error: err1 } = await resend.emails.send({
-      from: FROM,
-      to: NOTIFY_TO.length > 0 ? NOTIFY_TO : [FROM],
+      from: fromAddress,
+      to: NOTIFY_TO.length > 0 ? NOTIFY_TO : [fromAddress],
       replyTo: email,
       subject: `[GOV RFQ] ${agencyType || 'Agency'} — ${agency}`,
       html: `
@@ -70,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // ── 2. Auto-reply to buyer ──
     const { error: err2 } = await resend.emails.send({
-      from: FROM,
+      from: fromAddress,
       to: [email],
       subject: `RFQ Received — Nature's Way Soil Government Sales`,
       html: `

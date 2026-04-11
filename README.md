@@ -225,7 +225,10 @@ HEYGEN_API_KEY=your_heygen_api_key_here
 STRIPE_SECRET_KEY=your_stripe_key
 SUPABASE_URL=your_supabase_url
 RESEND_API_KEY=your_resend_key
+RESEND_FROM="Nature's Way Soil <no-reply@natureswaysoil.com>"
 ```
+
+`RESEND_FROM` must be a valid sender string in the form `Display Name <verified@yourdomain.com>` and the address must be verified in your Resend account.
 
 ## 📞 Support Features
 

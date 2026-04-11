@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import { FormEvent, useState } from 'react';
 
 const contact = {
   phone: '(252) 560-7390',
@@ -126,6 +127,76 @@ const biocharUses = [
 ];
 
 export default function GovernmentPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    organization: '',
+    email: '',
+    phone: '',
+    products: '',
+    shipping: '',
+  });
+  const [submitState, setSubmitState] = useState<{
+    status: 'idle' | 'submitting' | 'success' | 'error';
+    message: string;
+  }>({
+    status: 'idle',
+    message: '',
+  });
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitState({ status: 'submitting', message: '' });
+
+    const messageSections = [
+      formData.products.trim() ? `Products / Quantity:\n${formData.products.trim()}` : '',
+      formData.shipping.trim()
+        ? `Shipping Address / Need-by Date:\n${formData.shipping.trim()}`
+        : '',
+    ].filter(Boolean);
+
+    try {
+      const response = await fetch('/api/government-rfq', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agency: formData.organization.trim(),
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          agencyType: 'Government / Institutional Buyer',
+          useCase: formData.products.trim() || 'Quote request',
+          message: messageSections.join('\n\n') || 'Quote request submitted from government page.',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to submit request');
+      }
+
+      setFormData({
+        name: '',
+        organization: '',
+        email: '',
+        phone: '',
+        products: '',
+        shipping: '',
+      });
+      setSubmitState({
+        status: 'success',
+        message: 'Your request has been sent. Our government sales team will follow up within one business day.',
+      });
+    } catch (error) {
+      setSubmitState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unable to submit request right now.',
+      });
+    }
+  }
+
   return (
     <>
       <Head>
@@ -464,19 +535,19 @@ export default function GovernmentPage() {
               </div>
 
               <form
-                action="https://formsubmit.co/sales@natureswaysoil.com"
-                method="POST"
+                onSubmit={handleSubmit}
                 className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm"
               >
-                <input type="hidden" name="_subject" value="Government Quote Request" />
-                <input type="hidden" name="_captcha" value="false" />
-
                 <div className="grid gap-4">
                   <label className="grid gap-2">
                     <span className="text-sm font-medium">Name</span>
                     <input
                       name="name"
                       required
+                      value={formData.name}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, name: event.target.value }))
+                      }
                       className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
                     />
                   </label>
@@ -485,6 +556,11 @@ export default function GovernmentPage() {
                     <span className="text-sm font-medium">Agency / Organization</span>
                     <input
                       name="organization"
+                      required
+                      value={formData.organization}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, organization: event.target.value }))
+                      }
                       className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
                     />
                   </label>
@@ -495,6 +571,10 @@ export default function GovernmentPage() {
                       type="email"
                       name="email"
                       required
+                      value={formData.email}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, email: event.target.value }))
+                      }
                       className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
                     />
                   </label>
@@ -503,6 +583,10 @@ export default function GovernmentPage() {
                     <span className="text-sm font-medium">Phone</span>
                     <input
                       name="phone"
+                      value={formData.phone}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, phone: event.target.value }))
+                      }
                       className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
                     />
                   </label>
@@ -512,6 +596,11 @@ export default function GovernmentPage() {
                     <textarea
                       name="products"
                       rows={4}
+                      required
+                      value={formData.products}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, products: event.target.value }))
+                      }
                       className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
                       placeholder="Example: Liquid Biochar - 12 gallons"
                     />
@@ -524,15 +613,30 @@ export default function GovernmentPage() {
                     <textarea
                       name="shipping"
                       rows={4}
+                      value={formData.shipping}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, shipping: event.target.value }))
+                      }
                       className="rounded-xl border border-[#cbd4c3] px-4 py-3 outline-none focus:border-[#567547]"
                     />
                   </label>
 
+                  {submitState.status !== 'idle' && (
+                    <p
+                      className={`text-sm ${
+                        submitState.status === 'success' ? 'text-[#2f6b2f]' : 'text-[#8a3b32]'
+                      }`}
+                    >
+                      {submitState.message || 'Submitting your request...'}
+                    </p>
+                  )}
+
                   <button
                     type="submit"
+                    disabled={submitState.status === 'submitting'}
                     className="rounded-xl bg-[#3e6b2f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#335826]"
                   >
-                    Submit Request
+                    {submitState.status === 'submitting' ? 'Submitting...' : 'Submit Request'}
                   </button>
                 </div>
               </form>
