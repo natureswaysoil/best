@@ -4,6 +4,11 @@ import { Resend } from 'resend';
 // Never import this in client components or pages that run in the browser
 
 let resend: Resend | null = null;
+const INTERNAL_EMAIL_COPY = 'natureswaysoil@gmail.com';
+
+function getInternalEmailBcc() {
+  return INTERNAL_EMAIL_COPY ? [INTERNAL_EMAIL_COPY] : undefined;
+}
 
 function getResendClient(): Resend | null {
   // Ensure this only runs on server-side
@@ -88,6 +93,7 @@ export async function sendOrderConfirmation(
     const { data, error } = await client.emails.send({
       from: "Nature's Way Soil <no-reply@natureswaysoil.com>",
       to: email,
+      bcc: getInternalEmailBcc(),
       subject: `Order Confirmation #${orderId}`,
       html: `
         <!DOCTYPE html>
@@ -251,6 +257,7 @@ export async function sendFollowUpEmail(email: string, name: string) {
     const { data, error } = await client.emails.send({
       from: "Nature's Way Soil <no-reply@natureswaysoil.com>",
       to: email,
+      bcc: getInternalEmailBcc(),
       subject: 'How\'s Your Soil Health Journey Going?',
       html: `
         <!DOCTYPE html>

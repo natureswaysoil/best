@@ -8,6 +8,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const INTERNAL_EMAIL_RECIPIENTS = Array.from(
+  new Set([
+    'natureswaysoil@natureswaysoil.com',
+    'james@natureswaysoil.com',
+    'sales@natureswaysoil.com',
+    'natureswaysoil@gmail.com',
+  ])
+);
 
 export const config = {
   api: {
@@ -67,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (resendClient) {
               await resendClient.emails.send({
                 from: "Nature's Way Soil <no-reply@natureswaysoil.com>",
-                to: ['natureswaysoil@natureswaysoil.com', 'james@natureswaysoil.com', 'sales@natureswaysoil.com'],
+                to: INTERNAL_EMAIL_RECIPIENTS,
                 subject: `🛒 New Order — $${(paymentIntent.amount / 100).toFixed(2)} from ${metadata.customer_name || paymentIntent.receipt_email}`,
                 html: `
                   <h2 style="color:#2d5016;">New Website Order!</h2>
@@ -85,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   </p>
                 `
               });
-              console.log('Owner notification sent to james@, sales@, and gmail');
+              console.log('Owner notification sent to internal recipients including gmail');
             }
 
             await sendOrderConfirmation(paymentIntent.receipt_email, {
