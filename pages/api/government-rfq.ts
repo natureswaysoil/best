@@ -4,12 +4,16 @@ import { Resend } from 'resend';
 // Uses your existing RESEND_FROM variable
 // Notifications go to JAMES_TO (owner) + SALES_TO — same pattern as rest of site
 const DEFAULT_FROM = "Nature's Way Soil <no-reply@natureswaysoil.com>";
+const GOVERNMENT_RFQ_CC = 'natureswaysoil@gmail.com';
 const FROM = process.env.RESEND_FROM as string;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const NOTIFY_TO = [
-  process.env.JAMES_TO,
-  process.env.SALES_TO,
-].filter(Boolean) as string[];
+const NOTIFY_TO = Array.from(
+  new Set([
+    process.env.JAMES_TO,
+    process.env.SALES_TO,
+    GOVERNMENT_RFQ_CC,
+  ].filter(Boolean))
+) as string[];
 
 function getFromAddress() {
   const trimmed = FROM?.trim();
