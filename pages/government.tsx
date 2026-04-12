@@ -48,49 +48,56 @@ const featuredProducts = [
     name: 'Dog Urine Neutralizer & Lawn Repair',
     href: '#quote-request',
     useCase: 'Base housing, common areas, pet relief areas, and kennel-adjacent turf',
-    blurb: 'Helps address yellow spots and lawn stress from pet urine in high-use outdoor areas. Starting at $29.99/qt · $59.99/gal.',
+    blurb: 'Helps address yellow spots and lawn stress from pet urine in high-use outdoor areas.',
+    price: 'Starting at $29.99/qt · $59.99/gal',
     cta: 'Request Pricing',
   },
   {
     name: 'Seaweed & Humic Acid Lawn Treatment',
     href: '#quote-request',
     useCase: 'Grounds crews, athletic fields, golf, and routine turf support',
-    blurb: 'Liquid soil revitalizer for greener lawns, stronger root systems, and healthier turf. Starting at $19.00/qt.',
+    blurb: 'Liquid soil revitalizer for greener lawns, stronger root systems, and healthier turf.',
+    price: 'Starting at $19.00/qt',
     cta: 'Request Pricing',
   },
   {
     name: 'Liquid Humic & Fulvic Acid with Kelp',
     href: '#quote-request',
     useCase: 'Soil conditioning, root-zone support, and large-area lawn care',
-    blurb: 'Professional-grade liquid humic and fulvic acid blend enriched with organic kelp extract. Starting at $69.99/2.5 gal.',
+    blurb: 'Professional-grade liquid humic and fulvic acid blend enriched with organic kelp extract.',
+    price: 'Starting at $69.99/2.5 gal',
     cta: 'Request Pricing',
   },
   {
     name: 'Liquid Biochar',
     href: '#quote-request',
     useCase: 'Soil restoration, NPDES stormwater compliance, PFAS-impacted sites, new construction, and environmental land-care programs',
-    blurb: 'Activated liquid biochar for public-sector soil and water programs. Peer-reviewed research supports biochar for PFAS immobilization, stormwater filtration, and disturbed-soil restoration on construction sites. $79.99/gal · Volume pricing available.',
+    blurb: 'Activated liquid biochar for public-sector soil and water programs. Peer-reviewed research supports biochar for PFAS immobilization, stormwater filtration, and disturbed-soil restoration on construction sites.',
+    price: '$79.99/gal · Volume pricing available',
     cta: 'Request Liquid Biochar Pricing',
   },
   {
     name: 'Horticultural Activated Charcoal (Dry Biochar)',
     href: '#quote-request',
     useCase: 'In-soil amendment, bioretention systems, stormwater filter media, new construction soil restoration, and PFAS-impacted site remediation',
-    blurb: 'Activated charcoal/biochar for direct soil incorporation. Ideal for bioretention cells, bioslopes, filter strips, and post-construction soil restoration. Research demonstrates up to 98–100% reduction in PFAS leaching at 5% soil amendment rates. $29.99/4 qt · Bulk/project quantities quoted.',
+    blurb: 'Activated charcoal/biochar for direct soil incorporation. Ideal for bioretention cells, bioslopes, filter strips, and post-construction soil restoration. Research demonstrates up to 98–100% reduction in PFAS leaching at 5% soil amendment rates.',
+    price: '$29.99/4 qt · Bulk/project quantities quoted',
     cta: 'Request Dry Biochar Pricing',
   },
   {
     name: 'Hay, Pasture & Lawn Fertilizer',
     href: '#quote-request',
     useCase: 'Large turf areas, pastures, recreation areas, and facility grounds',
-    blurb: 'Microbial fertilizer blend designed for healthy grass growth and greener grounds. Covers up to 5 acres per gallon at 1:50 dilution — approximately $20/acre at retail, less than half the cost of comparable granular options. Starting at $99.99/2.5 gal · Bulk/pallet pricing available.',
+    blurb: 'Microbial fertilizer blend designed for healthy grass growth and greener grounds. Covers up to 5 acres per gallon at 1:50 dilution — approximately $20/acre at retail, less than half the cost of comparable granular options.',
+    price: 'Starting at $99.99/2.5 gal · Bulk/pallet pricing available',
     cta: 'Request Pricing',
   },
   {
     name: 'Enhanced Living Compost with Fermented Duckweed',
     href: '#quote-request',
     useCase: 'Landscape beds, planting projects, and soil restoration work',
-    blurb: 'A living compost blend with worm castings, activated biochar, and weed-free aged compost. Starting at $29.99/10 lbs · Project quantities quoted.',
+    blurb: 'A living compost blend with worm castings, activated biochar, and weed-free aged compost.',
+    price: 'Starting at $29.99/10 lbs · Project quantities quoted',
     cta: 'Request Pricing',
   },
 ];
@@ -498,6 +505,7 @@ export default function GovernmentPage() {
                   Best fit: {product.useCase}
                 </p>
                 <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">{product.blurb}</p>
+                <p className="mt-3 text-sm font-semibold text-[#2f4d25]">{product.price}</p>
                 <Link
                   href={product.href}
                   className="mt-5 inline-flex rounded-xl border border-[#c8d2bf] bg-[#f7f8f3] px-4 py-2 text-sm font-semibold text-[#2d3a2d] transition hover:bg-[#edf2e7]"
