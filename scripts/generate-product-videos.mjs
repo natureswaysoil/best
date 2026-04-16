@@ -20,6 +20,7 @@ const DATA_FILE = path.join(PROJECT, 'data', 'products.ts');
 const OUT_DIR = path.join(PROJECT, 'public', 'videos');
 const ASIN_SCRIPTS = path.join(PROJECT, 'content', 'video-scripts', 'asin-scripts.json');
 const VIDEO_CONFIG = path.join(PROJECT, 'content', 'video-scripts', 'video-config.json');
+const SHEET_CACHE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
 
 function hasFfmpeg() {
   try {
@@ -34,7 +35,43 @@ function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
 }
 
+/**
+ * Load products from Google Sheets cache if available, otherwise fall back to products.ts.
+ *
+ * To pull fresh data from a Google Sheet, run:
+ *   node scripts/asin-from-sheet.mjs <SPREADSHEET_ID> <SHEET_GID> content/video-scripts/sheet-products.json
+ * Or set GOOGLE_SHEET_ID (and optionally GOOGLE_SHEET_GID) in .env.local and run:
+ *   npm run sheet:sync
+ */
 function loadProducts() {
+  // 1. Try Google Sheets cache first
+  if (fs.existsSync(SHEET_CACHE)) {
+    try {
+      const sheetData = JSON.parse(fs.readFileSync(SHEET_CACHE, 'utf8'));
+      if (Array.isArray(sheetData.products) && sheetData.products.length > 0) {
+        console.log(`📊 Using Google Sheets data (${sheetData.products.length} products) from ${SHEET_CACHE}`);
+        console.log(`   Source: ${sheetData._source || 'unknown'}`);
+        console.log(`   Generated: ${sheetData._generated || 'unknown'}`);
+        // Map sheet products to the expected shape
+        return sheetData.products.map(p => ({
+          id: p.id || (p.asin ? `ASIN_${p.asin}` : null),
+          name: p.name || p.asin,
+          category: p.category || 'General',
+          usage: [],
+          asin: p.asin || null,
+          image: p.image || null,
+          description: p.description || '',
+          videoScript: p.videoScript || null,
+        })).filter(p => p.id && p.name);
+      }
+    } catch (e) {
+      console.warn(`⚠️  Failed to read sheet cache (${SHEET_CACHE}): ${e.message}`);
+      console.warn('   Falling back to products.ts...');
+    }
+  }
+
+  // 2. Fall back to hard-coded products.ts
+  console.log('📦 Loading products from data/products.ts');
   const ts = fs.readFileSync(DATA_FILE, 'utf8');
   const entries = [];
   const productBlocks = ts.split(/\n\s*},\s*\n\s*{\s*id:/).map((block, idx) => (idx === 0 ? block : '{ id:' + block));
@@ -44,17 +81,21 @@ function loadProducts() {
     const usageMatch = block.match(/usage:\s*\[(.*?)\]/s);
     const asinMatch = block.match(/asin:\s*'([^']+)'/);
     const categoryMatch = block.match(/category:\s*'([^']+)'/);
+    const imageMatch = block.match(/image:\s*'([^']+)'/);
+    const descMatch = block.match(/description:\s*'([^']+)'/);
     if (!idMatch || !nameMatch) continue;
     const id = idMatch[1];
     const name = nameMatch[1];
     const category = categoryMatch ? categoryMatch[1] : '';
     const asin = asinMatch ? asinMatch[1] : undefined;
+    const image = imageMatch ? imageMatch[1] : null;
+    const description = descMatch ? descMatch[1] : '';
     let usage = [];
     if (usageMatch) {
       const inner = usageMatch[1];
       usage = Array.from(inner.matchAll(/'([^']+)'/g)).map(m => m[1]);
     }
-    entries.push({ id, name, category, usage, asin });
+    entries.push({ id, name, category, usage, asin, image, description });
   }
   return entries.filter(e => /^NWS_\d{3}$/.test(e.id));
 }
@@ -235,6 +276,29 @@ async function main() {
   console.log('🎬 Starting HeyGen AI Video Generation for Products');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
+  // Auto-sync Google Sheets if GOOGLE_SHEET_ID is set and cache is missing or stale (>1 hour)
+  const googleSheetId = process.env.GOOGLE_SHEET_ID;
+  if (googleSheetId) {
+    const cacheAge = fs.existsSync(SHEET_CACHE)
+      ? Date.now() - fs.statSync(SHEET_CACHE).mtimeMs
+      : Infinity;
+    if (cacheAge > 60 * 60 * 1000) {
+      console.log('🔄 Syncing products from Google Sheets...');
+      const sheetGid = process.env.GOOGLE_SHEET_GID || '0';
+      const { spawnSync: sync } = await import('child_process');
+      const result = sync(
+        'node',
+        ['scripts/asin-from-sheet.mjs', googleSheetId, sheetGid, SHEET_CACHE],
+        { cwd: PROJECT, stdio: 'inherit' }
+      );
+      if (result.status !== 0) {
+        console.warn('⚠️  Google Sheets sync failed — using cached/fallback product data');
+      }
+    } else {
+      console.log(`✅ Google Sheets cache is fresh (age: ${Math.round(cacheAge / 60000)}m)`);
+    }
+  }
+
   const products = loadProducts();
   if (!products.length) {
     console.error('❌ No products found to generate videos for.');
@@ -261,9 +325,16 @@ async function main() {
     const results = [];
 
     for (const product of products) {
+      // Skip if a real product video already exists — never overwrite existing footage
+      const existingVideo = path.join(OUT_DIR, `${product.id}.mp4`);
+      if (fs.existsSync(existingVideo) && fs.statSync(existingVideo).size > 100000) {
+        console.log(`⏭️  Skipping ${product.id} — real video already exists (${Math.round(fs.statSync(existingVideo).size / 1024)}KB)`);
+        continue;
+      }
+
       try {
         console.log(`\n🎥 Generating AI video for: ${product.name}`);
-        
+
         const result = await generator.generateProductVideo(product, OUT_DIR);
         results.push(result);
         
@@ -340,6 +411,12 @@ async function generateWithFFmpeg(products) {
   const results = [];
   
   for (const product of products) {
+    // Skip if a real product video already exists — never overwrite existing footage
+    const existingVideo = path.join(OUT_DIR, `${product.id}.mp4`);
+    if (fs.existsSync(existingVideo) && fs.statSync(existingVideo).size > 100000) {
+      console.log(`⏭️  Skipping ${product.id} — real video already exists`);
+      continue;
+    }
     try {
       const out = buildVideoForProduct(product, asinMap, cfg);
       results.push({ productId: product.id, out });
