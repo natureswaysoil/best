@@ -368,7 +368,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0D9HT7ND8',
     name: 'Organic Hydroponic Fertilizer Concentrate',
     price: 29.99,
-  image: '/images/products/NWS_011/main.jpg',
+  image: '/images/products/NWS_016/main.jpg',
     description: 'Made fresh weekly - 32 oz makes 512 gallons of nutrient solution. Organic plant food for hydroponic systems and aquaponics.',
     category: 'Fertilizer',
     tags: ['hydroponic', 'aquaponic', 'organic', 'concentrate', 'indoor-growing', 'pet-safe'],
