@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nature's Way Soil 4x6 Insert</title>
+  <style>
+    :root {
+      --green-900: #14532d;
+      --green-800: #166534;
+      --green-700: #15803d;
+      --green-100: #dcfce7;
+      --gray-900: #111827;
+      --gray-700: #374151;
+      --gray-500: #6b7280;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", Arial, sans-serif;
+      background: #f3f4f6;
+      color: var(--gray-900);
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .card {
+      width: 6in;
+      height: 4in;
+      background: var(--white);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+      border: 1px solid #e5e7eb;
+      position: relative;
+      padding: 0.32in;
+    }
+
+    .front {
+      background: linear-gradient(135deg, var(--green-900) 0%, var(--green-800) 54%, var(--green-700) 100%);
+      color: var(--white);
+    }
+
+    .brand {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .lead {
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      max-width: 3.25in;
+      color: #ecfdf5;
+    }
+
+    .checks {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #f0fdf4;
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .checks li::before {
+      content: "✔ ";
+      color: #bbf7d0;
+      font-weight: 800;
+    }
+
+    .qr-wrap {
+      position: absolute;
+      right: 0.32in;
+      bottom: 0.32in;
+      width: 1.55in;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 10px;
+      padding: 8px;
+      backdrop-filter: blur(4px);
+    }
+
+    .qr-wrap img {
+      width: 1.08in;
+      height: 1.08in;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.5);
+      background: #fff;
+      padding: 4px;
+    }
+
+    .qr-wrap p {
+      margin: 5px 0 0;
+      font-size: 10px;
+      line-height: 1.25;
+      color: #ecfdf5;
+    }
+
+    .back h2 {
+      margin: 0;
+      font-size: 18px;
+      color: var(--green-800);
+      font-weight: 800;
+    }
+
+    .steps {
+      margin: 8px 0 10px;
+      padding-left: 18px;
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--gray-900);
+      font-weight: 600;
+    }
+
+    .safe {
+      background: var(--green-100);
+      border: 1px solid #86efac;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #14532d;
+      line-height: 1.4;
+    }
+
+    .review {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px dashed #d1d5db;
+      background: #f9fafb;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--gray-700);
+    }
+
+    .url {
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--gray-500);
+      word-break: break-all;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; gap: 0; }
+      .card { box-shadow: none; border: 0; border-radius: 0; page-break-after: always; }
+      @page { size: 6in 4in; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <section class="card front" aria-label="Front of 4x6 insert">
+    <div class="brand">Nature's Way Soil</div>
+    <h1>Naturally Stronger Soil Starts Here</h1>
+    <p class="lead">
+      Your soil is waking up.<br /><br />
+      You are not just feeding plants. You are rebuilding the biology that makes everything grow stronger,
+      greener, and more resilient.
+    </p>
+
+    <ul class="checks">
+      <li>Improves root development</li>
+      <li>Helps retain moisture</li>
+      <li>Supports long-term soil health</li>
+    </ul>
+
+    <div class="qr-wrap">
+      <img
+        alt="QR code to Nature's Way Soil guide"
+        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Fnatureswaysoil.com%2Fguide%3Fsrc%3Dinsert"
+      />
+      <p>Scan to open your full Soil Recovery Guide</p>
+      <p>natureswaysoil.com/guide</p>
+    </div>
+  </section>
+
+  <section class="card back" aria-label="Back of 4x6 insert">
+    <h2>Quick Start (Most Customers Miss This)</h2>
+    <ol class="steps">
+      <li>Water first</li>
+      <li>Apply diluted solution</li>
+      <li>Focus on root zone (not leaves)</li>
+      <li>Repeat weekly for best results</li>
+    </ol>
+
+    <div class="safe">
+      Safe for kids, pets, and beneficial insects.<br />
+      Built for long-term soil health.
+    </div>
+
+    <div class="review">
+      Seeing results? We are a small family business, and your feedback helps us grow.<br /><br />
+      If this made a difference for you, we would truly appreciate your review.<br /><br />
+      Thank you for supporting Nature's Way Soil.
+    </div>
+
+    <div class="url">
+      Guide: https://natureswaysoil.com/guide?src=insert<br />
+      Review: https://www.amazon.com/product-reviews/B0822RH5L3?tag=natureswaysoil-20&amp;ascsubtag=insert-review
+    </div>
+  </section>
+</body>
+</html>
