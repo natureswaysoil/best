@@ -21,6 +21,106 @@ const OUT_DIR = path.join(PROJECT, 'public', 'videos');
 const ASIN_SCRIPTS = path.join(PROJECT, 'content', 'video-scripts', 'asin-scripts.json');
 const VIDEO_CONFIG = path.join(PROJECT, 'content', 'video-scripts', 'video-config.json');
 const SHEET_CACHE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
+const VIDEO_SCRIPTS_DIR = path.join(PROJECT, 'content', 'video-scripts');
+
+const FORCE_REGENERATE = process.argv.includes('--force') || process.env.VIDEO_FORCE_REGENERATE === '1';
+const LOCK_SCRIPT_MODE = process.argv.includes('--lock-script') || process.env.VIDEO_LOCK_SCRIPT === '1';
+
+function readArgValue(...names) {
+  for (const name of names) {
+    const eqArg = process.argv.find((arg) => arg.startsWith(`${name}=`));
+    if (eqArg) return eqArg.slice(name.length + 1).trim();
+    const idx = process.argv.indexOf(name);
+    if (idx >= 0 && process.argv[idx + 1]) return String(process.argv[idx + 1]).trim();
+  }
+  return null;
+}
+
+const TARGET_PRODUCT_ID = readArgValue('--product', '--product-id') || process.env.VIDEO_PRODUCT_ID || null;
+
+function getPublicBaseUrl() {
+  const raw = process.env.VIDEO_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://natureswaysoil.com';
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+}
+
+function toPublicAssetUrl(assetPath) {
+  if (!assetPath || typeof assetPath !== 'string') return null;
+  if (/^https?:\/\//i.test(assetPath)) return assetPath;
+  const normalized = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+  return `${getPublicBaseUrl()}${normalized}`;
+}
+
+function parseDelimitedList(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean);
+  return String(value)
+    .split(/[|,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function resolveLikelyAmazonImageUrl(asin) {
+  if (!asin) return null;
+  return `https://m.media-amazon.com/images/P/${asin}.01._SCLZZZZZZZ_.jpg`;
+}
+
+function getPrimaryProductImage(product) {
+  if (product?.image) return product.image;
+  if (Array.isArray(product?.brollImages) && product.brollImages.length > 0) {
+    return product.brollImages[0];
+  }
+  return resolveLikelyAmazonImageUrl(product?.asin);
+}
+
+async function checkHeyGenReachability(apiKey, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch('https://api.heygen.com/v2/avatars', {
+      method: 'GET',
+      headers: {
+        'X-Api-Key': apiKey,
+      },
+      signal: controller.signal,
+    });
+
+    if (response.ok) {
+      return { ok: true };
+    }
+
+    const body = await response.text().catch(() => '');
+    return {
+      ok: false,
+      status: response.status,
+      message: body || `HTTP ${response.status}`,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error.name === 'AbortError'
+        ? `timeout after ${timeoutMs}ms`
+        : (error.message || 'unknown network error'),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function getHeyGenPreflightTimeoutMs() {
+  const raw = process.env.HEYGEN_PREFLIGHT_TIMEOUT_MS;
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed >= 1000) return parsed;
+  return 8000;
+}
+
+function shouldSkipHeyGenPreflight() {
+  return process.env.HEYGEN_SKIP_PREFLIGHT === '1';
+}
+
+function isHeyGenPreflightStrict() {
+  return process.env.HEYGEN_PREFLIGHT_STRICT === '1';
+}
 
 function hasFfmpeg() {
   try {
@@ -53,16 +153,21 @@ function loadProducts() {
         console.log(`   Source: ${sheetData._source || 'unknown'}`);
         console.log(`   Generated: ${sheetData._generated || 'unknown'}`);
         // Map sheet products to the expected shape
-        return sheetData.products.map(p => ({
-          id: p.id || (p.asin ? `ASIN_${p.asin}` : null),
-          name: p.name || p.asin,
-          category: p.category || 'General',
-          usage: [],
-          asin: p.asin || null,
-          image: p.image || null,
-          description: p.description || '',
-          videoScript: p.videoScript || null,
-        })).filter(p => p.id && p.name);
+        return sheetData.products.map((p) => {
+          const brollImages = parseDelimitedList(p.brollImages || p.broll_images || p.b_roll_images || p.broll || p.b_roll);
+          return {
+            id: p.id || (p.asin ? `ASIN_${p.asin}` : null),
+            name: p.name || p.asin,
+            category: p.category || 'General',
+            usage: parseDelimitedList(p.usage || p.instructions),
+            asin: p.asin || null,
+            image: p.image || null,
+            description: p.description || '',
+            videoScript: p.videoScript || null,
+            keywords: parseDelimitedList(p.keywords),
+            brollImages,
+          };
+        }).filter((p) => p.id && p.name);
       }
     } catch (e) {
       console.warn(`⚠️  Failed to read sheet cache (${SHEET_CACHE}): ${e.message}`);
@@ -79,6 +184,8 @@ function loadProducts() {
     const idMatch = block.match(/id:\s*'([^']+)'/);
     const nameMatch = block.match(/name:\s*'([^']+)'/);
     const usageMatch = block.match(/usage:\s*\[(.*?)\]/s);
+    const keywordsMatch = block.match(/keywords:\s*\[(.*?)\]/s);
+    const imagesMatch = block.match(/images:\s*\[(.*?)\]/s);
     const asinMatch = block.match(/asin:\s*'([^']+)'/);
     const categoryMatch = block.match(/category:\s*'([^']+)'/);
     const imageMatch = block.match(/image:\s*'([^']+)'/);
@@ -93,9 +200,22 @@ function loadProducts() {
     let usage = [];
     if (usageMatch) {
       const inner = usageMatch[1];
-      usage = Array.from(inner.matchAll(/'([^']+)'/g)).map(m => m[1]);
+      usage = Array.from(inner.matchAll(/'([^']+)'/g)).map((m) => m[1]);
     }
-    entries.push({ id, name, category, usage, asin, image, description });
+
+    let keywords = [];
+    if (keywordsMatch) {
+      const inner = keywordsMatch[1];
+      keywords = Array.from(inner.matchAll(/'([^']+)'/g)).map((m) => m[1]);
+    }
+
+    let brollImages = [];
+    if (imagesMatch) {
+      const inner = imagesMatch[1];
+      brollImages = Array.from(inner.matchAll(/'([^']+)'/g)).map((m) => m[1]);
+    }
+
+    entries.push({ id, name, category, usage, keywords, asin, image, brollImages, description });
   }
   return entries.filter(e => /^NWS_\d{3}$/.test(e.id));
 }
@@ -104,7 +224,236 @@ function sanitize(text) {
   return text.replace(/:/g, '\u2236');
 }
 
-function makeSegments(prod, asinMap) {
+function getLatestStyleFile() {
+  try {
+    const entries = fs
+      .readdirSync(VIDEO_SCRIPTS_DIR)
+      .filter((f) => f.endsWith('.md') && f !== 'README.md')
+      .map((f) => {
+        const full = path.join(VIDEO_SCRIPTS_DIR, f);
+        return { full, mtime: fs.statSync(full).mtimeMs };
+      })
+      .sort((a, b) => b.mtime - a.mtime);
+
+    return entries.length > 0 ? entries[0].full : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadStyleReference() {
+  if (LOCK_SCRIPT_MODE) {
+    return { path: null, cues: [] };
+  }
+
+  const configuredPath = process.env.VIDEO_STYLE_REFERENCE_FILE;
+  const stylePath = configuredPath || getLatestStyleFile();
+  if (!stylePath || !fs.existsSync(stylePath)) {
+    return { path: null, cues: [] };
+  }
+
+  try {
+    const text = fs.readFileSync(stylePath, 'utf8');
+    const cueMatches = Array.from(text.matchAll(/Voiceover:\s*"([^"]+)"/g)).map((m) => m[1]);
+    return { path: stylePath, cues: cueMatches.slice(0, 4) };
+  } catch {
+    return { path: null, cues: [] };
+  }
+}
+
+function warnRootLevelMp4Ignored() {
+  try {
+    const rootMp4s = fs
+      .readdirSync(PROJECT)
+      .filter((name) => /\.mp4$/i.test(name));
+
+    if (rootMp4s.length > 0) {
+      console.log('🛡️  Root-level MP4 files detected and ignored by automation:');
+      rootMp4s.forEach((name) => console.log(`   - ${name}`));
+      console.log('   Only public/videos/{PRODUCT_ID}.mp4 is considered canonical.');
+    }
+  } catch {
+    // Ignore root scan errors.
+  }
+}
+
+function loadAsinScriptsMap() {
+  try {
+    if (fs.existsSync(ASIN_SCRIPTS)) {
+      return JSON.parse(fs.readFileSync(ASIN_SCRIPTS, 'utf8'));
+    }
+  } catch (error) {
+    console.warn(`⚠️  Could not load ASIN script map: ${error.message}`);
+  }
+  return {};
+}
+
+function buildLockedScript(product, asinMap) {
+  if (product.videoScript && String(product.videoScript).trim().length > 0) {
+    return String(product.videoScript).trim();
+  }
+
+  const segments = product.asin && asinMap?.[product.asin]?.segments;
+  if (Array.isArray(segments) && segments.length > 0) {
+    return segments
+      .map((segment) => String(segment?.text || '').trim())
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  return [
+    `${product.name} is an organic, pet-safe way to improve soil health and plant performance.`,
+    'Apply as directed to support stronger roots, better nutrient uptake, and more consistent growth.',
+    "Nature's Way Soil helps you feed plants naturally without harsh synthetic overload.",
+    'Learn more at NaturesWaySoil.com.'
+  ].join(' ');
+}
+
+function isHttpUrl(value) {
+  return typeof value === 'string' && /^https?:\/\//i.test(value);
+}
+
+function collectProductBrollImages(prod) {
+  const candidates = new Set();
+  const push = (p) => {
+    if (!p || typeof p !== 'string') return;
+    if (isHttpUrl(p)) {
+      candidates.add(p.trim());
+      return;
+    }
+    const normalized = p.startsWith('/') ? p.slice(1) : p;
+    const local = path.join(PROJECT, 'public', normalized);
+    if (fs.existsSync(local)) candidates.add(local);
+  };
+
+  if (prod.image) push(prod.image);
+  if (Array.isArray(prod.images)) {
+    for (const img of prod.images) push(img);
+  }
+  if (Array.isArray(prod.brollImages)) {
+    for (const img of prod.brollImages) push(img);
+  }
+
+  const asinFallback = resolveLikelyAmazonImageUrl(prod.asin);
+  if (asinFallback) push(asinFallback);
+
+  const productImageDir = path.join(PROJECT, 'public', 'images', 'products', prod.id);
+  if (fs.existsSync(productImageDir)) {
+    const files = fs.readdirSync(productImageDir)
+      .filter((name) => /\.(jpg|jpeg|png|webp)$/i.test(name))
+      .sort((a, b) => {
+        const score = (s) => {
+          const lower = s.toLowerCase();
+          if (lower.startsWith('main.')) return 0;
+          if (lower.startsWith('original.')) return 1;
+          if (lower.startsWith('thumb.')) return 2;
+          return 3;
+        };
+        return score(a) - score(b) || a.localeCompare(b);
+      });
+
+    for (const name of files) {
+      candidates.add(path.join(productImageDir, name));
+    }
+  }
+
+  return Array.from(candidates).slice(0, 6);
+}
+
+function enhanceHeyGenVideoWithBroll(videoPath, prod) {
+  if (!hasFfmpeg()) {
+    console.log(`   ⚠️  FFmpeg not available, skipping b-roll enhancement for ${prod.id}`);
+    return false;
+  }
+
+  const images = collectProductBrollImages(prod);
+  if (!images.length) {
+    console.log(`   ⚠️  No product images found for b-roll enhancement (${prod.id})`);
+    return false;
+  }
+
+  const downloaded = [];
+  const usableImages = [];
+  images.forEach((img, idx) => {
+    if (!isHttpUrl(img)) {
+      usableImages.push(img);
+      return;
+    }
+
+    const extMatch = img.match(/\.(jpe?g|png|webp)(?:\?|$)/i);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
+    const downloadedPath = path.join(os.tmpdir(), `${prod.id}_broll_${idx}.${ext}`);
+    const downloadRes = spawnSync('curl', ['-fsSL', '--max-time', '20', img, '-o', downloadedPath], { stdio: 'ignore' });
+    if (downloadRes.status === 0 && fs.existsSync(downloadedPath) && fs.statSync(downloadedPath).size > 0) {
+      downloaded.push(downloadedPath);
+      usableImages.push(downloadedPath);
+    }
+  });
+
+  if (!usableImages.length) {
+    console.log(`   ⚠️  No downloadable b-roll images found for ${prod.id}`);
+    return false;
+  }
+
+  const tempOutput = `${videoPath}.broll.mp4`;
+  const imageInputs = usableImages.flatMap((img) => ['-loop', '1', '-i', img]);
+  const overlays = [];
+  const segmentStart = 2;
+  const segmentEnd = 28;
+  const segmentSpan = Math.max(3, (segmentEnd - segmentStart) / usableImages.length);
+
+  overlays.push('[0:v]scale=1280:720,format=yuv420p[v0]');
+
+  let lastLabel = '[v0]';
+  usableImages.forEach((_, idx) => {
+    const inputLabel = `[${idx + 1}:v]`;
+    const scaledLabel = `[b${idx}]`;
+    const outputLabel = idx === images.length - 1 ? '[vout]' : `[v${idx + 1}]`;
+    const start = (segmentStart + idx * segmentSpan).toFixed(2);
+    const end = (idx === images.length - 1 ? segmentEnd : (segmentStart + (idx + 1) * segmentSpan)).toFixed(2);
+
+    overlays.push(`${inputLabel}scale=460:-2,format=rgba,colorchannelmixer=aa=0.92${scaledLabel}`);
+    overlays.push(`${lastLabel}${scaledLabel}overlay=x='W-w-28':y='28':enable='between(t,${start},${end})'${outputLabel}`);
+    lastLabel = outputLabel;
+  });
+
+  const args = [
+    'ffmpeg', '-y',
+    '-i', videoPath,
+    ...imageInputs,
+    '-filter_complex', overlays.join(';'),
+    '-map', '[vout]',
+    '-map', '0:a?',
+    '-c:v', 'libx264',
+    '-preset', 'veryfast',
+    '-crf', '21',
+    '-pix_fmt', 'yuv420p',
+    '-c:a', 'copy',
+    '-movflags', '+faststart',
+    tempOutput,
+  ];
+
+  const res = spawnSync(args[0], args.slice(1), { stdio: 'inherit' });
+  if (res.status !== 0 || !fs.existsSync(tempOutput)) {
+    try {
+      if (fs.existsSync(tempOutput)) fs.unlinkSync(tempOutput);
+      downloaded.forEach((f) => {
+        if (fs.existsSync(f)) fs.unlinkSync(f);
+      });
+    } catch {}
+    throw new Error(`ffmpeg b-roll enhancement failed for ${prod.id}`);
+  }
+
+  fs.renameSync(tempOutput, videoPath);
+  downloaded.forEach((f) => {
+    try {
+      if (fs.existsSync(f)) fs.unlinkSync(f);
+    } catch {}
+  });
+  return true;
+}
+
+function makeSegments(prod, asinMap, styleRef) {
   if (prod.asin && asinMap && asinMap[prod.asin] && asinMap[prod.asin].segments) {
     return asinMap[prod.asin].segments;
   }
@@ -115,18 +464,28 @@ function makeSegments(prod, asinMap) {
   const intro = `${title}`;
   const tip = prod.category ? `${prod.category} • Pet-safe • Easy to use` : 'Pet-safe • Easy to use';
   const cta = 'Mix with water • Apply • See results\nLearn more at NaturesWaySoil.com';
+  const styleCues = styleRef?.cues || [];
+  const cue0 = styleCues[0] || 'Natural humic-powered feeding can outperform harsh synthetic fertilizer routines.';
+  const cue1 = styleCues[1] || 'Build healthier soil biology, improve nutrient uptake, and support steadier growth.';
+  const cue2 = styleCues[2] || 'Use on lawns, gardens, and trees for visible results without synthetic overload.';
+  const cue3 = styleCues[3] || "Nature's Way Soil helps bring long-term life back to your soil.";
+
   return [
-    { start: 0, end: 5, text: intro },
-    { start: 5, end: 10, text: safeSteps[0] || 'Shake well before use.\nMix with water as directed.' },
-    { start: 10, end: 15, text: safeSteps[1] || 'Apply to soil around roots\nor spray foliage as recommended.' },
+    { start: 0, end: 5, text: `${intro}\n${sanitize(cue0)}` },
+    { start: 5, end: 10, text: safeSteps[0] || sanitize(cue1) },
+    { start: 10, end: 15, text: safeSteps[1] || sanitize(cue2) },
     { start: 15, end: 20, text: safeSteps[2] || 'Repeat on schedule for best results.' },
     { start: 20, end: 25, text: tip },
-    { start: 25, end: 30, text: cta },
+    { start: 25, end: 30, text: `${sanitize(cue3)}\n${cta}` },
   ];
 }
 
 function buildVideoForProduct(prod, asinMap, cfg) {
-  const segments = makeSegments(prod, asinMap);
+  const styleRef = loadStyleReference();
+  if (styleRef.path) {
+    console.log(`🎬 Using style reference: ${styleRef.path}`);
+  }
+  const segments = makeSegments(prod, asinMap, styleRef);
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `nws_${prod.id}_`));
   const fontPathCandidates = [
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
@@ -259,7 +618,7 @@ function buildVideoForProduct(prod, asinMap, cfg) {
   const outPosterJpg = path.join(OUT_DIR, `${prod.id}.jpg`);
   const posterCmd = [
     'ffmpeg','-y','-i', outPath,
-    '-frames:v','1','-q:v','3', outPosterJpg
+    '-frames:v','1','-update','1','-q:v','3', outPosterJpg
   ];
   const pres = spawnSync(posterCmd[0], posterCmd.slice(1), { stdio: 'inherit' });
   if (pres.status !== 0) throw new Error(`ffmpeg poster export failed for ${prod.id}`);
@@ -275,6 +634,16 @@ function buildVideoForProduct(prod, asinMap, cfg) {
 async function main() {
   console.log('🎬 Starting HeyGen AI Video Generation for Products');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  warnRootLevelMp4Ignored();
+
+  const styleRef = loadStyleReference();
+  if (LOCK_SCRIPT_MODE) {
+    delete process.env.VIDEO_STYLE_REFERENCE_TEXT;
+    console.log('🔒 Locked script mode enabled: style-reference cues are disabled');
+  } else if (styleRef.path) {
+    console.log(`🎬 Using style reference: ${styleRef.path}`);
+    process.env.VIDEO_STYLE_REFERENCE_TEXT = styleRef.cues.join(' ');
+  }
 
   // Auto-sync Google Sheets if GOOGLE_SHEET_ID is set and cache is missing or stale (>1 hour)
   const googleSheetId = process.env.GOOGLE_SHEET_ID;
@@ -305,29 +674,64 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`📝 Found ${products.length} products to process`);
+  const selectedProducts = TARGET_PRODUCT_ID
+    ? products.filter((product) => product.id === TARGET_PRODUCT_ID)
+    : products;
+
+  if (!selectedProducts.length) {
+    console.error(`❌ No product matched --product ${TARGET_PRODUCT_ID}`);
+    process.exit(1);
+  }
+
+  console.log(`📝 Found ${selectedProducts.length} products to process`);
+  if (TARGET_PRODUCT_ID) {
+    console.log(`🎯 Single product mode enabled: ${TARGET_PRODUCT_ID}`);
+  }
+  if (FORCE_REGENERATE) {
+    console.log('♻️  Force regenerate enabled; existing videos will be replaced');
+  }
 
   // Check for HeyGen API key
   const heygenApiKey = process.env.HEYGEN_API_KEY;
   
   if (!heygenApiKey || heygenApiKey === 'your_heygen_api_key') {
     console.log('⚠️  HeyGen API key not found, falling back to FFmpeg generation');
-    await generateWithFFmpeg(products);
+    await generateWithFFmpeg(selectedProducts);
     return;
   }
 
   try {
     // Initialize HeyGen generator
     const generator = new HeyGenVideoGenerator(heygenApiKey);
-    console.log('✅ HeyGen API connected successfully');
+    console.log('✅ HeyGen API key detected');
+
+    if (shouldSkipHeyGenPreflight()) {
+      console.log('⚠️  Skipping HeyGen preflight because HEYGEN_SKIP_PREFLIGHT=1');
+    } else {
+      const preflightTimeoutMs = getHeyGenPreflightTimeoutMs();
+      const preflight = await checkHeyGenReachability(heygenApiKey, preflightTimeoutMs);
+      if (!preflight.ok) {
+        const message = `⚠️  HeyGen preflight failed: ${preflight.message}${preflight.status ? ` (status ${preflight.status})` : ''}`;
+        if (isHeyGenPreflightStrict()) {
+          console.error(message);
+          console.log('🔄 Falling back to FFmpeg generation...');
+          await generateWithFFmpeg(selectedProducts);
+          return;
+        }
+        console.warn(`${message} — continuing with HeyGen generation attempt`);
+      } else {
+        console.log('✅ HeyGen preflight check passed');
+      }
+    }
 
     ensureDir(OUT_DIR);
     const results = [];
+    const asinMap = loadAsinScriptsMap();
 
-    for (const product of products) {
+    for (const product of selectedProducts) {
       // Skip if a real product video already exists — never overwrite existing footage
       const existingVideo = path.join(OUT_DIR, `${product.id}.mp4`);
-      if (fs.existsSync(existingVideo) && fs.statSync(existingVideo).size > 100000) {
+      if (!FORCE_REGENERATE && fs.existsSync(existingVideo) && fs.statSync(existingVideo).size > 100000) {
         console.log(`⏭️  Skipping ${product.id} — real video already exists (${Math.round(fs.statSync(existingVideo).size / 1024)}KB)`);
         continue;
       }
@@ -335,7 +739,36 @@ async function main() {
       try {
         console.log(`\n🎥 Generating AI video for: ${product.name}`);
 
-        const result = await generator.generateProductVideo(product, OUT_DIR);
+        const productForGeneration = { ...product, videoScript: buildLockedScript(product, asinMap) };
+
+        const keywordList = Array.isArray(product.keywords) ? product.keywords.filter(Boolean) : [];
+        const descriptionText = String(product.description || '').trim();
+        const primaryImage = getPrimaryProductImage(product);
+        const publicProductImage = toPublicAssetUrl(primaryImage);
+
+        if (descriptionText) {
+          console.log(`   🧾 Sheet description detected (${descriptionText.length} chars)`);
+        }
+        if (keywordList.length) {
+          console.log(`   🔑 Sheet keywords: ${keywordList.join(', ')}`);
+        }
+        if (publicProductImage) {
+          console.log(`   🖼️  HeyGen background image: ${publicProductImage}`);
+        }
+
+        const result = await generator.generateProductVideo(productForGeneration, OUT_DIR, {
+          productImage: publicProductImage,
+        });
+
+        try {
+          const enhanced = enhanceHeyGenVideoWithBroll(result.videoPath, product);
+          if (enhanced) {
+            console.log(`   🎞️  Added b-roll/product image overlays for ${product.id}`);
+          }
+        } catch (enhanceError) {
+          console.warn(`   ⚠️  B-roll enhancement failed for ${product.id}: ${enhanceError.message}`);
+        }
+
         results.push(result);
         
         console.log(`✅ ${product.id} -> ${path.relative(PROJECT, result.videoPath)}`);
@@ -367,12 +800,12 @@ async function main() {
       console.log(`✅ ${result.productId}: ${relativePath}`);
     });
 
-    console.log(`\n🎯 Generated ${results.length}/${products.length} videos successfully`);
+    console.log(`\n🎯 Generated ${results.length}/${selectedProducts.length} videos successfully`);
 
   } catch (error) {
     console.error(`❌ HeyGen generation failed: ${error.message}`);
     console.log('🔄 Falling back to FFmpeg generation...');
-    await generateWithFFmpeg(products);
+    await generateWithFFmpeg(selectedProducts);
   }
 }
 
@@ -413,7 +846,7 @@ async function generateWithFFmpeg(products) {
   for (const product of products) {
     // Skip if a real product video already exists — never overwrite existing footage
     const existingVideo = path.join(OUT_DIR, `${product.id}.mp4`);
-    if (fs.existsSync(existingVideo) && fs.statSync(existingVideo).size > 100000) {
+    if (!FORCE_REGENERATE && fs.existsSync(existingVideo) && fs.statSync(existingVideo).size > 100000) {
       console.log(`⏭️  Skipping ${product.id} — real video already exists`);
       continue;
     }

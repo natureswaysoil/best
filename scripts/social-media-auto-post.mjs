@@ -24,18 +24,78 @@ const YOUTUBE_CLIENT_SECRET = process.env.YT_CLIENT_SECRET;
 const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
 const FACEBOOK_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
 const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
 const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
 
 // Configuration
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const PRODUCTS_FILE = path.join(PROJECT, 'data', 'products.ts');
+const SHEET_PRODUCTS_FILE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
 const POSTED_SOCIAL_FILE = path.join(PROJECT, 'social-posted-content.json');
-const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://natureswaysoil.com';
+const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.natureswaysoil.com';
 
 class SocialMediaAutoPoster {
   constructor() {
     this.postedContent = this.loadPostedContent();
+    this.warnRootLevelMp4Ignored();
+  }
+
+  getVideoPath(product) {
+    return path.join(VIDEOS_DIR, `${product.id}.mp4`);
+  }
+
+  hasLocalVideo(product) {
+    const videoPath = this.getVideoPath(product);
+    if (!fs.existsSync(videoPath)) {
+      return false;
+    }
+
+    try {
+      const realVideoPath = fs.realpathSync(videoPath);
+      const realVideosDir = fs.realpathSync(VIDEOS_DIR);
+      const canonicalPrefix = `${realVideosDir}${path.sep}`;
+
+      if (!realVideoPath.startsWith(canonicalPrefix)) {
+        this.log(`Ignoring non-canonical video path: ${realVideoPath}`);
+        return false;
+      }
+    } catch (error) {
+      this.log(`Warning: failed canonical path check for ${videoPath}: ${error.message}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  warnRootLevelMp4Ignored() {
+    try {
+      const rootMp4s = fs
+        .readdirSync(PROJECT)
+        .filter((name) => /\.mp4$/i.test(name));
+
+      if (rootMp4s.length > 0) {
+        this.log('🛡️ Root-level MP4 files are ignored by automation:');
+        rootMp4s.forEach((name) => this.log(`   - ${name}`));
+        this.log('   Canonical source is public/videos/{PRODUCT_ID}.mp4 only.');
+      }
+    } catch (error) {
+      this.log(`Warning: unable to scan root-level MP4 guard: ${error.message}`);
+    }
+  }
+
+  getPublicVideoUrl(product) {
+    return `${WEBSITE_BASE_URL}/videos/${product.id}.mp4`;
+  }
+
+  getActivePlatforms() {
+    const active = [];
+    if (INSTAGRAM_ACCESS_TOKEN && INSTAGRAM_IG_ID) active.push('instagram');
+    if (process.env.TWITTER_API_KEY && process.env.TWITTER_ACCESS_TOKEN) active.push('twitter');
+    if (process.env.YT_CLIENT_ID && process.env.YT_CLIENT_SECRET && process.env.YT_REFRESH_TOKEN) active.push('youtube');
+    if (FACEBOOK_PAGE_ID && (FACEBOOK_PAGE_ACCESS_TOKEN || FACEBOOK_ACCESS_TOKEN)) active.push('facebook');
+    if (PINTEREST_ACCESS_TOKEN && PINTEREST_BOARD_ID) active.push('pinterest');
+    return active;
   }
 
   log(message) {
@@ -63,6 +123,29 @@ class SocialMediaAutoPoster {
 
   loadProducts() {
     try {
+      // Prefer Google Sheets cache when available so product selection follows sheet data.
+      if (fs.existsSync(SHEET_PRODUCTS_FILE)) {
+        const sheetData = JSON.parse(fs.readFileSync(SHEET_PRODUCTS_FILE, 'utf8'));
+        if (Array.isArray(sheetData.products) && sheetData.products.length > 0) {
+          const sheetProducts = sheetData.products
+            .map((p) => {
+              const id = p.id || (p.asin ? `ASIN_${p.asin}` : null);
+              const name = p.name || p.asin || '';
+              const description = p.description || '';
+              const category = p.category || 'General';
+              const keywords = Array.isArray(p.keywords) ? p.keywords : [];
+              return { id, name, description, category, keywords };
+            })
+            .filter((p) => p.id && p.name)
+            .filter((p) => /^NWS_\d{3}$/.test(p.id));
+
+          if (sheetProducts.length > 0) {
+            this.log(`Using Google Sheets cache for product selection (${sheetProducts.length} products)`);
+            return sheetProducts;
+          }
+        }
+      }
+
       const ts = fs.readFileSync(PRODUCTS_FILE, 'utf8');
       const products = [];
       const productBlocks = ts.split(/\n\s*},\s*\n\s*{\s*id:/).map((block, idx) => 
@@ -99,6 +182,26 @@ class SocialMediaAutoPoster {
     }
   }
 
+  normalizeWhitespace(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  shortProductName(name, maxLen = 44) {
+    const normalized = this.normalizeWhitespace(name)
+      .split('/')[0]
+      .split(' - ')[0]
+      .trim();
+
+    if (normalized.length <= maxLen) return normalized;
+    return `${normalized.slice(0, maxLen - 1).trimEnd()}…`;
+  }
+
+  truncateWithEllipsis(value, maxLen) {
+    const normalized = this.normalizeWhitespace(value);
+    if (normalized.length <= maxLen) return normalized;
+    return `${normalized.slice(0, maxLen - 1).trimEnd()}…`;
+  }
+
   generateSocialContent(product, platform) {
     const lawnProblems = [
       'yellow grass', 'brown patches', 'thin lawn', 'bare spots', 
@@ -112,6 +215,7 @@ class SocialMediaAutoPoster {
 
     const randomProblem = lawnProblems[Math.floor(Math.random() * lawnProblems.length)];
     const randomBenefit = benefits[Math.floor(Math.random() * benefits.length)];
+    const conciseName = this.shortProductName(product.name);
 
     const hashtags = {
       instagram: '#LawnCare #OrganicGardening #HealthyLawn #PetSafe #GreenLawn #LawnGoals #GardeningLife #SoilHealth #LawnTips #OrganicLawn',
@@ -131,7 +235,7 @@ class SocialMediaAutoPoster {
         alt_text: `${product.name} for natural lawn care`
       },
       youtube: {
-        title: `Fix ${randomProblem} Naturally - ${product.name} Review & Application`,
+        title: this.truncateWithEllipsis(`Fix ${randomProblem} Naturally - ${conciseName}`, 100),
         description: `Transform your lawn with ${product.name}! This natural, pet-safe solution tackles ${randomProblem} to give you ${randomBenefit}.\n\n🌱 What You'll Learn:\n• How to identify ${randomProblem}\n• Safe, organic treatment options\n• Step-by-step application guide\n• Expected results timeline\n\n✅ Product Benefits:\n• Pet & family safe\n• Organic ingredients\n• Fast-acting formula\n• Easy application\n• Proven results\n\n🛒 Shop ${product.name}:\n${WEBSITE_BASE_URL}/product/${product.id}\n\n📧 Questions? Contact us at support@natureswaysoil.com\n\nTags: ${hashtags.youtube}`,
         tags: hashtags.youtube.split(', '),
         category_id: '26' // Howto & Style
@@ -141,7 +245,7 @@ class SocialMediaAutoPoster {
         link: `${WEBSITE_BASE_URL}/product/${product.id}`
       },
       pinterest: {
-        title: `${product.name} – Fix ${randomProblem} Naturally`,
+        title: this.truncateWithEllipsis(`${conciseName} - Fix ${randomProblem} Naturally`, 100),
         description: `Tired of ${randomProblem}? ${product.name} delivers ${randomBenefit} using safe, organic ingredients. Perfect for pet owners and families who want a beautiful lawn without harsh chemicals.\n\n✅ Pet & family safe\n✅ Organic & natural\n✅ Easy application\n\nShop here: ${WEBSITE_BASE_URL}/product/${product.id}\n\n${hashtags.pinterest}`,
         link: `${WEBSITE_BASE_URL}/product/${product.id}`,
         alt_text: `${product.name} - organic lawn care solution`
@@ -165,14 +269,24 @@ class SocialMediaAutoPoster {
 
       const content = this.generateSocialContent(product, 'instagram');
       
-      // Use product image from the website
       const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
-      
-      const mediaData = {
-        image_url: imageUrl,
-        caption: content.caption,
-        access_token: INSTAGRAM_ACCESS_TOKEN
-      };
+      const videoUrl = this.getPublicVideoUrl(product);
+      const shouldTryVideo = this.hasLocalVideo(product) && process.env.SOCIAL_FORCE_IMAGE_ONLY !== '1';
+
+      // Prefer short-form video posts when product video exists, with image fallback.
+      const mediaData = shouldTryVideo
+        ? {
+            media_type: 'REELS',
+            video_url: videoUrl,
+            caption: content.caption,
+            share_to_feed: true,
+            access_token: INSTAGRAM_ACCESS_TOKEN
+          }
+        : {
+            image_url: imageUrl,
+            caption: content.caption,
+            access_token: INSTAGRAM_ACCESS_TOKEN
+          };
 
       // Create media object
       const createResponse = await fetch(`https://graph.facebook.com/v19.0/${INSTAGRAM_IG_ID}/media`, {
@@ -189,9 +303,9 @@ class SocialMediaAutoPoster {
       const mediaResult = await createResponse.json();
       const containerId = mediaResult.id;
 
-      // Poll until media container is ready (up to 30s)
+      // Poll until media container is ready.
       let ready = false;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 20; i++) {
         await new Promise(r => setTimeout(r, 3000));
         const statusRes = await fetch(
           `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${INSTAGRAM_ACCESS_TOKEN}`
@@ -225,6 +339,7 @@ class SocialMediaAutoPoster {
       this.postedContent.instagram[product.id] = {
         postId: publishResult.id,
         mediaId: mediaResult.id,
+        mediaType: shouldTryVideo ? 'video' : 'image',
         caption: content.caption,
         createdAt: new Date().toISOString(),
         productId: product.id
@@ -256,7 +371,7 @@ class SocialMediaAutoPoster {
     const oauthParams = {
       oauth_consumer_key: TWITTER_API_KEY,
       oauth_nonce: Math.random().toString(36).substring(2) + Date.now().toString(36),
-      oauth_signature_method: 'HMAC-SHA256',
+      oauth_signature_method: 'HMAC-SHA1',
       oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
       oauth_token: TWITTER_ACCESS_TOKEN,
       oauth_version: '1.0'
@@ -276,8 +391,8 @@ class SocialMediaAutoPoster {
 
     const signingKey = `${encodeURIComponent(TWITTER_API_SECRET)}&${encodeURIComponent(TWITTER_ACCESS_SECRET)}`;
 
-    // HMAC-SHA256 using Node crypto
-    const signature = createHmac('sha256', signingKey).update(sigBase).digest('base64');
+    // OAuth 1.0a for Twitter write APIs uses HMAC-SHA1.
+    const signature = createHmac('sha1', signingKey).update(sigBase).digest('base64');
 
     oauthParams.oauth_signature = signature;
 
@@ -303,7 +418,28 @@ class SocialMediaAutoPoster {
       }
 
       const content = this.generateSocialContent(product, 'twitter');
-      const tweetData = { text: content.text };
+      let tweetData;
+
+      if (this.hasLocalVideo(product) && process.env.TWITTER_FORCE_LINK_ONLY !== '1') {
+        try {
+          const mediaId = await this.uploadVideoToTwitter(product);
+          tweetData = {
+            text: content.text,
+            media: { media_ids: [mediaId] }
+          };
+        } catch (uploadError) {
+          this.log(`Twitter native media upload failed, falling back to video link: ${uploadError.message}`);
+          tweetData = {
+            text: `${content.text}\n🎥 Watch: ${this.getPublicVideoUrl(product)}`
+          };
+        }
+      } else {
+        const videoText = this.hasLocalVideo(product)
+          ? `\n🎥 Watch: ${this.getPublicVideoUrl(product)}`
+          : '';
+        tweetData = { text: `${content.text}${videoText}` };
+      }
+
       const url = 'https://api.twitter.com/2/tweets';
 
       // Build OAuth 1.0a header (required for write operations)
@@ -327,6 +463,8 @@ class SocialMediaAutoPoster {
 
       this.postedContent.twitter[product.id] = {
         tweetId: result.data.id,
+        mediaId: tweetData.media?.media_ids?.[0] || null,
+        usedNativeMediaUpload: Boolean(tweetData.media?.media_ids?.[0]),
         text: content.text,
         createdAt: new Date().toISOString(),
         productId: product.id
@@ -341,6 +479,140 @@ class SocialMediaAutoPoster {
       this.log(`❌ Twitter posting failed for ${product.name}: ${error.message}`);
       throw error;
     }
+  }
+
+  async uploadVideoToTwitter(product) {
+    const videoPath = this.getVideoPath(product);
+    if (!this.hasLocalVideo(product)) {
+      throw new Error(`No video file found at ${videoPath}`);
+    }
+
+    const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+    const videoBuffer = fs.readFileSync(videoPath);
+    const totalBytes = videoBuffer.length;
+    const chunkSize = 5 * 1024 * 1024; // 5MB per chunk
+
+    this.log(`Twitter upload init for ${product.id} (${(totalBytes / 1024 / 1024).toFixed(1)}MB)`);
+
+    const initParams = {
+      command: 'INIT',
+      total_bytes: totalBytes.toString(),
+      media_type: 'video/mp4',
+      media_category: 'tweet_video'
+    };
+
+    const initAuthHeader = this.buildOAuth1Header('POST', uploadUrl, initParams);
+    const initResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': initAuthHeader,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams(initParams)
+    });
+
+    if (!initResponse.ok) {
+      const initErr = await initResponse.text();
+      throw new Error(`Twitter upload INIT failed: ${initResponse.status} - ${initErr}`);
+    }
+
+    const initData = await initResponse.json();
+    const mediaId = initData.media_id_string || String(initData.media_id);
+    if (!mediaId) {
+      throw new Error(`Twitter upload INIT returned no media id: ${JSON.stringify(initData)}`);
+    }
+
+    for (let offset = 0, segmentIndex = 0; offset < totalBytes; offset += chunkSize, segmentIndex++) {
+      const chunk = videoBuffer.subarray(offset, Math.min(offset + chunkSize, totalBytes));
+      const appendAuthHeader = this.buildOAuth1Header('POST', uploadUrl, {});
+      const form = new FormData();
+      form.append('command', 'APPEND');
+      form.append('media_id', mediaId);
+      form.append('segment_index', String(segmentIndex));
+      form.append('media', new Blob([chunk], { type: 'video/mp4' }), `${product.id}.mp4`);
+
+      const appendResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': appendAuthHeader
+        },
+        body: form
+      });
+
+      if (!appendResponse.ok) {
+        const appendErr = await appendResponse.text();
+        throw new Error(`Twitter upload APPEND failed (segment ${segmentIndex}): ${appendResponse.status} - ${appendErr}`);
+      }
+    }
+
+    const finalizeParams = {
+      command: 'FINALIZE',
+      media_id: mediaId
+    };
+    const finalizeAuthHeader = this.buildOAuth1Header('POST', uploadUrl, finalizeParams);
+    const finalizeResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': finalizeAuthHeader,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams(finalizeParams)
+    });
+
+    if (!finalizeResponse.ok) {
+      const finalizeErr = await finalizeResponse.text();
+      throw new Error(`Twitter upload FINALIZE failed: ${finalizeResponse.status} - ${finalizeErr}`);
+    }
+
+    let finalizeData = await finalizeResponse.json();
+
+    if (finalizeData.processing_info) {
+      finalizeData = await this.waitForTwitterMediaProcessing(uploadUrl, mediaId, finalizeData.processing_info);
+    }
+
+    this.log(`Twitter media upload complete for ${product.id}: media_id=${mediaId}`);
+    return mediaId;
+  }
+
+  async waitForTwitterMediaProcessing(uploadUrl, mediaId, processingInfo) {
+    let info = processingInfo;
+
+    for (let i = 0; i < 15; i++) {
+      if (info.state === 'succeeded') {
+        return { media_id_string: mediaId, processing_info: info };
+      }
+      if (info.state === 'failed') {
+        const err = info.error ? `${info.error.code}: ${info.error.message}` : 'unknown processing error';
+        throw new Error(`Twitter media processing failed: ${err}`);
+      }
+
+      const waitMs = Math.max((info.check_after_secs || 2) * 1000, 2000);
+      await sleep(waitMs);
+
+      const statusParams = {
+        command: 'STATUS',
+        media_id: mediaId
+      };
+      const statusAuthHeader = this.buildOAuth1Header('GET', uploadUrl, statusParams);
+      const statusUrl = `${uploadUrl}?${new URLSearchParams(statusParams).toString()}`;
+
+      const statusResponse = await fetch(statusUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': statusAuthHeader
+        }
+      });
+
+      if (!statusResponse.ok) {
+        const statusErr = await statusResponse.text();
+        throw new Error(`Twitter upload STATUS failed: ${statusResponse.status} - ${statusErr}`);
+      }
+
+      const statusData = await statusResponse.json();
+      info = statusData.processing_info || { state: 'succeeded' };
+    }
+
+    throw new Error('Twitter media processing timed out');
   }
 
   // YouTube Methods
@@ -378,8 +650,8 @@ class SocialMediaAutoPoster {
       }
 
       // Check if video file exists for this product
-      const videoPath = path.join(PROJECT, 'public', 'videos', `${product.id}.mp4`);
-      if (!fs.existsSync(videoPath)) {
+      const videoPath = this.getVideoPath(product);
+      if (!this.hasLocalVideo(product)) {
         throw new Error(`No video file found at ${videoPath} — run HeyGen generation first`);
       }
 
@@ -450,7 +722,8 @@ class SocialMediaAutoPoster {
         throw new Error(`YouTube video upload failed: ${uploadResponse.status} - ${err}`);
       }
 
-      const uploadResult = await uploadResponse.json();
+      const rawUploadResult = await uploadResponse.text();
+      const uploadResult = rawUploadResult ? JSON.parse(rawUploadResult) : {};
       const videoId = uploadResult.id;
 
       if (!videoId) {
@@ -478,10 +751,60 @@ class SocialMediaAutoPoster {
   }
 
   // Facebook Methods
+  async resolveFacebookPageAccessToken() {
+    if (!FACEBOOK_PAGE_ID) {
+      throw new Error('FACEBOOK_PAGE_ID is required for Facebook posting');
+    }
+
+    if (FACEBOOK_PAGE_ACCESS_TOKEN) {
+      this.log('Using FACEBOOK_PAGE_ACCESS_TOKEN for Facebook posting');
+      return FACEBOOK_PAGE_ACCESS_TOKEN;
+    }
+
+    if (!FACEBOOK_ACCESS_TOKEN) {
+      throw new Error('Facebook token missing: set FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_ACCESS_TOKEN');
+    }
+
+    // If FACEBOOK_ACCESS_TOKEN is already a Page token, this probe succeeds.
+    const directProbe = await fetch(
+      `https://graph.facebook.com/v19.0/${FACEBOOK_PAGE_ID}?fields=id,name&access_token=${encodeURIComponent(FACEBOOK_ACCESS_TOKEN)}`
+    );
+
+    if (directProbe.ok) {
+      this.log('FACEBOOK_ACCESS_TOKEN appears to be a valid Page token');
+      return FACEBOOK_ACCESS_TOKEN;
+    }
+
+    // Otherwise, treat FACEBOOK_ACCESS_TOKEN as a user token and resolve page token via /me/accounts.
+    const pageTokenResponse = await fetch(
+      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token&limit=200&access_token=${encodeURIComponent(FACEBOOK_ACCESS_TOKEN)}`
+    );
+
+    if (!pageTokenResponse.ok) {
+      const errText = await pageTokenResponse.text();
+      throw new Error(
+        `Could not resolve Page access token via /me/accounts: ${pageTokenResponse.status} - ${errText}`
+      );
+    }
+
+    const pageTokenData = await pageTokenResponse.json();
+    const pages = Array.isArray(pageTokenData.data) ? pageTokenData.data : [];
+    const pageMatch = pages.find((page) => String(page.id) === String(FACEBOOK_PAGE_ID));
+
+    if (!pageMatch?.access_token) {
+      throw new Error(
+        `No Page access token found for page ${FACEBOOK_PAGE_ID}. Ensure token has pages_show_list and pages_manage_posts.`
+      );
+    }
+
+    this.log('Resolved Facebook Page access token from /me/accounts');
+    return pageMatch.access_token;
+  }
+
   async postToFacebook(product) {
     try {
-      if (!FACEBOOK_PAGE_ID || !FACEBOOK_ACCESS_TOKEN) {
-        throw new Error('Facebook credentials not configured (need FACEBOOK_PAGE_ID, FACEBOOK_ACCESS_TOKEN)');
+      if (!FACEBOOK_PAGE_ID || (!FACEBOOK_PAGE_ACCESS_TOKEN && !FACEBOOK_ACCESS_TOKEN)) {
+        throw new Error('Facebook credentials not configured (need FACEBOOK_PAGE_ID plus FACEBOOK_PAGE_ACCESS_TOKEN or FACEBOOK_ACCESS_TOKEN)');
       }
 
       if (this.postedContent.facebook[product.id]) {
@@ -489,22 +812,75 @@ class SocialMediaAutoPoster {
         return this.postedContent.facebook[product.id];
       }
 
+      const facebookPageToken = await this.resolveFacebookPageAccessToken();
+
       const content = this.generateSocialContent(product, 'facebook');
       const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+      const videoUrl = this.getPublicVideoUrl(product);
+      const shouldTryVideo = this.hasLocalVideo(product) && process.env.SOCIAL_FORCE_IMAGE_ONLY !== '1';
 
-      // Post to Facebook Page with photo
-      const response = await fetch(
-        `https://graph.facebook.com/v19.0/${FACEBOOK_PAGE_ID}/photos`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: imageUrl,
-            caption: content.message,
-            access_token: FACEBOOK_ACCESS_TOKEN
-          })
+      let response;
+      let mediaType = shouldTryVideo ? 'video' : 'image';
+      if (shouldTryVideo) {
+        response = await fetch(
+          `https://graph.facebook.com/v19.0/${FACEBOOK_PAGE_ID}/videos`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              file_url: videoUrl,
+              title: product.name.slice(0, 100),
+              description: content.message,
+              published: true,
+              access_token: facebookPageToken
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const videoErr = await response.text();
+          this.log(`Facebook video upload failed, falling back to image post: ${response.status} - ${videoErr}`);
+          response = null;
+          mediaType = 'image';
         }
-      );
+      }
+
+      if (!response) {
+        // Fallback 1: image post to Page photos endpoint.
+        response = await fetch(
+          `https://graph.facebook.com/v19.0/${FACEBOOK_PAGE_ID}/photos`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: imageUrl,
+              caption: content.message,
+              published: true,
+              access_token: facebookPageToken
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const photoErr = await response.text();
+          this.log(`Facebook photo upload failed, falling back to feed link post: ${response.status} - ${photoErr}`);
+
+          // Fallback 2: feed link post, supported with pages_manage_posts.
+          response = await fetch(
+            `https://graph.facebook.com/v19.0/${FACEBOOK_PAGE_ID}/feed`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: content.message,
+                link: content.link,
+                access_token: facebookPageToken
+              })
+            }
+          );
+          mediaType = 'link';
+        }
+      }
 
       if (!response.ok) {
         const err = await response.text();
@@ -517,6 +893,7 @@ class SocialMediaAutoPoster {
       this.postedContent.facebook[product.id] = {
         postId,
         url: `https://www.facebook.com/${FACEBOOK_PAGE_ID}/posts/${postId}`,
+        mediaType,
         createdAt: new Date().toISOString(),
         productId: product.id
       };
@@ -546,7 +923,13 @@ class SocialMediaAutoPoster {
       const content = this.generateSocialContent(product, 'pinterest');
       const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
 
-      const response = await fetch('https://api.pinterest.com/v5/pins', {
+      const requestedBase = (process.env.PINTEREST_API_BASE_URL || '').trim();
+      const testMode = process.env.PINTEREST_TEST_MODE === '1';
+      const productionBase = 'https://api.pinterest.com';
+      const sandboxBase = 'https://api-sandbox.pinterest.com';
+      const initialBase = requestedBase || (testMode ? sandboxBase : productionBase);
+
+      const createPin = async (apiBase) => fetch(`${apiBase}/v5/pins`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${PINTEREST_ACCESS_TOKEN}`,
@@ -565,23 +948,51 @@ class SocialMediaAutoPoster {
         })
       });
 
+      let apiBase = initialBase;
+      let response = await createPin(apiBase);
+      let errText = response.ok ? '' : await response.text();
+
       if (!response.ok) {
-        const err = await response.text();
-        throw new Error(`Pinterest API error: ${response.status} - ${err}`);
+        let errCode = null;
+        try {
+          const parsed = JSON.parse(errText);
+          errCode = parsed?.code;
+        } catch {
+          // Ignore parse errors.
+        }
+
+        const trialAccessError = response.status === 403 && (errCode === 29 || /Trial access/i.test(errText));
+
+        if (trialAccessError) {
+          throw new Error(
+            'Pinterest app is in Trial access mode — pin creation is blocked in production. ' +
+            'To fix: go to https://developers.pinterest.com/apps/ → select your app → request Standard/Advanced access. ' +
+            'Once approved, posting will work automatically.'
+          );
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(`Pinterest API error (${apiBase}): ${response.status} - ${errText}`);
       }
 
       const data = await response.json();
       const pinId = data.id;
+      const isSandbox = apiBase === sandboxBase;
 
       this.postedContent.pinterest[product.id] = {
         pinId,
-        url: `https://www.pinterest.com/pin/${pinId}`,
+        url: isSandbox ? `${sandboxBase}/v5/pins/${pinId}` : `https://www.pinterest.com/pin/${pinId}`,
+        apiBase,
+        sandboxMode: isSandbox,
         createdAt: new Date().toISOString(),
         productId: product.id
       };
 
       this.savePostedContent();
-      this.log(`✅ Pinterest pin created: ${product.name} → https://www.pinterest.com/pin/${pinId}`);
+      this.log(
+        `✅ Pinterest pin created (${isSandbox ? 'sandbox' : 'production'}): ${product.name} → ${this.postedContent.pinterest[product.id].url}`
+      );
       return this.postedContent.pinterest[product.id];
 
     } catch (error) {
@@ -600,20 +1011,22 @@ class SocialMediaAutoPoster {
         return;
       }
 
+      const activePlatforms = this.getActivePlatforms();
+      this.log(`Active platforms this run: ${activePlatforms.join(', ') || 'none configured'}`);
+
       this.log(`Found ${products.length} products to process`);
 
       // Pick ONE product per run — the next one not yet posted to any platform
       const unposted = products.filter(p => {
-        const hasVideo = fs.existsSync(path.join(VIDEOS_DIR, `${p.id}.mp4`));
-        const alreadyPosted =
-          this.postedContent.instagram[p.id] &&
-          this.postedContent.twitter[p.id] &&
-          this.postedContent.facebook[p.id];
+        const hasVideo = this.hasLocalVideo(p);
+        const alreadyPosted = activePlatforms.length > 0
+          ? activePlatforms.every(platform => Boolean(this.postedContent[platform]?.[p.id]))
+          : false;
         return hasVideo && !alreadyPosted;
       });
 
       if (!unposted.length) {
-        this.log('All products already posted — resetting posted content for next cycle');
+        this.log('All eligible products already posted for active platforms — resetting posted content for next cycle');
         this.postedContent = { instagram: {}, twitter: {}, youtube: {}, facebook: {}, pinterest: {} };
         this.savePostedContent();
         return;
@@ -621,6 +1034,7 @@ class SocialMediaAutoPoster {
 
       const product = unposted[0];
       this.log(`Selected product for this run: ${product.name} (${product.id})`);
+      this.log(`SCHEDULE_TICK product_id=${product.id} run_at=${new Date().toISOString()} active_platforms=${activePlatforms.join(',') || 'none'}`);
 
       const results = {
         success: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] },
@@ -725,9 +1139,9 @@ class SocialMediaAutoPoster {
         }
 
         if (results.success.youtube.length > 0) {
-          this.log(`\n📺 YouTube (${results.success.youtube.length} videos prepared):`);
+          this.log(`\n📺 YouTube (${results.success.youtube.length} uploads):`);
           results.success.youtube.forEach(post => {
-            this.log(`  • ${post.productId}: Ready for manual upload`);
+            this.log(`  • ${post.productId}: ${post.url}`);
           });
         }
       }
