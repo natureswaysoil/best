@@ -164,6 +164,8 @@ function loadProducts() {
             image: p.image || null,
             description: p.description || '',
             videoScript: p.videoScript || null,
+            heygenAvatarId: p.heygenAvatarId || p.heygen_avatar_id || p.HEYGEN_AVATAR_ID || null,
+            heygenVoiceId: p.heygenVoiceId || p.heygen_voice_id || p.HEYGEN_VOICE_ID || null,
             keywords: parseDelimitedList(p.keywords),
             brollImages,
           };

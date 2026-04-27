@@ -14,6 +14,22 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VIDEO_CONFIG_FILE = path.resolve(__dirname, '..', 'content', 'video-scripts', 'video-config.json');
 
+const SHEET_AVATAR_ALIAS_MAP = {
+  garden_expert_01: 'Anna_public_3_20240108',
+  eco_gardener_01: 'Abigail_expressive_2024112501',
+  pasture_specialist_01: 'Aditya_public_4',
+  farm_expert_02: 'Aditya_public_1',
+};
+
+const SHEET_VOICE_ALIAS_MAP = {
+  en_us_warm_female_01: 'f8c69e517f424cafaecde32dde57096b',
+  en_us_warm_female_02: '97dd67ab8ce242b6a9e7689cb00c6414',
+  en_us_neutral_mx_01: '5d8c378ba8c3434586081a52ac368738',
+};
+
+const DEFAULT_HEYGEN_AVATAR_ID = 'Anna_public_3_20240108';
+const DEFAULT_HEYGEN_VOICE_ID = 'f8c69e517f424cafaecde32dde57096b';
+
 function loadVideoConfig() {
   try {
     if (fsSync.existsSync(VIDEO_CONFIG_FILE)) {
@@ -23,12 +39,52 @@ function loadVideoConfig() {
   return {};
 }
 
+function pickNonEmpty(...values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null) {
+      const trimmed = String(value).trim();
+      if (trimmed) return trimmed;
+    }
+  }
+  return null;
+}
+
+function mapSheetAlias(value, aliasMap) {
+  const normalized = pickNonEmpty(value);
+  if (!normalized) return null;
+  return aliasMap[normalized] || normalized;
+}
+
+/** Return { avatarId, voiceId } from product-level sheet fields if present. */
+function resolveSheetAvatarVoice(product) {
+  return {
+    avatarId: mapSheetAlias(pickNonEmpty(
+      product?.heygenAvatarId,
+      product?.heygen_avatar_id,
+      product?.HEYGEN_AVATAR_ID,
+      product?.avatarId,
+      product?.avatar_id,
+      product?.AVATAR_ID,
+    ), SHEET_AVATAR_ALIAS_MAP),
+    voiceId: mapSheetAlias(pickNonEmpty(
+      product?.heygenVoiceId,
+      product?.heygen_voice_id,
+      product?.HEYGEN_VOICE_ID,
+      product?.voiceId,
+      product?.voice_id,
+      product?.VOICE_ID,
+      product?.HEYGEN_VOICE,
+      product?.heygen_voice,
+    ), SHEET_VOICE_ALIAS_MAP),
+  };
+}
+
 /** Return { avatarId, voiceId } for a product, using config category/product overrides. */
 function resolveConfigAvatarVoice(product) {
   const cfg = loadVideoConfig();
   const heygen = cfg?.heygen || {};
-  const defaultAvatarId = heygen.defaultAvatarId || 'Anna_public_3_20240108';
-  const defaultVoiceId  = heygen.defaultVoiceId  || null;
+  const defaultAvatarId = heygen.defaultAvatarId || DEFAULT_HEYGEN_AVATAR_ID;
+  const defaultVoiceId  = heygen.defaultVoiceId  || DEFAULT_HEYGEN_VOICE_ID;
 
   // product-level override takes highest priority
   const productOverride = heygen.productOverrides?.[product.id];
@@ -414,7 +470,11 @@ export class HeyGenVideoGenerator {
       a.avatar_id === preferredAvatarId ||
       a.id === preferredAvatarId
     );
-    const fallback = preferred || avatars[0];
+    const defaultAvatar = avatars.find((a) =>
+      a.avatar_id === DEFAULT_HEYGEN_AVATAR_ID ||
+      a.id === DEFAULT_HEYGEN_AVATAR_ID
+    );
+    const fallback = preferred || defaultAvatar || avatars[0];
     const avatarId = fallback.avatar_id || fallback.id;
     if (!avatarId) throw new Error('Unable to resolve HeyGen avatar ID');
 
@@ -423,7 +483,7 @@ export class HeyGenVideoGenerator {
     return avatarId;
   }
 
-  async resolveVoiceId(preferredVoiceId = 'b8266b04af0a4c7e8adc8ea21273eecd') {
+  async resolveVoiceId(preferredVoiceId = DEFAULT_HEYGEN_VOICE_ID) {
     if (process.env.HEYGEN_VOICE_ID) return process.env.HEYGEN_VOICE_ID;
     if (this.cachedVoiceId) return this.cachedVoiceId;
 
@@ -437,7 +497,11 @@ export class HeyGenVideoGenerator {
       v.voice_id === preferredVoiceId ||
       v.id === preferredVoiceId
     );
-    const fallback = preferred || voices[0];
+    const defaultVoice = voices.find((v) =>
+      v.voice_id === DEFAULT_HEYGEN_VOICE_ID ||
+      v.id === DEFAULT_HEYGEN_VOICE_ID
+    );
+    const fallback = preferred || defaultVoice || voices[0];
     const voiceId = fallback.voice_id || fallback.id;
     if (!voiceId) {
       this.log(`Unable to resolve voice_id from API response; falling back to preferred voice ID (${preferredVoiceId})`);
@@ -522,12 +586,13 @@ export class HeyGenVideoGenerator {
       const script = await this.generateProductScript(product);
       const title = `${product.name} - Natural Lawn Care Solution`;
 
-      // Resolve avatar and voice: env vars → config mapping → API lookup
+      // Resolve avatar and voice: env vars → sheet per-product values → config mapping → API lookup
+      const sheetAV = resolveSheetAvatarVoice(product);
       const configAV = resolveConfigAvatarVoice(product);
-      let avatarId = process.env.HEYGEN_AVATAR_ID || configAV.avatarId || 'Anna_public_3_20240108';
-      let voiceId  = process.env.HEYGEN_VOICE_ID  || configAV.voiceId  || null;
+      let avatarId = process.env.HEYGEN_AVATAR_ID || sheetAV.avatarId || configAV.avatarId || DEFAULT_HEYGEN_AVATAR_ID;
+      let voiceId  = process.env.HEYGEN_VOICE_ID  || sheetAV.voiceId  || configAV.voiceId  || null;
 
-      this.log(`Config mapping → avatar: ${avatarId}, voice: ${voiceId || '(resolve from API)'}`);
+      this.log(`Avatar/voice resolution → avatar: ${avatarId}, voice: ${voiceId || '(resolve from API)'} (sheet overrides config when present)`);
 
       if (process.env.HEYGEN_SKIP_PREFLIGHT !== '1') {
         try {
@@ -541,7 +606,7 @@ export class HeyGenVideoGenerator {
         voiceId = await this.resolveVoiceId(voiceId || 'b8266b04af0a4c7e8adc8ea21273eecd');
       } catch (error) {
         this.log(`Falling back to default voice_id because voice lookup failed: ${error.message}`);
-        voiceId = voiceId || 'ybOJaAgPlBdcGBEpCJzA';
+        voiceId = voiceId || DEFAULT_HEYGEN_VOICE_ID;
       }
       const productImage = options.productImage || null;
 
