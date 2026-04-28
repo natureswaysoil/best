@@ -30,6 +30,40 @@ const SHEET_VOICE_ALIAS_MAP = {
 const DEFAULT_HEYGEN_AVATAR_ID = 'Anna_public_3_20240108';
 const DEFAULT_HEYGEN_VOICE_ID = 'f8c69e517f424cafaecde32dde57096b';
 
+function splitScriptIntoScenes(script, count) {
+  const sentences = (script.match(/[^.git apply - <<'PATCH'
+diff --git a/scripts/heygen-video-generator.mjs b/scripts/heygen-video-generator.mjs
+--- a/scripts/heygen-video-generator.mjs
++++ b/scripts/heygen-video-generator.mjs
+@@ -31,6 +31,18 @@ const DEFAULT_HEYGEN_VOICE_ID = 'f8c69e517f424cafaecde32dde57096b';
+ 
++function splitScriptIntoScenes(script, count) {
++  const sentences = (script.match(/[^.!?]+[.!?]+s*/g) || []).map(s => s.trim()).filter(Boolean);
++  if (sentences.length <= 1 || count <= 1) return [script];
++  const actual = Math.min(count, sentences.length);
++  const perScene = Math.ceil(sentences.length / actual);
++  const scenes = [];
++  for (let i = 0; i < actual; i++) {
++    const chunk = sentences.slice(i * perScene, (i + 1) * perScene).join(' ').trim();
++    if (chunk) scenes.push(chunk);
++  }
++  return scenes.length ? scenes : [script];
++}
++
+ function loadVideoConfig() {
+PATCH
+]+\s*/g) || []).map(s => s.trim()).filter(Boolean);
+  if (sentences.length <= 1 || count <= 1) return [script];
+  const actual = Math.min(count, sentences.length);
+  const perScene = Math.ceil(sentences.length / actual);
+  const scenes = [];
+  for (let i = 0; i < actual; i++) {
+    const chunk = sentences.slice(i * perScene, (i + 1) * perScene).join(' ').trim();
+    if (chunk) scenes.push(chunk);
+  }
+  return scenes.length ? scenes : [script];
+}
+
 function loadVideoConfig() {
   try {
     if (fsSync.existsSync(VIDEO_CONFIG_FILE)) {
@@ -190,7 +224,8 @@ export class HeyGenVideoGenerator {
     avatarId = 'Anna_public_3_20240108', // Default professional avatar
     voiceId = null,
     background = '#0d3b2a', // Nature's Way brand color
-    productImage = null
+    productImage = null,
+    brollImages = []
   }) {
     try {
       this.log(`Creating video: ${title}`);
@@ -199,45 +234,16 @@ export class HeyGenVideoGenerator {
         throw new Error('HeyGen voice_id is required for v2/video/generate. Resolve a valid voice before creating video.');
       }
 
-      const videoData = {
-        video_inputs: [
-          {
-            character: {
-              type: 'avatar',
-              avatar_id: avatarId,
-              avatar_style: 'normal'
-            },
-            // Current HeyGen v2 expects voice_id for text voice generation.
-            voice: {
-              type: 'text',
-              input_text: script,
-              voice_id: voiceId,
-              speed: 1.0
-            },
-            background: {
-              type: 'color',
-              value: background
-            }
-          }
-        ],
-        dimension: {
-          width: 1280,
-          height: 720
-        },
-        aspect_ratio: '16:9',
-        test: process.env.HEYGEN_TEST_MODE === '1',
-        caption: false,
-        callback_id: `nws_${Date.now()}`
-      };
-
-      // Add product image overlay if provided
-      if (productImage) {
-        videoData.video_inputs[0].background = {
-          type: 'image',
-          url: productImage,
-          fit: 'cover'
-        };
-      }
+      const sceneImages = brollImages.length >= 2 ? brollImages.slice(0, 4) : (productImage ? [productImage] : []);
+      const scriptScenes = sceneImages.length >= 2 ? splitScriptIntoScenes(script, sceneImages.length) : [script];
+      const bgFor = (i) => { const img = sceneImages[i]; return img ? { type: 'image', url: img, fit: 'cover' } : { type: 'color', value: background }; };
+      const video_inputs = scriptScenes.map((sceneScript, i) => ({
+        character: { type: 'avatar', avatar_id: avatarId, avatar_style: 'normal' },
+        voice: { type: 'text', input_text: sceneScript, voice_id: voiceId, speed: 1.0 },
+        background: bgFor(i),
+      }));
+      if (sceneImages.length >= 2) this.log(`Multi-scene b-roll: ${video_inputs.length} scenes`);
+      const videoData = { video_inputs, dimension: { width: 1280, height: 720 }, aspect_ratio: '16:9', test: process.env.HEYGEN_TEST_MODE === '1', caption: true, callback_id: `nws_${Date.now()}` };
 
       const response = await this.fetchWithRetry(`${this.baseUrl}/video/generate`, {
         method: 'POST',
@@ -609,6 +615,7 @@ export class HeyGenVideoGenerator {
         voiceId = voiceId || DEFAULT_HEYGEN_VOICE_ID;
       }
       const productImage = options.productImage || null;
+      const brollImages = Array.isArray(options.brollImages) ? options.brollImages : [];
 
       // Create video
       const videoJob = await this.createVideo({
@@ -618,6 +625,7 @@ export class HeyGenVideoGenerator {
         voiceId,
         background: '#0d3b2a', // Nature's Way brand color
         productImage,
+        brollImages,
       });
 
       // Wait for completion
