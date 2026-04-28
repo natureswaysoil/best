@@ -410,9 +410,9 @@ function enhanceHeyGenVideoWithBroll(videoPath, prod) {
   usableImages.forEach((_, idx) => {
     const inputLabel = `[${idx + 1}:v]`;
     const scaledLabel = `[b${idx}]`;
-    const outputLabel = idx === images.length - 1 ? '[vout]' : `[v${idx + 1}]`;
+    const outputLabel = idx === usableImages.length - 1 ? '[vout]' : `[v${idx + 1}]`;
     const start = (segmentStart + idx * segmentSpan).toFixed(2);
-    const end = (idx === images.length - 1 ? segmentEnd : (segmentStart + (idx + 1) * segmentSpan)).toFixed(2);
+    const end = (idx === usableImages.length - 1 ? segmentEnd : (segmentStart + (idx + 1) * segmentSpan)).toFixed(2);
 
     overlays.push(`${inputLabel}scale=460:-2,format=rgba,colorchannelmixer=aa=0.92${scaledLabel}`);
     overlays.push(`${lastLabel}${scaledLabel}overlay=x='W-w-28':y='28':enable='between(t,${start},${end})'${outputLabel}`);
@@ -748,18 +748,34 @@ async function main() {
         const primaryImage = getPrimaryProductImage(product);
         const publicProductImage = toPublicAssetUrl(primaryImage);
 
+        // Collect b-roll images: convert all candidates to public HTTP URLs for HeyGen
+        const publicPrefix = path.join(PROJECT, 'public');
+        const brollImages = collectProductBrollImages(product)
+          .map(img => {
+            if (isHttpUrl(img)) return img;
+            if (img.startsWith(publicPrefix)) {
+              return `${getPublicBaseUrl()}${img.slice(publicPrefix.length)}`;
+            }
+            return null;
+          })
+          .filter(Boolean)
+          .slice(0, 3);
+
         if (descriptionText) {
           console.log(`   🧾 Sheet description detected (${descriptionText.length} chars)`);
         }
         if (keywordList.length) {
           console.log(`   🔑 Sheet keywords: ${keywordList.join(', ')}`);
         }
-        if (publicProductImage) {
+        if (brollImages.length >= 2) {
+          console.log(`   🎞️  B-roll: ${brollImages.length} scenes → ${brollImages.map(u => u.split('/').pop()).join(', ')}`);
+        } else if (publicProductImage) {
           console.log(`   🖼️  HeyGen background image: ${publicProductImage}`);
         }
 
         const result = await generator.generateProductVideo(productForGeneration, OUT_DIR, {
           productImage: publicProductImage,
+          brollImages,
         });
 
         try {
