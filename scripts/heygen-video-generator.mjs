@@ -42,18 +42,6 @@ function splitScriptIntoScenes(script, count) {
   return scenes.length ? scenes : [script];
 }
 
-function splitScriptIntoScenes(script, count) {
-  const sentences = (script.match(/[^.!?]+[.!?]+\s*/g) || []).map(s => s.trim()).filter(Boolean);
-  if (sentences.length <= 1 || count <= 1) return [script];
-  const actual = Math.min(count, sentences.length);
-  const perScene = Math.ceil(sentences.length / actual);
-  const scenes = [];
-  for (let i = 0; i < actual; i++) {
-    const chunk = sentences.slice(i * perScene, (i + 1) * perScene).join(' ').trim();
-    if (chunk) scenes.push(chunk);
-  }
-  return scenes.length ? scenes : [script];
-}
 
 function loadVideoConfig() {
   try {
