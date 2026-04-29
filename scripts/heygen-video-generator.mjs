@@ -31,6 +31,7 @@ const DEFAULT_HEYGEN_AVATAR_ID = 'Anna_public_3_20240108';
 const DEFAULT_HEYGEN_VOICE_ID = 'f8c69e517f424cafaecde32dde57096b';
 
 function splitScriptIntoScenes(script, count) {
+  const sentences = (script.match(/[^.!?]+[.!?]+\s*/g) || []).map(s => s.trim()).filter(Boolean);
   if (sentences.length <= 1 || count <= 1) return [script];
   const actual = Math.min(count, sentences.length);
   const perScene = Math.ceil(sentences.length / actual);
