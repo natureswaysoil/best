@@ -3,7 +3,8 @@
 /**
  * HeyGen Video Generator
  * Professional AI video generation using HeyGen's API
- * Creates talking head videos with avatars for product demonstrations
+ * Creates product-first videos with avatars, real product imagery, stronger hooks,
+ * and richer visual direction instead of plain talking-head green backgrounds.
  */
 
 import fs from 'fs/promises';
@@ -29,6 +30,7 @@ const SHEET_VOICE_ALIAS_MAP = {
 
 const DEFAULT_HEYGEN_AVATAR_ID = 'Anna_public_3_20240108';
 const DEFAULT_HEYGEN_VOICE_ID = 'f8c69e517f424cafaecde32dde57096b';
+const DEFAULT_BRAND_BG = '#0d3b2a';
 
 function loadVideoConfig() {
   try {
@@ -55,7 +57,6 @@ function mapSheetAlias(value, aliasMap) {
   return aliasMap[normalized] || normalized;
 }
 
-/** Return { avatarId, voiceId } from product-level sheet fields if present. */
 function resolveSheetAvatarVoice(product) {
   return {
     avatarId: mapSheetAlias(pickNonEmpty(
@@ -79,33 +80,49 @@ function resolveSheetAvatarVoice(product) {
   };
 }
 
-/** Return { avatarId, voiceId } for a product, using config category/product overrides. */
 function resolveConfigAvatarVoice(product) {
   const cfg = loadVideoConfig();
   const heygen = cfg?.heygen || {};
   const defaultAvatarId = heygen.defaultAvatarId || DEFAULT_HEYGEN_AVATAR_ID;
-  const defaultVoiceId  = heygen.defaultVoiceId  || DEFAULT_HEYGEN_VOICE_ID;
+  const defaultVoiceId = heygen.defaultVoiceId || DEFAULT_HEYGEN_VOICE_ID;
 
-  // product-level override takes highest priority
   const productOverride = heygen.productOverrides?.[product.id];
   if (productOverride?.avatarId || productOverride?.voiceId) {
     return {
       avatarId: productOverride.avatarId || defaultAvatarId,
-      voiceId:  productOverride.voiceId  || defaultVoiceId,
+      voiceId: productOverride.voiceId || defaultVoiceId,
     };
   }
 
-  // category-level override
   const category = product.category || '';
   const catOverride = heygen.categoryOverrides?.[category];
   if (catOverride?.avatarId || catOverride?.voiceId) {
     return {
       avatarId: catOverride.avatarId || defaultAvatarId,
-      voiceId:  catOverride.voiceId  || defaultVoiceId,
+      voiceId: catOverride.voiceId || defaultVoiceId,
     };
   }
 
   return { avatarId: defaultAvatarId, voiceId: defaultVoiceId };
+}
+
+function buildVisualPrompt(product) {
+  const category = String(product?.category || 'lawn and garden').toLowerCase();
+  const name = String(product?.name || 'Nature\'s Way Soil product');
+
+  if (category.includes('pet')) {
+    return `Create a polished short-form product video background for ${name}: healthy green lawn, repaired dog urine spots, family-safe backyard feel, natural sunlight, subtle product-focused composition, clean e-commerce style.`;
+  }
+
+  if (category.includes('compost') || category.includes('soil')) {
+    return `Create a premium organic gardening video background for ${name}: rich dark soil, raised beds, roots, vegetables, compost texture, natural farm-to-garden feel, warm daylight, trustworthy educational style.`;
+  }
+
+  if (category.includes('fertilizer')) {
+    return `Create a premium lawn and garden product video background for ${name}: lush turf, strong roots, healthy plants, watering/application moment, natural sunlight, clean e-commerce product demonstration style.`;
+  }
+
+  return `Create a premium Nature's Way Soil product video background for ${name}: organic garden, healthy soil, green plants, natural sunlight, clean product demonstration style.`;
 }
 
 export class HeyGenVideoGenerator {
@@ -140,7 +157,6 @@ export class HeyGenVideoGenerator {
     const timeoutMs = Number(meta.timeoutMs || this.requestTimeoutMs);
     const retries = Number(meta.retries ?? this.maxRetries);
     const label = meta.label || 'heygen-request';
-
     let lastError;
 
     for (let attempt = 1; attempt <= retries; attempt += 1) {
@@ -148,10 +164,7 @@ export class HeyGenVideoGenerator {
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
-        const response = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-        });
+        const response = await fetch(url, { ...options, signal: controller.signal });
 
         if (!response.ok && this.shouldRetryStatus(response.status) && attempt < retries) {
           const backoff = this.retryBaseDelayMs * Math.pow(2, attempt - 1);
@@ -181,16 +194,14 @@ export class HeyGenVideoGenerator {
     throw lastError || new Error(`${label} failed without response`);
   }
 
-  /**
-   * Create video using HeyGen's streaming avatar API
-   */
   async createVideo({
     script,
     title,
-    avatarId = 'Anna_public_3_20240108', // Default professional avatar
+    avatarId = DEFAULT_HEYGEN_AVATAR_ID,
     voiceId = null,
-    background = '#0d3b2a', // Nature's Way brand color
-    productImage = null
+    background = DEFAULT_BRAND_BG,
+    productImage = null,
+    product = null,
   }) {
     try {
       this.log(`Creating video: ${title}`);
@@ -199,53 +210,49 @@ export class HeyGenVideoGenerator {
         throw new Error('HeyGen voice_id is required for v2/video/generate. Resolve a valid voice before creating video.');
       }
 
+      const usePlainBrandBackground = process.env.HEYGEN_FORCE_COLOR_BACKGROUND === '1';
+      const backgroundData = usePlainBrandBackground
+        ? { type: 'color', value: background }
+        : productImage
+          ? { type: 'image', url: productImage, fit: 'cover' }
+          : {
+              type: 'text',
+              prompt: buildVisualPrompt(product),
+            };
+
       const videoData = {
         video_inputs: [
           {
             character: {
               type: 'avatar',
               avatar_id: avatarId,
-              avatar_style: 'normal'
+              avatar_style: 'normal',
+              scale: 0.82,
+              offset: { x: -0.28, y: 0.04 },
             },
-            // Current HeyGen v2 expects voice_id for text voice generation.
             voice: {
               type: 'text',
               input_text: script,
               voice_id: voiceId,
-              speed: 1.0
+              speed: 1.03,
             },
-            background: {
-              type: 'color',
-              value: background
-            }
+            background: backgroundData,
           }
         ],
-        dimension: {
-          width: 1280,
-          height: 720
-        },
+        dimension: { width: 1280, height: 720 },
         aspect_ratio: '16:9',
         test: process.env.HEYGEN_TEST_MODE === '1',
-        caption: false,
-        callback_id: `nws_${Date.now()}`
+        caption: true,
+        callback_id: `nws_${Date.now()}`,
       };
-
-      // Add product image overlay if provided
-      if (productImage) {
-        videoData.video_inputs[0].background = {
-          type: 'image',
-          url: productImage,
-          fit: 'cover'
-        };
-      }
 
       const response = await this.fetchWithRetry(`${this.baseUrl}/video/generate`, {
         method: 'POST',
         headers: {
           'X-Api-Key': this.apiKey,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(videoData)
+        body: JSON.stringify(videoData),
       }, {
         label: 'create-video',
         retries: this.maxRetries,
@@ -260,28 +267,17 @@ export class HeyGenVideoGenerator {
       const result = await response.json();
       this.log(`Video creation initiated - Video ID: ${result.data.video_id}`);
 
-      return {
-        videoId: result.data.video_id,
-        status: 'processing',
-        title: title
-      };
-
+      return { videoId: result.data.video_id, status: 'processing', title };
     } catch (error) {
       this.log(`Video creation failed: ${error.message}`);
       throw error;
     }
   }
 
-  /**
-   * Check video generation status
-   */
   async getVideoStatus(videoId) {
     try {
-      // Preferred v2 endpoint
       const response = await this.fetchWithRetry(`${this.baseUrl}/video/${videoId}`, {
-        headers: {
-          'X-Api-Key': this.apiKey
-        }
+        headers: { 'X-Api-Key': this.apiKey }
       }, {
         label: 'video-status-v2',
         retries: this.maxRetries,
@@ -296,23 +292,18 @@ export class HeyGenVideoGenerator {
           videoUrl: result.data.video_url,
           thumbnailUrl: result.data.thumbnail_url,
           duration: result.data.duration,
-          error: result.data.error
+          error: result.data.error,
         };
       }
 
-      // Fallback v1 endpoint
       const fallback = await this.fetchWithRetry(`${this.baseUrlV1}/video_status.get?video_id=${encodeURIComponent(videoId)}`, {
-        headers: {
-          'X-Api-Key': this.apiKey
-        }
+        headers: { 'X-Api-Key': this.apiKey }
       }, {
         label: 'video-status-v1',
         retries: this.maxRetries,
         timeoutMs: this.requestTimeoutMs,
       });
-      if (!fallback.ok) {
-        throw new Error(`Status check failed: ${response.status}/${fallback.status}`);
-      }
+      if (!fallback.ok) throw new Error(`Status check failed: ${response.status}/${fallback.status}`);
 
       const fallbackResult = await fallback.json();
       const data = fallbackResult?.data || {};
@@ -322,7 +313,7 @@ export class HeyGenVideoGenerator {
         videoUrl: data.video_url,
         thumbnailUrl: data.thumbnail_url,
         duration: data.duration,
-        error: data.error
+        error: data.error,
       };
     } catch (error) {
       this.log(`Status check failed: ${error.message}`);
@@ -330,10 +321,7 @@ export class HeyGenVideoGenerator {
     }
   }
 
-  /**
-   * Wait for video to complete processing
-   */
-  async waitForCompletion(videoId, maxWaitTime = 600000) { // 10 minutes max
+  async waitForCompletion(videoId, maxWaitTime = 600000) {
     const startTime = Date.now();
     let transientErrors = 0;
 
@@ -344,62 +332,41 @@ export class HeyGenVideoGenerator {
         transientErrors = 0;
       } catch (error) {
         transientErrors += 1;
-        if (transientErrors >= 4) {
-          throw error;
-        }
+        if (transientErrors >= 4) throw error;
         this.log(`Transient status check failure (${transientErrors}/4): ${error.message}`);
         await this.sleep(5000);
         continue;
       }
 
       this.log(`Video ${videoId}: ${status.status} (${status.progress}%)`);
-
-      if (status.status === 'completed') {
-        return status;
-      }
-
-      if (status.status === 'failed') {
-        throw new Error(`Video generation failed: ${status.error || 'Unknown error'}`);
-      }
-
-      // Wait 15 seconds before next check
+      if (status.status === 'completed') return status;
+      if (status.status === 'failed') throw new Error(`Video generation failed: ${status.error || 'Unknown error'}`);
       await this.sleep(15000);
     }
 
     throw new Error('Video generation timeout');
   }
 
-  /**
-   * Download video from HeyGen and save locally
-   */
   async downloadVideo(videoUrl, outputPath) {
     try {
       this.log(`Downloading video to: ${outputPath}`);
-
       const response = await this.fetchWithRetry(videoUrl, {}, {
         label: 'download-video',
         retries: this.maxRetries,
         timeoutMs: Math.max(this.requestTimeoutMs, 60000),
       });
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
 
       const arrayBuffer = await response.arrayBuffer();
       await fs.writeFile(outputPath, Buffer.from(arrayBuffer));
-
       this.log(`Video downloaded successfully: ${outputPath}`);
       return outputPath;
-
     } catch (error) {
       this.log(`Download failed: ${error.message}`);
       throw error;
     }
   }
 
-  /**
-   * List available avatars
-   */
   async getAvatars() {
     try {
       const response = await this.fetchWithRetry(`${this.baseUrl}/avatars`, {
@@ -429,12 +396,9 @@ export class HeyGenVideoGenerator {
       });
       if (response.ok) {
         const result = await response.json();
-        if (Array.isArray(result?.data?.voices) && result.data.voices.length > 0) {
-          return result.data.voices;
-        }
+        if (Array.isArray(result?.data?.voices) && result.data.voices.length > 0) return result.data.voices;
       }
 
-      // Fallback for legacy API shape
       const fallbackResponse = await this.fetchWithRetry(`${this.baseUrlV1}/voice.list`, {
         headers: { 'X-Api-Key': this.apiKey }
       }, {
@@ -444,12 +408,8 @@ export class HeyGenVideoGenerator {
       });
       if (!fallbackResponse.ok) throw new Error(`Failed to fetch voices: ${fallbackResponse.status}`);
       const fallbackResult = await fallbackResponse.json();
-      if (Array.isArray(fallbackResult?.data?.voices) && fallbackResult.data.voices.length > 0) {
-        return fallbackResult.data.voices;
-      }
-      if (Array.isArray(fallbackResult?.data?.list) && fallbackResult.data.list.length > 0) {
-        return fallbackResult.data.list;
-      }
+      if (Array.isArray(fallbackResult?.data?.voices) && fallbackResult.data.voices.length > 0) return fallbackResult.data.voices;
+      if (Array.isArray(fallbackResult?.data?.list) && fallbackResult.data.list.length > 0) return fallbackResult.data.list;
       return [];
     } catch (error) {
       this.log(`Failed to get voices: ${error.message}`);
@@ -457,23 +417,15 @@ export class HeyGenVideoGenerator {
     }
   }
 
-  async resolveAvatarId(preferredAvatarId = 'Anna_public_3_20240108') {
+  async resolveAvatarId(preferredAvatarId = DEFAULT_HEYGEN_AVATAR_ID) {
     if (process.env.HEYGEN_AVATAR_ID) return process.env.HEYGEN_AVATAR_ID;
     if (this.cachedAvatarId) return this.cachedAvatarId;
 
     const avatars = await this.getAvatars();
-    if (!avatars.length) {
-      throw new Error('No HeyGen avatars available for this account');
-    }
+    if (!avatars.length) throw new Error('No HeyGen avatars available for this account');
 
-    const preferred = avatars.find((a) =>
-      a.avatar_id === preferredAvatarId ||
-      a.id === preferredAvatarId
-    );
-    const defaultAvatar = avatars.find((a) =>
-      a.avatar_id === DEFAULT_HEYGEN_AVATAR_ID ||
-      a.id === DEFAULT_HEYGEN_AVATAR_ID
-    );
+    const preferred = avatars.find((a) => a.avatar_id === preferredAvatarId || a.id === preferredAvatarId);
+    const defaultAvatar = avatars.find((a) => a.avatar_id === DEFAULT_HEYGEN_AVATAR_ID || a.id === DEFAULT_HEYGEN_AVATAR_ID);
     const fallback = preferred || defaultAvatar || avatars[0];
     const avatarId = fallback.avatar_id || fallback.id;
     if (!avatarId) throw new Error('Unable to resolve HeyGen avatar ID');
@@ -493,14 +445,8 @@ export class HeyGenVideoGenerator {
       return preferredVoiceId;
     }
 
-    const preferred = voices.find((v) =>
-      v.voice_id === preferredVoiceId ||
-      v.id === preferredVoiceId
-    );
-    const defaultVoice = voices.find((v) =>
-      v.voice_id === DEFAULT_HEYGEN_VOICE_ID ||
-      v.id === DEFAULT_HEYGEN_VOICE_ID
-    );
+    const preferred = voices.find((v) => v.voice_id === preferredVoiceId || v.id === preferredVoiceId);
+    const defaultVoice = voices.find((v) => v.voice_id === DEFAULT_HEYGEN_VOICE_ID || v.id === DEFAULT_HEYGEN_VOICE_ID);
     const fallback = preferred || defaultVoice || voices[0];
     const voiceId = fallback.voice_id || fallback.id;
     if (!voiceId) {
@@ -513,9 +459,6 @@ export class HeyGenVideoGenerator {
     return voiceId;
   }
 
-  /**
-   * Generate script using OpenAI (falls back to template if no API key)
-   */
   async generateProductScript(product) {
     if (product.videoScript && String(product.videoScript).trim().length > 0) {
       this.log(`Using provided script for ${product.name}`);
@@ -527,8 +470,10 @@ export class HeyGenVideoGenerator {
       : '';
     const keywordList = Array.isArray(product.keywords) ? product.keywords.filter(Boolean) : [];
     const description = String(product.description || '').trim();
+    const usage = Array.isArray(product.usage) ? product.usage.filter(Boolean).slice(0, 3).join(' | ') : '';
     const metadataHint = [
       description ? `Product description from catalog: ${description}` : '',
+      usage ? `Usage directions: ${usage}` : '',
       keywordList.length ? `Keywords from catalog: ${keywordList.join(', ')}` : '',
     ].filter(Boolean).join(' ');
 
@@ -538,22 +483,22 @@ export class HeyGenVideoGenerator {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             model: 'gpt-4o-mini',
-            max_tokens: 300,
+            max_tokens: 360,
             messages: [
               {
                 role: 'system',
-                content: `You write short enthusiastic 30-second video scripts for Nature's Way Soil lawn and garden products. Scripts must be 60-80 words, conversational, mention the product name, one key problem it solves, one benefit, that it's pet-safe and organic, and end with a call to action to visit NaturesWaySoil.com. No emojis. Natural speech only.${styleReference}`
+                content: `You write high-converting 30-second short-form video scripts for Nature's Way Soil lawn, garden, compost, pet-lawn, and soil health products. Write 70-90 spoken words. Structure: 1) first sentence is a strong problem hook, 2) identify the product naturally, 3) explain one visual before/after benefit, 4) give one simple usage cue, 5) end with a direct call to action. Sound like a helpful farmer/soil educator, not a corporate ad. Avoid unsupported pesticide, disease, medical, or guaranteed-result claims. Do not mention scenes, camera directions, hashtags, emojis, or quotation marks. Natural speech only.${styleReference}`,
               },
               {
                 role: 'user',
-                content: `Write a 30-second video script for: ${product.name}. Description: ${description || product.name}. ${metadataHint}`
-              }
-            ]
-          })
+                content: `Write the script for: ${product.name}. Category: ${product.category || 'General'}. ${metadataHint}`,
+              },
+            ],
+          }),
         });
         if (response.ok) {
           const data = await response.json();
@@ -568,29 +513,32 @@ export class HeyGenVideoGenerator {
       }
     }
 
-    // Fallback template
-    const problems = ['yellowing grass', 'brown patches', 'thin lawn', 'bare spots', 'poor soil', 'slow growth'];
-    const benefits = ['lush green growth', 'stronger roots', 'healthier soil', 'faster recovery', 'natural nutrition'];
-    const randomProblem = problems[Math.floor(Math.random() * problems.length)];
-    const randomBenefit = benefits[Math.floor(Math.random() * benefits.length)];
-    const keywordLine = keywordList.length ? `Key focus: ${keywordList.slice(0, 4).join(', ')}.` : '';
-    const descriptionLine = description ? `${description}.` : '';
-    return `Hi! I'm here to tell you about ${product.name}, the natural solution for ${randomProblem}. ${descriptionLine} This organic formula delivers ${randomBenefit} without harsh chemicals. ${keywordLine} It's completely pet-safe and kid-friendly. Simply apply to your lawn or garden and you'll see results in just days. ${product.name} works with nature, not against it. Get yours today at NaturesWaySoil.com!`;
+    const category = String(product.category || '').toLowerCase();
+    const problem = category.includes('pet')
+      ? 'Tired of yellow lawn spots where your dog likes to go?'
+      : category.includes('compost') || category.includes('soil')
+        ? 'If your plants look weak, the problem may be tired soil, not the plant.'
+        : 'If your lawn or garden is growing slowly, your soil may need more than basic fertilizer.';
+    const benefit = category.includes('pet')
+      ? 'It works at the soil level to support recovery, odor control, and healthier regrowth.'
+      : category.includes('compost') || category.includes('soil')
+        ? 'It helps improve root contact, moisture retention, and long-term soil biology.'
+        : 'It supports stronger roots, better nutrient uptake, and steady green growth.';
+    const usageCue = Array.isArray(product.usage) && product.usage[0]
+      ? product.usage[0]
+      : 'Mix with water and apply evenly to the target area.';
+
+    return `${problem} ${product.name} is made to help bring life back into the soil naturally. ${benefit} ${usageCue} Use it as part of your regular soil care routine, especially during active growth. Feed the soil, support the plant, and see why Nature's Way Soil is built for naturally stronger results. Visit NaturesWaySoil.com to learn more.`;
   }
 
-  /**
-   * Generate video for a product
-   */
   async generateProductVideo(product, outputDir = './public/videos', options = {}) {
     try {
       const script = await this.generateProductScript(product);
-      const title = `${product.name} - Natural Lawn Care Solution`;
-
-      // Resolve avatar and voice: env vars → sheet per-product values → config mapping → API lookup
+      const title = `${product.name} - Nature's Way Soil`;
       const sheetAV = resolveSheetAvatarVoice(product);
       const configAV = resolveConfigAvatarVoice(product);
       let avatarId = process.env.HEYGEN_AVATAR_ID || sheetAV.avatarId || configAV.avatarId || DEFAULT_HEYGEN_AVATAR_ID;
-      let voiceId  = process.env.HEYGEN_VOICE_ID  || sheetAV.voiceId  || configAV.voiceId  || null;
+      let voiceId = process.env.HEYGEN_VOICE_ID || sheetAV.voiceId || configAV.voiceId || null;
 
       this.log(`Avatar/voice resolution → avatar: ${avatarId}, voice: ${voiceId || '(resolve from API)'} (sheet overrides config when present)`);
 
@@ -608,22 +556,19 @@ export class HeyGenVideoGenerator {
         this.log(`Falling back to default voice_id because voice lookup failed: ${error.message}`);
         voiceId = voiceId || DEFAULT_HEYGEN_VOICE_ID;
       }
-      const productImage = options.productImage || null;
 
-      // Create video
+      const productImage = options.productImage || null;
       const videoJob = await this.createVideo({
         script,
         title,
         avatarId,
         voiceId,
-        background: '#0d3b2a', // Nature's Way brand color
+        background: options.background || DEFAULT_BRAND_BG,
         productImage,
+        product,
       });
 
-      // Wait for completion
       const result = await this.waitForCompletion(videoJob.videoId);
-
-      // Download video
       const outputPath = path.join(outputDir, `${product.id}.mp4`);
       await fs.mkdir(outputDir, { recursive: true });
       await this.downloadVideo(result.videoUrl, outputPath);
@@ -633,9 +578,8 @@ export class HeyGenVideoGenerator {
         videoPath: outputPath,
         videoUrl: result.videoUrl,
         duration: result.duration,
-        script: script
+        script,
       };
-
     } catch (error) {
       this.log(`Failed to generate video for ${product.name}: ${error.message}`);
       throw error;
@@ -643,27 +587,20 @@ export class HeyGenVideoGenerator {
   }
 }
 
-// CLI usage
 async function main() {
   const command = process.argv[2];
 
   if (command === 'test') {
     console.log('🧪 Testing HeyGen integration...');
-
     try {
       const generator = new HeyGenVideoGenerator();
-
-      // Test API connection
       console.log('📋 Fetching available avatars...');
       const avatars = await generator.getAvatars();
       console.log(`✅ Found ${avatars.length} avatars`);
-
       console.log('🎤 Fetching available voices...');
       const voices = await generator.getVoices();
       console.log(`✅ Found ${voices.length} voices`);
-
       console.log('🎉 HeyGen integration is working!');
-
     } catch (error) {
       console.error('❌ HeyGen test failed:', error.message);
       console.error('');
@@ -676,22 +613,16 @@ async function main() {
   } else if (command === 'avatars') {
     console.log('👥 Available HeyGen Avatars:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
     try {
       const generator = new HeyGenVideoGenerator();
       const avatars = await generator.getAvatars();
-
       avatars.slice(0, 10).forEach(avatar => {
         console.log(`🎭 ${avatar.avatar_name || avatar.name}`);
         console.log(`   ID: ${avatar.avatar_id}`);
         console.log(`   Type: ${avatar.gender || 'Unknown'}`);
         console.log('');
       });
-
-      if (avatars.length > 10) {
-        console.log(`... and ${avatars.length - 10} more avatars available`);
-      }
-
+      if (avatars.length > 10) console.log(`... and ${avatars.length - 10} more avatars available`);
     } catch (error) {
       console.error('❌ Failed to fetch avatars:', error.message);
       process.exit(1);
@@ -699,11 +630,9 @@ async function main() {
   } else if (command === 'voices') {
     console.log('🎤 Available HeyGen Voices:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
     try {
       const generator = new HeyGenVideoGenerator();
       const voices = await generator.getVoices();
-
       voices.slice(0, 10).forEach(voice => {
         console.log(`🗣️ ${voice.voice_name || voice.name}`);
         console.log(`   ID: ${voice.voice_id}`);
@@ -711,11 +640,7 @@ async function main() {
         console.log(`   Gender: ${voice.gender || 'Unknown'}`);
         console.log('');
       });
-
-      if (voices.length > 10) {
-        console.log(`... and ${voices.length - 10} more voices available`);
-      }
-
+      if (voices.length > 10) console.log(`... and ${voices.length - 10} more voices available`);
     } catch (error) {
       console.error('❌ Failed to fetch voices:', error.message);
       process.exit(1);
@@ -735,10 +660,8 @@ async function main() {
   }
 }
 
-// Export for use in other modules
 export default HeyGenVideoGenerator;
 
-// Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
