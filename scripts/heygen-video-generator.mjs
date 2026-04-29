@@ -54,8 +54,6 @@ function splitScriptIntoScenes(script, count) {
   }
   return scenes.length ? scenes : [script];
 }
-  return scenes.length ? scenes : [script];
-}
 
 function loadVideoConfig() {
   try {
