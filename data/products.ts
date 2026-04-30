@@ -8,7 +8,48 @@ export interface ProductData {
   image: string;
   description: string;
   category: string;
-  tags: string[];
+  tags: string[  {
+    id: 'NWS_022',
+    asin: 'B0GTBZ7N56',
+    name: 'Fruit Tree Fertilizer',
+    price: 34.99,
+    image: '/images/products/NWS_022/main.jpg',
+    description: 'Living liquid fertilizer formulated for woody fruiting plants. Delivers soluble nitrogen, potassium, humic acid, and trace minerals directly to the root zone — apply at bud break, fruit set, and post-harvest for stronger trees every season.',
+    category: 'Fertilizer',
+    tags: ['fruit-tree', 'orchard', 'apple', 'peach', 'citrus', 'fig', 'liquid', 'organic'],
+    features: [
+      'Formulated specifically for woody fruiting plants',
+      'Soluble N-P-K + humic acid + trace minerals',
+      'Apply at 3 critical windows: bud break, fruit set, post-harvest',
+      'Fast root-zone uptake via liquid delivery',
+      'Safe for organic production',
+      'Works on apples, pears, peaches, citrus, figs, and more',
+      'Covers up to 20 trees per application',
+      'No synthetic chemicals — family farm formula',
+    ],
+    images: [
+      '/images/products/NWS_022/main.jpg',
+      '/images/products/NWS_022/thumb.jpg',
+    ],
+    inStock: true,
+    video: '/videos/NWS_022.mp4',
+    videoWebm: '/videos/NWS_022.webm',
+    videoPoster: '/videos/NWS_022.jpg',
+    sizes: [
+      { name: '1 Gallon', price: 34.99, sku: 'FT-NWS-1GAL' },
+      { name: '2.5 Gallon', price: 79.99, sku: 'FT-NWS-25GAL' },
+    ],
+    usage: [
+      'Shake well. Dilute 4 oz per gallon of water.',
+      'Drench the drip line of each tree — apply where feeder roots are active.',
+      'First application: bud break (early spring, before leaves open).',
+      'Second application: fruit set (when small fruit first appears).',
+      'Third application: post-harvest (after picking, to restore the tree).',
+      'Covers up to 20 mature trees per gallon of concentrate.',
+      'Can also be applied via foliar spray at 2 oz per gallon during early season.',
+    ],
+  },
+];
   features: string[];
   images: string[];
   video?: string;
