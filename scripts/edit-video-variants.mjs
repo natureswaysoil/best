@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Create visually distinct A/B/C edits from already-rendered variant videos.
- * This uses FFmpeg so you can improve creative variation without spending more HeyGen credits.
+ * Uses FFmpeg textfile overlays to avoid quote/unicode parsing issues.
  */
 
 import fs from 'fs';
@@ -46,21 +46,17 @@ function saveJson(file, data) {
 }
 
 function normalizeText(text) {
-  return String(text || '').replace(/\s+/g, ' ').trim();
+  return String(text || '').replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/[\u2026]/g, '...').replace(/\s+/g, ' ').trim();
 }
 
 function shortText(text, maxLen = 58) {
   const normalized = normalizeText(text);
   if (normalized.length <= maxLen) return normalized;
-  return `${normalized.slice(0, maxLen - 1).trimEnd()}…`;
+  return `${normalized.slice(0, maxLen - 3).trimEnd()}...`;
 }
 
-function ffmpegText(text) {
-  return String(text || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/:/g, '\\:')
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, ' ');
+function safePath(filePath) {
+  return filePath.replace(/\\/g, '/').replace(/:/g, '\\:');
 }
 
 function fileForVariant(variant) {
@@ -87,40 +83,64 @@ function updatePerformance(variant, patch) {
   saveJson(PERFORMANCE_FILE, perf);
 }
 
-function buildOverlayFilter(variant) {
-  const brand = "Nature's Way Soil";
-  const hook = shortText(variant.firstTwoSeconds || variant.hook, 64);
-  const name = shortText(variant.productName || variant.productId, 46);
-  const cta = shortText(variant.cta || 'NaturesWaySoil.com', 50);
+function writeText(tmpDir, name, value) {
+  const file = path.join(tmpDir, `${name}.txt`);
+  fs.writeFileSync(file, normalizeText(value), 'utf8');
+  return safePath(file);
+}
+
+function drawText(input, output, textFile, opts) {
+  const parts = [
+    `${input}drawtext=textfile='${textFile}'`,
+    `fontcolor=${opts.fontcolor || 'white'}`,
+    `fontsize=${opts.fontsize || 34}`,
+    opts.box ? `box=1:boxcolor=${opts.boxcolor || 'black@0.45'}:boxborderw=${opts.boxborderw || 12}` : '',
+    `x=${opts.x}`,
+    `y=${opts.y}`,
+    opts.enable ? `enable='${opts.enable}'` : '',
+    output,
+  ].filter(Boolean);
+  return parts.join(':');
+}
+
+function buildOverlayFilter(variant, tmpDir) {
+  const brandFile = writeText(tmpDir, 'brand', "Nature's Way Soil");
+  const hookFile = writeText(tmpDir, 'hook', shortText(variant.firstTwoSeconds || variant.hook, 64));
+  const stopFile = writeText(tmpDir, 'stop', 'STOP SCROLLING');
+  const demoFile = writeText(tmpDir, 'demo', 'DEMO');
+  const stepsFile = writeText(tmpDir, 'steps', '1. Find the problem | 2. Feed the soil | 3. Repeat as directed');
+  const nameFile = writeText(tmpDir, 'name', shortText(variant.productName || variant.productId, 46));
+  const benefitsFile = writeText(tmpDir, 'benefits', 'Supports soil health | Easy to apply as directed | Lawn & garden care');
+  const ctaFile = writeText(tmpDir, 'cta', shortText(variant.cta || 'NaturesWaySoil.com', 50));
 
   if (variant.variant === 'A') {
     return [
-      "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=contrast=1.07:saturation=1.15[v0]",
-      "[v0]drawbox=x=0:y=0:w=iw:h=360:color=black@0.62:t=fill[v1]",
-      `[v1]drawtext=text='${ffmpegText(hook)}':fontcolor=white:fontsize=58:box=1:boxcolor=black@0.25:boxborderw=18:x=(w-text_w)/2:y=90:enable='between(t,0,4)'[v2]`,
-      `[v2]drawtext=text='${ffmpegText('STOP SCROLLING')}':fontcolor=white:fontsize=38:box=1:boxcolor=black@0.55:boxborderw=14:x=48:y=40:enable='between(t,0,2.4)'[v3]`,
-      `[v3]drawtext=text='${ffmpegText(brand)}':fontcolor=white:fontsize=34:box=1:boxcolor=black@0.45:boxborderw=12:x=42:y=h-th-58[vout]`
+      '[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=contrast=1.07:saturation=1.15[v0]',
+      '[v0]drawbox=x=0:y=0:w=iw:h=360:color=black@0.62:t=fill[v1]',
+      drawText('[v1]', '[v2]', hookFile, { fontcolor: 'white', fontsize: 58, box: true, boxcolor: 'black@0.25', boxborderw: 18, x: '(w-text_w)/2', y: '90', enable: 'between(t,0,4)' }),
+      drawText('[v2]', '[v3]', stopFile, { fontcolor: 'white', fontsize: 38, box: true, boxcolor: 'black@0.55', boxborderw: 14, x: '48', y: '40', enable: 'between(t,0,2.4)' }),
+      drawText('[v3]', '[vout]', brandFile, { fontcolor: 'white', fontsize: 34, box: true, boxcolor: 'black@0.45', boxborderw: 12, x: '42', y: 'h-th-58' })
     ].join(';');
   }
 
   if (variant.variant === 'B') {
     return [
-      "[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,eq=contrast=1.04:saturation=1.08[v0]",
-      "[v0]drawbox=x=0:y=0:w=430:h=720:color=black@0.45:t=fill[v1]",
-      `[v1]drawtext=text='${ffmpegText('DEMO')}':fontcolor=white:fontsize=52:box=1:boxcolor=black@0.45:boxborderw=16:x=42:y=56[v2]`,
-      `[v2]drawtext=text='${ffmpegText(shortText(variant.hook, 42))}':fontcolor=white:fontsize=34:box=1:boxcolor=black@0.28:boxborderw=14:x=42:y=148:enable='between(t,0,7)'[v3]`,
-      `[v3]drawtext=text='${ffmpegText('1. Find the problem | 2. Feed the soil | 3. Repeat as directed')}':fontcolor=white:fontsize=28:x=42:y=310:enable='between(t,5,22)'[v4]`,
-      `[v4]drawtext=text='${ffmpegText(brand)}':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.45:boxborderw=10:x=w-tw-36:y=h-th-34[vout]`
+      '[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,eq=contrast=1.04:saturation=1.08[v0]',
+      '[v0]drawbox=x=0:y=0:w=430:h=720:color=black@0.45:t=fill[v1]',
+      drawText('[v1]', '[v2]', demoFile, { fontcolor: 'white', fontsize: 52, box: true, boxcolor: 'black@0.45', boxborderw: 16, x: '42', y: '56' }),
+      drawText('[v2]', '[v3]', hookFile, { fontcolor: 'white', fontsize: 34, box: true, boxcolor: 'black@0.28', boxborderw: 14, x: '42', y: '148', enable: 'between(t,0,7)' }),
+      drawText('[v3]', '[v4]', stepsFile, { fontcolor: 'white', fontsize: 28, box: false, x: '42', y: '310', enable: 'between(t,5,22)' }),
+      drawText('[v4]', '[vout]', brandFile, { fontcolor: 'white', fontsize: 28, box: true, boxcolor: 'black@0.45', boxborderw: 10, x: 'w-tw-36', y: 'h-th-34' })
     ].join(';');
   }
 
   return [
-    "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0xF5F1E8[v0]",
-    "[v0]drawbox=x=760:y=0:w=520:h=720:color=white@0.86:t=fill[v1]",
-    `[v1]drawtext=text='${ffmpegText(name)}':fontcolor=0x143d2a:fontsize=38:x=800:y=80[v2]`,
-    `[v2]drawtext=text='${ffmpegText('Supports soil health | Easy to apply as directed | Lawn & garden care')}':fontcolor=0x1f1f1f:fontsize=26:x=800:y=230[v3]`,
-    `[v3]drawtext=text='${ffmpegText(cta)}':fontcolor=white:fontsize=30:box=1:boxcolor=0x0d3b2a@0.95:boxborderw=18:x=800:y=560[v4]`,
-    `[v4]drawtext=text='${ffmpegText(brand)}':fontcolor=0x0d3b2a:fontsize=28:x=40:y=h-th-32[vout]`
+    '[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0xF5F1E8[v0]',
+    '[v0]drawbox=x=760:y=0:w=520:h=720:color=white@0.86:t=fill[v1]',
+    drawText('[v1]', '[v2]', nameFile, { fontcolor: '0x143d2a', fontsize: 38, box: false, x: '800', y: '80' }),
+    drawText('[v2]', '[v3]', benefitsFile, { fontcolor: '0x1f1f1f', fontsize: 26, box: false, x: '800', y: '230' }),
+    drawText('[v3]', '[v4]', ctaFile, { fontcolor: 'white', fontsize: 30, box: true, boxcolor: '0x0d3b2a@0.95', boxborderw: 18, x: '800', y: '560' }),
+    drawText('[v4]', '[vout]', brandFile, { fontcolor: '0x0d3b2a', fontsize: 28, box: false, x: '40', y: 'h-th-32' })
   ].join(';');
 }
 
@@ -138,8 +158,9 @@ function editVariant(variant) {
     return true;
   }
 
-  const filter = buildOverlayFilter(variant);
-  const graphFile = path.join(os.tmpdir(), `${variant.productId}_${variant.variant}_edit.ffscript`);
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `${variant.productId}_${variant.variant}_edit_`));
+  const filter = buildOverlayFilter(variant, tmpDir);
+  const graphFile = path.join(tmpDir, 'filtergraph.ffscript');
   fs.writeFileSync(graphFile, filter);
 
   const args = [
@@ -156,7 +177,7 @@ function editVariant(variant) {
     console.error(filter);
     throw new Error(`FFmpeg edit failed for ${variant.outputName}`);
   }
-  try { fs.unlinkSync(graphFile); } catch {}
+  try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
 
   updatePerformance(variant, {
     status: 'edited',
