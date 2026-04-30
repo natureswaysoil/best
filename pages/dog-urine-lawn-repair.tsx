@@ -1,14 +1,46 @@
 import Head from 'next/head';
+import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, Star, Shield, Droplets, Sprout } from 'lucide-react';
 import Layout from '../components/Layout';
 
-const checkoutLinks = {
-  small: process.env.NEXT_PUBLIC_DOG_URINE_32OZ_CHECKOUT_URL || '/product/NWS_014',
-  gallon: process.env.NEXT_PUBLIC_DOG_URINE_GALLON_CHECKOUT_URL || '/product/NWS_014',
-  bundle: process.env.NEXT_PUBLIC_DOG_URINE_BUNDLE_CHECKOUT_URL || '/shop',
-  guide: process.env.NEXT_PUBLIC_LAWN_RECOVERY_GUIDE_URL || '/guide?src=dog-urine-landing',
+type CheckoutProduct = {
+  productId: string;
+  productName: string;
+  sizeName: string;
+  quantity: number;
+  price: number;
+  sku: string;
 };
+
+const dogProducts = {
+  small: {
+    productId: 'NWS_014',
+    productName: 'Dog Urine Neutralizer & Lawn Revitalizer',
+    sizeName: '32 oz',
+    quantity: 1,
+    price: 29.99,
+    sku: 'EG-PJ13-DA9T',
+  },
+  gallon: {
+    productId: 'NWS_014',
+    productName: 'Dog Urine Neutralizer & Lawn Revitalizer',
+    sizeName: '1 Gallon',
+    quantity: 1,
+    price: 59.99,
+    sku: 'T0-MB9Q-JIKC',
+  },
+  bundle: {
+    productId: 'NWS_014',
+    productName: 'Dog Urine Neutralizer & Lawn Revitalizer Bundle',
+    sizeName: 'Lawn Recovery Bundle',
+    quantity: 1,
+    price: 99.99,
+    sku: 'NWS-DOG-LAWN-BUNDLE',
+  },
+};
+
+const guideLink = process.env.NEXT_PUBLIC_LAWN_RECOVERY_GUIDE_URL || '/guide?src=dog-urine-landing';
 
 const faqs = [
   {
@@ -33,16 +65,61 @@ const faqs = [
   },
 ];
 
-function CtaButton({ href, children, secondary = false }: { href: string; children: React.ReactNode; secondary?: boolean }) {
+function GuideButton({ children, secondary = false }: { children: React.ReactNode; secondary?: boolean }) {
   return (
     <Link
-      href={href}
+      href={guideLink}
       className={secondary
         ? 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-nature-green-700 bg-white px-6 py-4 text-base font-extrabold text-nature-green-700 shadow-sm hover:bg-nature-green-50'
         : 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-nature-green-600 px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-green-900/20 hover:bg-nature-green-700'}
     >
       {children}
     </Link>
+  );
+}
+
+function CheckoutButton({ product, children, secondary = false }: { product: CheckoutProduct; children: React.ReactNode; secondary?: boolean }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function startCheckout() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.error || 'Unable to start checkout.');
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to start checkout.');
+      setLoading(false);
+    }
+  }
+
+  return (
+    <span className="inline-flex w-full flex-col sm:w-auto">
+      <button
+        type="button"
+        onClick={startCheckout}
+        disabled={loading}
+        className={secondary
+          ? 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-nature-green-700 bg-white px-6 py-4 text-base font-extrabold text-nature-green-700 shadow-sm hover:bg-nature-green-50 disabled:opacity-60'
+          : 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-nature-green-600 px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-green-900/20 hover:bg-nature-green-700 disabled:opacity-60'}
+      >
+        {loading ? 'Opening secure checkout…' : children}
+      </button>
+      {error && <span className="mt-2 text-sm font-semibold text-red-700">{error}</span>}
+    </span>
   );
 }
 
@@ -74,8 +151,8 @@ export default function DogUrineLawnRepair() {
                   Nature&apos;s Way Soil Dog Urine Neutralizer & Lawn Revitalizer helps support lawn recovery where dog urine has stressed the grass and soil — without relying on temporary green dye.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <CtaButton href={checkoutLinks.gallon}>Order Direct</CtaButton>
-                  <CtaButton href={checkoutLinks.guide} secondary>Get Free Lawn Recovery Guide</CtaButton>
+                  <CheckoutButton product={dogProducts.gallon}>Order Direct with Link</CheckoutButton>
+                  <GuideButton secondary>Get Free Lawn Recovery Guide</GuideButton>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-4">
                   {['Soil-level support', 'Not a green dye', 'Easy spot treatment'].map((benefit) => (
@@ -93,8 +170,8 @@ export default function DogUrineLawnRepair() {
                   className="w-full rounded-2xl shadow-xl object-cover"
                 />
                 <div className="absolute -bottom-5 -left-5 bg-white rounded-xl shadow-lg p-4 text-gray-900">
-                  <p className="text-2xl font-black text-nature-green-600">Direct</p>
-                  <p className="text-sm text-gray-600">from Nature&apos;s Way Soil</p>
+                  <p className="text-2xl font-black text-nature-green-600">Link</p>
+                  <p className="text-sm text-gray-600">secure Stripe checkout</p>
                 </div>
               </div>
             </div>
@@ -167,7 +244,7 @@ export default function DogUrineLawnRepair() {
                     'Helps support soil and root-zone conditions',
                     'Designed for spot treatment and routine lawn care',
                     'Useful for repeat dog areas and larger lawns',
-                    'Order direct for bundles and lawn recovery resources',
+                    'Order direct through secure Stripe checkout with Link',
                   ].map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <CheckCircle className="w-5 h-5 text-nature-green-600 flex-shrink-0 mt-0.5" />
@@ -176,8 +253,8 @@ export default function DogUrineLawnRepair() {
                   ))}
                 </ul>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <CtaButton href={checkoutLinks.gallon}>Order 1 Gallon Direct</CtaButton>
-                  <CtaButton href={checkoutLinks.small} secondary>Order 32 oz</CtaButton>
+                  <CheckoutButton product={dogProducts.gallon}>Order 1 Gallon with Link</CheckoutButton>
+                  <CheckoutButton product={dogProducts.small} secondary>Order 32 oz</CheckoutButton>
                 </div>
               </div>
             </div>
@@ -218,17 +295,17 @@ export default function DogUrineLawnRepair() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10 text-left">
               {[
-                { title: '32 oz Concentrate', copy: 'Best for small yards and first-time use.', href: checkoutLinks.small, button: 'Order 32 oz' },
-                { title: '1 Gallon', copy: 'Best for repeat dog spots and larger lawns.', href: checkoutLinks.gallon, button: 'Order 1 Gallon', badge: 'Most Popular' },
-                { title: 'Lawn Recovery Bundle', copy: 'Best value with add-ons such as sprayer or soil booster.', href: checkoutLinks.bundle, button: 'Get the Bundle', badge: 'Best Value' },
+                { title: '32 oz Concentrate', copy: 'Best for small yards and first-time use.', product: dogProducts.small, button: 'Order 32 oz' },
+                { title: '1 Gallon', copy: 'Best for repeat dog spots and larger lawns.', product: dogProducts.gallon, button: 'Order 1 Gallon', badge: 'Most Popular' },
+                { title: 'Lawn Recovery Bundle', copy: 'Best value with a direct-order bundle.', product: dogProducts.bundle, button: 'Get the Bundle', badge: 'Best Value' },
               ].map((offer) => (
                 <div key={offer.title} className={`relative rounded-2xl bg-white p-8 shadow-sm border ${offer.badge === 'Most Popular' ? 'border-nature-green-600 ring-2 ring-nature-green-600' : 'border-gray-100'}`}>
                   {offer.badge && <span className="absolute -top-4 left-6 rounded-full bg-nature-green-600 px-4 py-2 text-xs font-black uppercase tracking-wide text-white">{offer.badge}</span>}
                   <h3 className="text-2xl font-black text-gray-900">{offer.title}</h3>
                   <p className="mt-3 text-gray-600">{offer.copy}</p>
-                  <Link href={offer.href} className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-nature-green-600 px-5 py-3 font-extrabold text-white hover:bg-nature-green-700">
-                    {offer.button}
-                  </Link>
+                  <div className="mt-6">
+                    <CheckoutButton product={offer.product}>{offer.button}</CheckoutButton>
+                  </div>
                 </div>
               ))}
             </div>
@@ -241,7 +318,7 @@ export default function DogUrineLawnRepair() {
             <p className="text-lg text-gray-600 mb-8">
               Get the free Yellow Spot Lawn Recovery Guide and learn how to support grass recovery from the soil up.
             </p>
-            <CtaButton href={checkoutLinks.guide}>Get Free Lawn Recovery Guide</CtaButton>
+            <GuideButton>Get Free Lawn Recovery Guide</GuideButton>
           </div>
         </section>
 
@@ -302,8 +379,8 @@ export default function DogUrineLawnRepair() {
               Order direct from Nature&apos;s Way Soil and give your lawn soil-level support after dog urine stress.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <CtaButton href={checkoutLinks.gallon}>Order Direct</CtaButton>
-              <CtaButton href={checkoutLinks.guide} secondary>Get Free Guide</CtaButton>
+              <CheckoutButton product={dogProducts.gallon}>Order Direct with Link</CheckoutButton>
+              <GuideButton secondary>Get Free Guide</GuideButton>
             </div>
           </div>
         </section>
