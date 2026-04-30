@@ -2,11 +2,6 @@
 /**
  * Create visually distinct A/B/C edits from already-rendered variant videos.
  * This uses FFmpeg so you can improve creative variation without spending more HeyGen credits.
- *
- * Usage:
- *   node scripts/edit-video-variants.mjs --product NWS_001
- *   node scripts/edit-video-variants.mjs --product NWS_001 --variant A
- *   node scripts/edit-video-variants.mjs --force
  */
 
 import fs from 'fs';
@@ -101,7 +96,7 @@ function buildOverlayFilter(variant) {
   if (variant.variant === 'A') {
     return [
       "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,eq=contrast=1.07:saturation=1.15[v0]",
-      `[v0]drawbox=x=0:y=0:w=iw:h=360:color=black@0.62:t=fill[v1]`,
+      "[v0]drawbox=x=0:y=0:w=iw:h=360:color=black@0.62:t=fill[v1]",
       `[v1]drawtext=text='${ffmpegText(hook)}':fontcolor=white:fontsize=58:box=1:boxcolor=black@0.25:boxborderw=18:x=(w-text_w)/2:y=90:enable='between(t,0,4)'[v2]`,
       `[v2]drawtext=text='${ffmpegText('STOP SCROLLING')}':fontcolor=white:fontsize=38:box=1:boxcolor=black@0.55:boxborderw=14:x=48:y=40:enable='between(t,0,2.4)'[v3]`,
       `[v3]drawtext=text='${ffmpegText(brand)}':fontcolor=white:fontsize=34:box=1:boxcolor=black@0.45:boxborderw=12:x=42:y=h-th-58[vout]`
@@ -111,19 +106,19 @@ function buildOverlayFilter(variant) {
   if (variant.variant === 'B') {
     return [
       "[0:v]scale=1280:720:force_original_aspect_ratio=increase,crop=1280:720,eq=contrast=1.04:saturation=1.08[v0]",
-      `[v0]drawbox=x=0:y=0:w=430:h=720:color=black@0.45:t=fill[v1]`,
+      "[v0]drawbox=x=0:y=0:w=430:h=720:color=black@0.45:t=fill[v1]",
       `[v1]drawtext=text='${ffmpegText('DEMO')}':fontcolor=white:fontsize=52:box=1:boxcolor=black@0.45:boxborderw=16:x=42:y=56[v2]`,
       `[v2]drawtext=text='${ffmpegText(shortText(variant.hook, 42))}':fontcolor=white:fontsize=34:box=1:boxcolor=black@0.28:boxborderw=14:x=42:y=148:enable='between(t,0,7)'[v3]`,
-      `[v3]drawtext=text='${ffmpegText('1. Find the problem\\n2. Feed the soil\\n3. Repeat as directed')}':fontcolor=white:fontsize=32:line_spacing=12:x=42:y=310:enable='between(t,5,22)'[v4]`,
+      `[v3]drawtext=text='${ffmpegText('1. Find the problem | 2. Feed the soil | 3. Repeat as directed')}':fontcolor=white:fontsize=28:x=42:y=310:enable='between(t,5,22)'[v4]`,
       `[v4]drawtext=text='${ffmpegText(brand)}':fontcolor=white:fontsize=28:box=1:boxcolor=black@0.45:boxborderw=10:x=w-tw-36:y=h-th-34[vout]`
     ].join(';');
   }
 
   return [
     "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=0xF5F1E8[v0]",
-    `[v0]drawbox=x=760:y=0:w=520:h=720:color=white@0.86:t=fill[v1]`,
-    `[v1]drawtext=text='${ffmpegText(name)}':fontcolor=0x143d2a:fontsize=38:box=1:boxcolor=white@0.0:boxborderw=8:x=800:y=80[v2]`,
-    `[v2]drawtext=text='${ffmpegText('Supports soil health\\nEasy to apply as directed\\nMade for lawn & garden care')}':fontcolor=0x1f1f1f:fontsize=30:line_spacing=14:x=800:y=230[v3]`,
+    "[v0]drawbox=x=760:y=0:w=520:h=720:color=white@0.86:t=fill[v1]",
+    `[v1]drawtext=text='${ffmpegText(name)}':fontcolor=0x143d2a:fontsize=38:x=800:y=80[v2]`,
+    `[v2]drawtext=text='${ffmpegText('Supports soil health | Easy to apply as directed | Lawn & garden care')}':fontcolor=0x1f1f1f:fontsize=26:x=800:y=230[v3]`,
     `[v3]drawtext=text='${ffmpegText(cta)}':fontcolor=white:fontsize=30:box=1:boxcolor=0x0d3b2a@0.95:boxborderw=18:x=800:y=560[v4]`,
     `[v4]drawtext=text='${ffmpegText(brand)}':fontcolor=0x0d3b2a:fontsize=28:x=40:y=h-th-32[vout]`
   ].join(';');
@@ -156,8 +151,12 @@ function editVariant(variant) {
   ];
 
   const result = spawnSync('ffmpeg', args, { stdio: 'inherit' });
+  if (result.status !== 0) {
+    console.error('--- FFmpeg filter graph that failed ---');
+    console.error(filter);
+    throw new Error(`FFmpeg edit failed for ${variant.outputName}`);
+  }
   try { fs.unlinkSync(graphFile); } catch {}
-  if (result.status !== 0) throw new Error(`FFmpeg edit failed for ${variant.outputName}`);
 
   updatePerformance(variant, {
     status: 'edited',
