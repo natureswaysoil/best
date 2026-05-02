@@ -1,0 +1,312 @@
+{
+  "NWS_014": {
+    "product": "Dog Urine Neutralizer & Lawn Repair",
+    "funnelUrl": "/lawn-repair",
+    "variations": [
+      {
+        "angle": "problem-solution",
+        "hook": "Dog pee killing your grass?",
+        "scenes": [
+          "Dog pee killing your grass?",
+          "Yellow spots keep coming back?",
+          "The problem is in the soil.",
+          "Treat urine salts at the root zone.",
+          "Nature's Way Soil Dog Urine Neutralizer",
+          "Save 15% on your first direct order."
+        ],
+        "voiceover": "Dog pee killing your grass? Those yellow spots keep coming back because urine salts build up in the soil. Nature's Way Soil Dog Urine Neutralizer helps treat the problem at the soil level. Shop direct and save 15% on your first order.",
+        "caption": "Dog urine damage? Fix it at the soil level. Save 15% on your first direct order: /lawn-repair"
+      },
+      {
+        "angle": "not-a-dye",
+        "hook": "This is not green lawn dye.",
+        "scenes": [
+          "This is not green lawn dye.",
+          "Dog urine damage starts in the soil.",
+          "Neutralize the problem area.",
+          "Support real grass recovery.",
+          "Pet-safe lawn care.",
+          "First order? Save 15%."
+        ],
+        "voiceover": "This is not green lawn dye. Dog urine damage starts in the soil, so covering the spot is not enough. Treat the affected area and support real recovery with Nature's Way Soil.",
+        "caption": "Not a dye. Real soil-level lawn repair. First-time direct customers save 15%."
+      },
+      {
+        "angle": "pet-owner",
+        "hook": "Your dog is not the problem.",
+        "scenes": [
+          "Your dog is not the problem.",
+          "Urine salts stress the grass.",
+          "The soil needs help recovering.",
+          "Spray. Water in. Repeat as needed.",
+          "Made for pet owners.",
+          "Shop direct and save."
+        ],
+        "voiceover": "Your dog is not the problem. The issue is what urine salts do to the soil. Help your lawn recover with a pet-safe formula made for dog owners.",
+        "caption": "Your dog is not the problem. Treat the soil and help the lawn recover."
+      },
+      {
+        "angle": "stop-reseeding",
+        "hook": "Stop reseeding the same dead spot.",
+        "scenes": [
+          "Stop reseeding the same dead spot.",
+          "Grass struggles when soil is stressed.",
+          "Treat the urine-damaged zone first.",
+          "Then grass has a better chance.",
+          "Nature's Way Soil lawn repair.",
+          "SAVE15 for first orders."
+        ],
+        "voiceover": "Stop reseeding the same dead spot before you fix the soil. Treat the urine-damaged zone first so new grass has a better chance to come back strong.",
+        "caption": "Before you reseed, treat the soil. SAVE15 for first-time direct customers."
+      }
+    ]
+  },
+  "NWS_011": {
+    "product": "Liquid Humic & Fulvic Acid with Kelp",
+    "funnelUrl": "/soil-boost",
+    "variations": [
+      {
+        "angle": "nutrient-lockout",
+        "hook": "Fertilizer not working?",
+        "scenes": [
+          "Fertilizer not working?",
+          "Your soil may be locked up.",
+          "Humic + fulvic acids help nutrient uptake.",
+          "Kelp supports root vigor.",
+          "Fix soil first.",
+          "Save 15% direct."
+        ],
+        "voiceover": "If fertilizer is not working like it should, your soil may be limiting nutrient uptake. Humic, fulvic, and kelp help support better soil performance from the roots up.",
+        "caption": "Fix soil, not symptoms. Humic + fulvic + kelp for stronger plant support."
+      },
+      {
+        "angle": "root-growth",
+        "hook": "Weak roots mean weak plants.",
+        "scenes": [
+          "Weak roots mean weak plants.",
+          "Soil biology matters.",
+          "Humic acid supports nutrient movement.",
+          "Kelp supports plant vigor.",
+          "Use on lawns, gardens, trees, and containers.",
+          "First order saves 15%."
+        ],
+        "voiceover": "Weak roots mean weak plants. Support the soil around the roots with humic acid, fulvic acid, and kelp for better growth potential.",
+        "caption": "Stronger plants start below the surface. Save 15% on your first direct order."
+      },
+      {
+        "angle": "broad-use",
+        "hook": "One soil booster. Many uses.",
+        "scenes": [
+          "One soil booster. Many uses.",
+          "Lawns.",
+          "Gardens.",
+          "Trees.",
+          "Raised beds and containers.",
+          "Humic + fulvic + kelp."
+        ],
+        "voiceover": "One soil booster can support lawns, gardens, trees, raised beds, and containers. Humic, fulvic, and kelp are a simple way to upgrade your soil routine.",
+        "caption": "Lawns, gardens, trees, containers — one soil support product."
+      },
+      {
+        "angle": "dead-soil",
+        "hook": "Your plants may not need more fertilizer.",
+        "scenes": [
+          "Your plants may not need more fertilizer.",
+          "They may need better soil.",
+          "Support nutrient uptake.",
+          "Improve root zone activity.",
+          "Add humic, fulvic, and kelp.",
+          "Shop direct and save."
+        ],
+        "voiceover": "Your plants may not need more fertilizer. They may need better soil. Support nutrient uptake and root zone activity with humic, fulvic, and kelp.",
+        "caption": "Better soil can make fertilizer work harder. Shop direct and save 15%."
+      }
+    ]
+  },
+  "NWS_013": {
+    "product": "Enhanced Living Compost with Fermented Duckweed",
+    "funnelUrl": "/living-compost",
+    "variations": [
+      {
+        "angle": "not-bulk-filler",
+        "hook": "Most compost is bulk filler.",
+        "scenes": [
+          "Most compost is bulk filler.",
+          "This is concentrated living compost.",
+          "Worm castings.",
+          "Activated biochar.",
+          "Fermented duckweed extract.",
+          "Upgrade your soil."
+        ],
+        "voiceover": "Most compost is bulk filler. Nature's Way Soil Living Compost is concentrated with worm castings, activated biochar, and fermented duckweed extract to upgrade your soil.",
+        "caption": "Not bulk filler. Worm castings + biochar + living soil support."
+      },
+      {
+        "angle": "small-bag-big-impact",
+        "hook": "Small bag. Big soil impact.",
+        "scenes": [
+          "Small bag. Big soil impact.",
+          "Use less than bulky compost.",
+          "Add to containers.",
+          "Topdress beds.",
+          "Support roots and moisture retention.",
+          "Save 15% direct."
+        ],
+        "voiceover": "Small bag, big soil impact. Use this concentrated compost in containers, raised beds, and transplant zones to support roots and moisture retention.",
+        "caption": "Small bag, big impact. Upgrade beds, containers, and transplant zones."
+      },
+      {
+        "angle": "transplant",
+        "hook": "Transplants need better soil contact.",
+        "scenes": [
+          "Transplants need better soil contact.",
+          "Weak soil slows establishment.",
+          "Add living compost around roots.",
+          "Support moisture and nutrients.",
+          "Help plants start stronger.",
+          "First order saves 15%."
+        ],
+        "voiceover": "Transplants need better soil contact. Add living compost around the root zone to support moisture, nutrients, and a stronger start.",
+        "caption": "Help transplants start stronger with living compost."
+      },
+      {
+        "angle": "biochar-castings",
+        "hook": "Biochar plus worm castings is a soil upgrade.",
+        "scenes": [
+          "Biochar plus worm castings is a soil upgrade.",
+          "Castings feed soil biology.",
+          "Biochar helps hold water and nutrients.",
+          "Compost brings it together.",
+          "Use in beds and containers.",
+          "Shop direct and save."
+        ],
+        "voiceover": "Biochar and worm castings work together as a soil upgrade. Castings support biology, while biochar helps hold water and nutrients in the root zone.",
+        "caption": "Biochar + worm castings = better soil support."
+      }
+    ]
+  },
+  "NWS_021": {
+    "product": "Horse Safe Hay, Pasture & Lawn Fertilizer",
+    "funnelUrl": "/pasture-boost",
+    "variations": [
+      {
+        "angle": "thin-pasture",
+        "hook": "Thin pasture? Feed the soil and grass.",
+        "scenes": [
+          "Thin pasture?",
+          "Weak grass needs better nutrition.",
+          "Liquid feeding is easy to apply.",
+          "Support thicker growth.",
+          "Great for hay, pasture, and lawns.",
+          "Save 15% first order."
+        ],
+        "voiceover": "Thin pasture starts with underfed grass and tired soil. Nature's Way Soil Hay, Pasture, and Lawn Fertilizer supports thicker growth with easy liquid application.",
+        "caption": "Thin pasture or weak lawn? Feed it right. Save 15% on your first direct order."
+      },
+      {
+        "angle": "horse-safe",
+        "hook": "Need a horse-safe pasture fertilizer?",
+        "scenes": [
+          "Need a horse-safe pasture fertilizer?",
+          "Support grass growth naturally.",
+          "Apply to hay fields, pasture, and lawns.",
+          "No harsh synthetic lawn routine.",
+          "Built for landowners.",
+          "Shop direct and save."
+        ],
+        "voiceover": "Need a horse-safe pasture fertilizer? Support grass growth on hay fields, pasture, and lawns with a simple liquid feed built for landowners.",
+        "caption": "Horse-safe pasture and lawn support for landowners."
+      },
+      {
+        "angle": "yield",
+        "hook": "Better pasture starts before the next cutting.",
+        "scenes": [
+          "Better pasture starts before the next cutting.",
+          "Do not wait until grass is weak.",
+          "Feed during active growth.",
+          "Support color and density.",
+          "Liquid pasture nutrition.",
+          "First order saves 15%."
+        ],
+        "voiceover": "Better pasture starts before the next cutting. Feed during active growth to support better color, density, and grass performance.",
+        "caption": "Feed before the grass gets weak. Pasture support for active growth."
+      },
+      {
+        "angle": "lawn-and-acreage",
+        "hook": "For lawns, fields, and pasture.",
+        "scenes": [
+          "For lawns, fields, and pasture.",
+          "One liquid feed for grass growth.",
+          "Easy to dilute and apply.",
+          "Supports thicker green growth.",
+          "Built for homeowners and landowners.",
+          "Shop direct. Save 15%."
+        ],
+        "voiceover": "For lawns, fields, and pasture, this liquid feed supports thicker green growth and easy application for homeowners and landowners.",
+        "caption": "Lawns, fields, and pasture — simple liquid grass nutrition."
+      }
+    ]
+  },
+  "NWS_018": {
+    "product": "Seaweed & Humic Acid Lawn Treatment",
+    "funnelUrl": "/soil-boost",
+    "variations": [
+      {
+        "angle": "green-lawn",
+        "hook": "Want a greener lawn without guessing?",
+        "scenes": [
+          "Want a greener lawn without guessing?",
+          "Support the soil first.",
+          "Seaweed supports plant vigor.",
+          "Humic acid supports nutrient uptake.",
+          "Use during active growth.",
+          "Save 15% direct."
+        ],
+        "voiceover": "Want a greener lawn without guessing? Support the soil first with seaweed and humic acid to help grass use nutrients better.",
+        "caption": "Greener lawn starts with better soil support. Seaweed + humic acid."
+      },
+      {
+        "angle": "soil-conditioner",
+        "hook": "Your lawn needs more than nitrogen.",
+        "scenes": [
+          "Your lawn needs more than nitrogen.",
+          "Soil condition matters.",
+          "Humic acid helps nutrient movement.",
+          "Seaweed supports stress tolerance.",
+          "Feed the root zone.",
+          "First order saves 15%."
+        ],
+        "voiceover": "Your lawn needs more than nitrogen. Soil condition matters. Humic acid and seaweed support the root zone so your lawn can perform better.",
+        "caption": "Your lawn needs more than nitrogen. Support the root zone."
+      },
+      {
+        "angle": "summer-stress",
+        "hook": "Heat stressing your lawn?",
+        "scenes": [
+          "Heat stressing your lawn?",
+          "Grass needs root support.",
+          "Seaweed helps plant vigor.",
+          "Humic acid supports soil function.",
+          "Apply before stress gets worse.",
+          "Shop direct and save."
+        ],
+        "voiceover": "Heat can stress your lawn fast. Support the root zone with seaweed and humic acid before stress gets worse.",
+        "caption": "Heat stress? Support your lawn before it fades."
+      },
+      {
+        "angle": "hose-end",
+        "hook": "Easy lawn treatment in minutes.",
+        "scenes": [
+          "Easy lawn treatment in minutes.",
+          "Mix with water.",
+          "Apply evenly.",
+          "Support soil and roots.",
+          "Seaweed plus humic acid.",
+          "Save 15% first order."
+        ],
+        "voiceover": "Easy lawn treatment in minutes. Mix with water, apply evenly, and support soil and roots with seaweed plus humic acid.",
+        "caption": "Easy lawn treatment: mix, apply, support the soil."
+      }
+    ]
+  }
+}
