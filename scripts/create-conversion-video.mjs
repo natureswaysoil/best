@@ -88,20 +88,34 @@ function writeTextFile(text) {
   fs.writeFileSync(textFile, text, 'utf8');
   return textFile;
 }
-function createFallbackScene(text, outFile, duration, bg = '0x234f32') {
+function createImageScene(imageFile, text, outFile, duration, productMode = false) {
+  const textFile = writeTextFile(text);
+  const filter = productMode
+    ? [
+        '[0:v]scale=1080:1920,setsar=1,format=yuv420p[bg]',
+        '[1:v]scale=760:-2:force_original_aspect_ratio=decrease,format=rgba[prod]',
+        '[bg][prod]overlay=x=(W-w)/2:y=340[withprod]',
+        `[withprod]drawtext=textfile=${textFile}:fontcolor=white:fontsize=58:box=1:boxcolor=black@0.48:boxborderw=24:x=(w-text_w)/2:y=1320:line_spacing=14[vout]`
+      ].join(';')
+    : [
+        `[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,zoompan=z='min(zoom+0.0015,1.10)':d=${duration * 30}:s=1080x1920:fps=30,format=yuv420p[bg]`,
+        `[bg]drawtext=textfile=${textFile}:fontcolor=white:fontsize=62:box=1:boxcolor=black@0.44:boxborderw=22:x=(w-text_w)/2:y=1450:line_spacing=14[vout]`
+      ].join(';');
+
+  const args = productMode
+    ? ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x234f32:s=1080x1920:d=${duration}`, '-loop', '1', '-t', String(duration), '-i', imageFile, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-r', '30', outFile]
+    : ['-y', '-hide_banner', '-loglevel', 'error', '-loop', '1', '-t', String(duration), '-i', imageFile, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-r', '30', outFile];
+  run('ffmpeg', args);
+}
+function createFallbackScene(text, outFile, duration, productImages = []) {
+  const image = productImages[0];
+  if (image) return createImageScene(image, text, outFile, duration, false);
   const textFile = writeTextFile(text);
   const filter = `drawtext=textfile=${textFile}:fontcolor=white:fontsize=64:box=1:boxcolor=black@0.45:boxborderw=26:x=(w-text_w)/2:y=(h-text_h)/2:line_spacing=16`;
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=${bg}:s=1080x1920:d=${duration}`, '-vf', filter, '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-r', '30', outFile]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x234f32:s=1080x1920:d=${duration}`, '-vf', filter, '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-r', '30', outFile]);
 }
 function createProductScene(productImage, text, outFile, duration) {
-  const textFile = writeTextFile(text);
-  const filter = [
-    '[0:v]format=yuv420p[bg]',
-    '[1:v]scale=760:-2:force_original_aspect_ratio=decrease,format=rgba[prod]',
-    '[bg][prod]overlay=x=(W-w)/2:y=360[withprod]',
-    `[withprod]drawtext=textfile=${textFile}:fontcolor=white:fontsize=58:box=1:boxcolor=black@0.48:boxborderw=24:x=(w-text_w)/2:y=1320:line_spacing=14[vout]`
-  ].join(';');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x234f32:s=1080x1920:d=${duration}`, '-loop', '1', '-t', String(duration), '-i', productImage, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-r', '30', outFile]);
+  createImageScene(productImage, text, outFile, duration, true);
 }
 function normalizeBrollScene(inputFile, text, outFile, duration) {
   const textFile = writeTextFile(text);
@@ -115,12 +129,13 @@ async function buildScenes(plan, productImages, workDir) {
     const scene = plan.scenes[i];
     const rawFile = path.join(workDir, `raw_${i}.mp4`);
     const sceneFile = path.join(workDir, `scene_${i}.mp4`);
+    const fallbackImages = productImages.length ? [productImages[i % productImages.length]] : [];
     console.log(`Rendering scene ${i + 1}/${plan.scenes.length}: ${scene.text.replace(/\n/g, ' ')}`);
     if (scene.type === 'product') {
-      productImage ? createProductScene(productImage, scene.text, sceneFile, scene.duration) : createFallbackScene(scene.text, sceneFile, scene.duration);
+      productImage ? createProductScene(productImage, scene.text, sceneFile, scene.duration) : createFallbackScene(scene.text, sceneFile, scene.duration, fallbackImages);
     } else {
       const gotPexels = await fetchPexelsVideo(scene.query, rawFile);
-      gotPexels ? normalizeBrollScene(rawFile, scene.text, sceneFile, scene.duration) : createFallbackScene(scene.text, sceneFile, scene.duration);
+      gotPexels ? normalizeBrollScene(rawFile, scene.text, sceneFile, scene.duration) : createFallbackScene(scene.text, sceneFile, scene.duration, fallbackImages);
     }
     sceneFiles.push(sceneFile);
   }
