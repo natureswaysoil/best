@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import CheckoutForm from '../components/CheckoutForm';
 import FreeShippingProgress from '../components/FreeShippingProgress';
@@ -37,6 +38,7 @@ type PaymentBreakdown = {
 const STORAGE_KEY = 'nws-checkout-selection';
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const [selection, setSelection] = useState<CheckoutSelection | null>(null);
   const [quantity, setQuantity] = useState(1);
 
@@ -120,20 +122,23 @@ export default function CheckoutPage() {
     return `$${(value / 100).toFixed(2)}`;
   };
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) {
+  const applyCoupon = async (overrideCode?: string) => {
+    const codeToApply = (overrideCode ?? couponCode).trim().toUpperCase();
+
+    if (!codeToApply) {
       setCouponError('Please enter a coupon code');
       return;
     }
 
     setCouponError(null);
+    setCouponCode(codeToApply);
     
     try {
       const response = await fetch('/api/validate-coupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: couponCode.trim().toUpperCase(),
+          code: codeToApply,
           subtotal: computedSubtotal * 100, // Convert to cents
         }),
       });
@@ -157,6 +162,18 @@ export default function CheckoutPage() {
       setCouponApplied(false);
     }
   };
+
+  useEffect(() => {
+    if (!router.isReady || !selection || computedSubtotal <= 0 || couponApplied) {
+      return;
+    }
+
+    const coupon = Array.isArray(router.query.coupon) ? router.query.coupon[0] : router.query.coupon;
+
+    if (coupon) {
+      applyCoupon(coupon);
+    }
+  }, [router.isReady, router.query.coupon, selection, computedSubtotal, couponApplied]);
 
   const removeCoupon = () => {
     setCouponCode('');
@@ -235,7 +252,7 @@ export default function CheckoutPage() {
     setClientSecret(null);
     setIntentId(null);
     setBreakdown(null);
-  }, [computedSubtotal, name, email, address1, address2, city, state, zip, phone]);
+  }, [computedSubtotal, name, email, address1, address2, city, state, zip, phone, couponDiscount]);
 
   const renderSummary = () => {
     if (!selection) {
@@ -468,7 +485,6 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* Shipping Information */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
                 <h3 className="font-medium text-blue-800 mb-2">🚚 Shipping Information</h3>
                 <div className="text-blue-700 space-y-1">
@@ -478,7 +494,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Coupon Code Section */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h3 className="font-medium text-gray-800 mb-3">💰 Have a coupon code?</h3>
                 {!couponApplied ? (
@@ -487,12 +502,12 @@ export default function CheckoutPage() {
                       type="text"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Enter coupon code (e.g., SAVE15ABC)"
+                      placeholder="Enter coupon code (e.g., SAVE15)"
                       className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-nature-green-500"
                     />
                     <button
                       type="button"
-                      onClick={applyCoupon}
+                      onClick={() => applyCoupon()}
                       className="px-4 py-2 bg-nature-green-600 text-white text-sm font-medium rounded-lg hover:bg-nature-green-700 transition-colors"
                     >
                       Apply
