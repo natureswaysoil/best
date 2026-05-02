@@ -10,6 +10,21 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createHmac } from 'crypto';
+import { buildForcedSocialContent } from './social-caption-overrides.mjs';
+generateSocialContent(product, platform) {const forced = buildForcedSocialContent({
+  product,
+  platform,
+  baseUrl: WEBSITE_BASE_URL,
+});
+
+if (forced) {
+  this.log(
+    `Using forced ${platform} variation caption for ${product.id}: ${
+      process.env.SOCIAL_VARIATION_HOOK || 'variation'
+    }`
+  );
+  return forced;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
