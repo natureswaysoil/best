@@ -1,18 +1,18 @@
 name: Manual Social Post
 
-on:
+'on':
   workflow_dispatch:
     inputs:
       product_id:
-        description: Product ID to post, for example NWS_014
+        description: 'Product ID to post, for example NWS_014'
         required: false
-        default: NWS_014
+        default: 'NWS_014'
       post_mode:
-        description: Posting mode: single, next, top5, or auto
+        description: 'Posting mode: single, next, top5, or auto'
         required: false
-        default: single
+        default: 'single'
       force_image_only:
-        description: Set to 1 to avoid video posts and use image fallback
+        description: 'Set to 1 to avoid video posts and use image fallback'
         required: false
         default: '0'
   schedule:
@@ -37,7 +37,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: npm
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -47,7 +47,7 @@ jobs:
           GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
           if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
-            echo "❌ Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
+            echo "Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
             exit 1
           fi
 
@@ -64,7 +64,7 @@ jobs:
           set -euo pipefail
           load_secret () {
             if gcloud secrets describe "$1" >/dev/null 2>&1; then
-              echo "$2=$(gcloud secrets versions access latest --secret=$1)" >> $GITHUB_ENV
+              echo "$2=$(gcloud secrets versions access latest --secret=$1)" >> "$GITHUB_ENV"
             fi
           }
           load_secret INSTAGRAM_ACCESS_TOKEN INSTAGRAM_ACCESS_TOKEN
@@ -83,7 +83,7 @@ jobs:
       - name: Generate preview
         env:
           PRODUCT_ID: ${{ github.event.inputs.product_id || '' }}
-          NEXT_PUBLIC_SITE_URL: https://www.natureswaysoil.com
+          NEXT_PUBLIC_SITE_URL: 'https://www.natureswaysoil.com'
         run: node scripts/social-preview.mjs
 
       - name: Upload preview artifact
@@ -97,5 +97,5 @@ jobs:
           PRODUCT_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.product_id || '' }}
           POST_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_mode || 'auto' }}
           SOCIAL_FORCE_IMAGE_ONLY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_image_only || '0' }}
-          NEXT_PUBLIC_SITE_URL: https://www.natureswaysoil.com
+          NEXT_PUBLIC_SITE_URL: 'https://www.natureswaysoil.com'
         run: node scripts/social-media-top5-post.mjs
