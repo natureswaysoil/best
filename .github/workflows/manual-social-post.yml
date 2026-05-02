@@ -7,6 +7,10 @@ on:
         description: Product ID to post, for example NWS_014
         required: false
         default: NWS_014
+      post_mode:
+        description: Posting mode: single, next, or top5
+        required: false
+        default: single
       force_image_only:
         description: Set to 1 to avoid video posts and use image fallback
         required: false
@@ -31,6 +35,18 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check required GitHub secret
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
+            echo "❌ Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
+            echo "Add it in GitHub: Settings → Secrets and variables → Actions → New repository secret"
+            echo "Value must be the full Google service account JSON key with Secret Manager Secret Accessor permission."
+            exit 1
+          fi
+          echo "✅ GCP_SERVICE_ACCOUNT_JSON secret is present"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -70,8 +86,10 @@ jobs:
           load_secret PINTEREST_ACCESS_TOKEN PINTEREST_ACCESS_TOKEN
           load_secret PINTEREST_BOARD_ID PINTEREST_BOARD_ID
 
-      - name: Post one product video
+      - name: Post selected product video
         env:
+          PRODUCT_ID: ${{ github.event.inputs.product_id }}
+          POST_MODE: ${{ github.event.inputs.post_mode }}
           SOCIAL_FORCE_IMAGE_ONLY: ${{ github.event.inputs.force_image_only }}
           NEXT_PUBLIC_SITE_URL: https://www.natureswaysoil.com
-        run: npm run social:manual
+        run: node scripts/social-media-top5-post.mjs
