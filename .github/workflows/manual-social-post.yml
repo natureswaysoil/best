@@ -16,7 +16,6 @@ on:
         required: false
         default: '0'
   schedule:
-    # GitHub cron runs in UTC. These are roughly 8am, 11am, 2pm, 5pm, and 8pm Eastern during daylight time.
     - cron: '0 12 * * *'
     - cron: '0 15 * * *'
     - cron: '0 18 * * *'
@@ -49,11 +48,8 @@ jobs:
         run: |
           if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
             echo "❌ Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
-            echo "Add it in GitHub: Settings → Secrets and variables → Actions → New repository secret"
-            echo "Value must be the full Google service account JSON key with Secret Manager Secret Accessor permission."
             exit 1
           fi
-          echo "✅ GCP_SERVICE_ACCOUNT_JSON secret is present"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -63,37 +59,40 @@ jobs:
       - name: Setup Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Load social secrets from Google Secret Manager
+      - name: Load social secrets
         run: |
           set -euo pipefail
           load_secret () {
-            local name="$1"
-            local env_name="$2"
-            if gcloud secrets describe "$name" >/dev/null 2>&1; then
-              value="$(gcloud secrets versions access latest --secret="$name")"
-              echo "${env_name}=${value}" >> "$GITHUB_ENV"
-              echo "Loaded ${env_name} from ${name}"
-            else
-              echo "Secret ${name} not found; skipping ${env_name}"
+            if gcloud secrets describe "$1" >/dev/null 2>&1; then
+              echo "$2=$(gcloud secrets versions access latest --secret=$1)" >> $GITHUB_ENV
             fi
           }
-
           load_secret INSTAGRAM_ACCESS_TOKEN INSTAGRAM_ACCESS_TOKEN
           load_secret INSTAGRAM_IG_ID INSTAGRAM_IG_ID
           load_secret FACEBOOK_PAGE_ID FACEBOOK_PAGE_ID
           load_secret FACEBOOK_ACCESS_TOKEN FACEBOOK_ACCESS_TOKEN
           load_secret FACEBOOK_PAGE_ACCESS_TOKEN FACEBOOK_PAGE_ACCESS_TOKEN
           load_secret TWITTER_API_KEY TWITTER_API_KEY
-          load_secret TWITTER_API_SECRET TWITTER_API_SECRET
           load_secret TWITTER_ACCESS_TOKEN TWITTER_ACCESS_TOKEN
-          load_secret TWITTER_ACCESS_TOKEN_SECRET TWITTER_ACCESS_TOKEN_SECRET
           load_secret YT_CLIENT_ID YT_CLIENT_ID
           load_secret YT_CLIENT_SECRET YT_CLIENT_SECRET
           load_secret YT_REFRESH_TOKEN YT_REFRESH_TOKEN
           load_secret PINTEREST_ACCESS_TOKEN PINTEREST_ACCESS_TOKEN
           load_secret PINTEREST_BOARD_ID PINTEREST_BOARD_ID
 
-      - name: Post selected product video
+      - name: Generate preview
+        env:
+          PRODUCT_ID: ${{ github.event.inputs.product_id || '' }}
+          NEXT_PUBLIC_SITE_URL: https://www.natureswaysoil.com
+        run: node scripts/social-preview.mjs
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-preview
+          path: social-preview
+
+      - name: Post video
         env:
           PRODUCT_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.product_id || '' }}
           POST_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_mode || 'next' }}
