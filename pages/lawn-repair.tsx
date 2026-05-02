@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import EmailCapture from '../components/EmailCapture';
 
 export default function LawnRepairPage() {
   return (
@@ -7,11 +8,14 @@ export default function LawnRepairPage() {
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
 
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">Fix Dog Urine Lawn Damage — Save 15%</h1>
+          <h1 className="text-4xl font-bold">Fix Dog Urine Lawn Damage — Save 15% on Your First Purchase</h1>
           <p className="text-lg text-gray-600">Stop yellow spots at the soil level. Not a dye. Real repair.</p>
-          <Link href="/product/NWS_014">
+          <div className="max-w-xl mx-auto">
+            <EmailCapture productId="NWS_014" />
+          </div>
+          <Link href="/checkout?productId=NWS_014&coupon=SAVE15">
             <button className="bg-green-600 text-white px-6 py-3 rounded-xl text-lg">
-              Shop Now & Save 15%
+              Buy Direct & Save 15%
             </button>
           </Link>
         </div>
@@ -28,7 +32,7 @@ export default function LawnRepairPage() {
         </div>
 
         <div className="text-center">
-          <Link href="/checkout?coupon=SAVE15">
+          <Link href="/checkout?productId=NWS_014&coupon=SAVE15">
             <button className="bg-green-700 text-white px-8 py-4 rounded-xl text-xl">
               Buy Direct & Save 15%
             </button>
