@@ -1,8 +1,7 @@
 name: Update Social Weights from Stripe
 
-on:
+'on':
   schedule:
-    # Run once daily at ~6am Eastern (10 UTC)
     - cron: '0 10 * * *'
   workflow_dispatch:
 
@@ -21,7 +20,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: npm
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -31,7 +30,7 @@ jobs:
           GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
           if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
-            echo "❌ Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
+            echo "Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
             exit 1
           fi
 
@@ -46,16 +45,16 @@ jobs:
       - name: Load Stripe secret
         run: |
           if gcloud secrets describe STRIPE_SECRET_KEY >/dev/null 2>&1; then
-            echo "STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY)" >> $GITHUB_ENV
+            echo "STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY)" >> "$GITHUB_ENV"
           else
-            echo "❌ STRIPE_SECRET_KEY not found in Google Secret Manager"
+            echo "STRIPE_SECRET_KEY not found in Google Secret Manager"
             exit 1
           fi
 
       - name: Update weights from Stripe
         env:
           STRIPE_SECRET_KEY: ${{ env.STRIPE_SECRET_KEY }}
-          SALES_LOOKBACK_DAYS: 14
+          SALES_LOOKBACK_DAYS: '14'
         run: node scripts/update-social-weights-from-stripe.mjs
 
       - name: Commit updated weights
