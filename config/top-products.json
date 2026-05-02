@@ -1,0 +1,39 @@
+{
+  "topProducts": [
+    {
+      "id": "NWS_014",
+      "name": "Dog Urine Neutralizer & Lawn Repair",
+      "funnelUrl": "/lawn-repair",
+      "checkoutUrl": "/checkout?productId=NWS_014&coupon=SAVE15",
+      "priority": 1
+    },
+    {
+      "id": "NWS_011",
+      "name": "Liquid Humic & Fulvic Acid with Kelp",
+      "funnelUrl": "/soil-boost",
+      "checkoutUrl": "/checkout?productId=NWS_011&coupon=SAVE15",
+      "priority": 2
+    },
+    {
+      "id": "NWS_013",
+      "name": "Enhanced Living Compost with Fermented Duckweed",
+      "funnelUrl": "/living-compost",
+      "checkoutUrl": "/checkout?productId=NWS_013&coupon=SAVE15",
+      "priority": 3
+    },
+    {
+      "id": "NWS_021",
+      "name": "Horse Safe Hay, Pasture & Lawn Fertilizer",
+      "funnelUrl": "/pasture-boost",
+      "checkoutUrl": "/checkout?productId=NWS_021&coupon=SAVE15",
+      "priority": 4
+    },
+    {
+      "id": "NWS_018",
+      "name": "Seaweed & Humic Acid Lawn Treatment",
+      "funnelUrl": "/soil-boost",
+      "checkoutUrl": "/checkout?productId=NWS_018&coupon=SAVE15",
+      "priority": 5
+    }
+  ]
+}
