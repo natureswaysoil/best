@@ -7,9 +7,7 @@
  *   POST_MODE=single PRODUCT_ID=NWS_014 node scripts/social-media-top5-post.mjs
  *   POST_MODE=top5 node scripts/social-media-top5-post.mjs
  *   POST_MODE=next node scripts/social-media-top5-post.mjs
- *
- * Selects a top product and a rotating script variation, then delegates to the
- * existing social-media-auto-post.mjs script with product + variation env vars.
+ *   POST_MODE=auto node scripts/social-media-top5-post.mjs
  */
 
 import fs from 'fs';
@@ -22,45 +20,65 @@ const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
 const CONFIG_FILE = path.join(PROJECT, 'config', 'top-products.json');
 const VARIATIONS_FILE = path.join(PROJECT, 'content', 'social-script-variations', 'top5-video-scripts.json');
+const PERFORMANCE_FILE = path.join(PROJECT, 'config', 'social-performance.json');
 const STATE_FILE = path.join(PROJECT, 'social-top5-rotation-state.json');
 
+function readJson(file, fallback = {}) {
+  try {
+    if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (error) {
+    console.warn(`Could not read ${file}: ${error.message}`);
+  }
+  return fallback;
+}
+
+function writeJson(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
 function loadTopProducts() {
-  const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+  const config = readJson(CONFIG_FILE, { topProducts: [] });
   return [...config.topProducts].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
 }
 
 function loadVariations() {
-  if (!fs.existsSync(VARIATIONS_FILE)) return {};
-  return JSON.parse(fs.readFileSync(VARIATIONS_FILE, 'utf8'));
+  return readJson(VARIATIONS_FILE, {});
+}
+
+function loadPerformance() {
+  return readJson(PERFORMANCE_FILE, { defaultWeight: 3, weights: {} });
+}
+
+function pickWeightedProduct(products, performance) {
+  const weights = performance.weights || {};
+  const defaultWeight = Number(performance.defaultWeight || 3);
+  const pool = [];
+
+  for (const product of products) {
+    const weight = Math.max(1, Number(weights[product.id] ?? defaultWeight));
+    for (let i = 0; i < weight; i++) pool.push(product);
+  }
+
+  return pool[Math.floor(Math.random() * pool.length)] || products[0];
 }
 
 function loadState() {
-  if (!fs.existsSync(STATE_FILE)) {
-    return { lastIndex: -1, lastVariationByProduct: {}, history: [] };
-  }
-
-  try {
-    const state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
-    return {
-      lastIndex: state.lastIndex ?? -1,
-      lastVariationByProduct: state.lastVariationByProduct ?? {},
-      history: state.history ?? [],
-    };
-  } catch {
-    return { lastIndex: -1, lastVariationByProduct: {}, history: [] };
-  }
+  const state = readJson(STATE_FILE, { lastIndex: -1, lastVariationByProduct: {}, history: [] });
+  return {
+    lastIndex: state.lastIndex ?? -1,
+    lastVariationByProduct: state.lastVariationByProduct ?? {},
+    history: state.history ?? [],
+  };
 }
 
 function saveState(state) {
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  writeJson(STATE_FILE, state);
 }
 
 function pickVariation(product, state, variationsConfig) {
   const productVariations = variationsConfig[product.id]?.variations ?? [];
 
-  if (productVariations.length === 0) {
-    return null;
-  }
+  if (productVariations.length === 0) return null;
 
   const lastVariation = state.lastVariationByProduct?.[product.id] ?? -1;
   const nextVariation = (lastVariation + 1) % productVariations.length;
@@ -69,10 +87,7 @@ function pickVariation(product, state, variationsConfig) {
     [product.id]: nextVariation,
   };
 
-  return {
-    index: nextVariation,
-    ...productVariations[nextVariation],
-  };
+  return { index: nextVariation, ...productVariations[nextVariation] };
 }
 
 function postProduct(product, state, variationsConfig) {
@@ -82,11 +97,8 @@ function postProduct(product, state, variationsConfig) {
   console.log(`Funnel: ${product.funnelUrl}`);
   console.log(`Checkout: ${product.checkoutUrl}`);
 
-  if (variation) {
-    console.log(`Variation ${variation.index + 1}: ${variation.angle} — ${variation.hook}`);
-  } else {
-    console.log('No script variation found; using default social caption generator.');
-  }
+  if (variation) console.log(`Variation ${variation.index + 1}: ${variation.angle} — ${variation.hook}`);
+  else console.log('No script variation found; using default social caption generator.');
 
   const result = spawnSync('node', ['scripts/social-media-auto-post.mjs'], {
     cwd: PROJECT,
@@ -106,9 +118,7 @@ function postProduct(product, state, variationsConfig) {
     },
   });
 
-  if (result.status !== 0) {
-    throw new Error(`Posting failed for ${product.id}`);
-  }
+  if (result.status !== 0) throw new Error(`Posting failed for ${product.id}`);
 
   state.history = [
     ...(state.history || []),
@@ -118,12 +128,12 @@ function postProduct(product, state, variationsConfig) {
       variationAngle: variation?.angle ?? null,
       hook: variation?.hook ?? null,
       postedAt: new Date().toISOString(),
-      mode: process.env.POST_MODE || 'next',
+      mode: process.env.POST_MODE || 'auto',
     },
   ].slice(-100);
 }
 
-const mode = (process.env.POST_MODE || 'next').toLowerCase();
+const mode = (process.env.POST_MODE || 'auto').toLowerCase();
 const productId = process.env.PRODUCT_ID;
 const topProducts = loadTopProducts();
 const variationsConfig = loadVariations();
@@ -131,23 +141,24 @@ const state = loadState();
 
 if (mode === 'single') {
   const product = topProducts.find((item) => item.id === productId);
-  if (!product) {
-    throw new Error(`PRODUCT_ID ${productId} is not in config/top-products.json`);
-  }
+  if (!product) throw new Error(`PRODUCT_ID ${productId} is not in config/top-products.json`);
   postProduct(product, state, variationsConfig);
   saveState(state);
 } else if (mode === 'top5') {
-  for (const product of topProducts) {
-    postProduct(product, state, variationsConfig);
-  }
+  for (const product of topProducts) postProduct(product, state, variationsConfig);
   saveState(state);
 } else if (mode === 'next') {
   const nextIndex = ((state.lastIndex ?? -1) + 1) % topProducts.length;
   const product = topProducts[nextIndex];
   postProduct(product, state, variationsConfig);
-
   state.lastIndex = nextIndex;
   saveState(state);
+} else if (mode === 'auto') {
+  const performance = loadPerformance();
+  const product = pickWeightedProduct(topProducts, performance);
+  console.log(`🎯 Auto-selected weighted product: ${product.id}`);
+  postProduct(product, state, variationsConfig);
+  saveState(state);
 } else {
-  throw new Error(`Unsupported POST_MODE ${mode}. Use single, top5, or next.`);
+  throw new Error(`Unsupported POST_MODE ${mode}. Use single, top5, next, or auto.`);
 }
