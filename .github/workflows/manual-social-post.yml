@@ -1,0 +1,77 @@
+name: Manual Social Post
+
+on:
+  workflow_dispatch:
+    inputs:
+      product_id:
+        description: Product ID to post, for example NWS_014
+        required: false
+        default: NWS_014
+      force_image_only:
+        description: Set to 1 to avoid video posts and use image fallback
+        required: false
+        default: '0'
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Load social secrets from Google Secret Manager
+        run: |
+          set -euo pipefail
+          load_secret () {
+            local name="$1"
+            local env_name="$2"
+            if gcloud secrets describe "$name" >/dev/null 2>&1; then
+              value="$(gcloud secrets versions access latest --secret="$name")"
+              echo "${env_name}=${value}" >> "$GITHUB_ENV"
+              echo "Loaded ${env_name} from ${name}"
+            else
+              echo "Secret ${name} not found; skipping ${env_name}"
+            fi
+          }
+
+          load_secret INSTAGRAM_ACCESS_TOKEN INSTAGRAM_ACCESS_TOKEN
+          load_secret INSTAGRAM_IG_ID INSTAGRAM_IG_ID
+          load_secret FACEBOOK_PAGE_ID FACEBOOK_PAGE_ID
+          load_secret FACEBOOK_ACCESS_TOKEN FACEBOOK_ACCESS_TOKEN
+          load_secret FACEBOOK_PAGE_ACCESS_TOKEN FACEBOOK_PAGE_ACCESS_TOKEN
+          load_secret TWITTER_API_KEY TWITTER_API_KEY
+          load_secret TWITTER_API_SECRET TWITTER_API_SECRET
+          load_secret TWITTER_ACCESS_TOKEN TWITTER_ACCESS_TOKEN
+          load_secret TWITTER_ACCESS_TOKEN_SECRET TWITTER_ACCESS_TOKEN_SECRET
+          load_secret YT_CLIENT_ID YT_CLIENT_ID
+          load_secret YT_CLIENT_SECRET YT_CLIENT_SECRET
+          load_secret YT_REFRESH_TOKEN YT_REFRESH_TOKEN
+          load_secret PINTEREST_ACCESS_TOKEN PINTEREST_ACCESS_TOKEN
+          load_secret PINTEREST_BOARD_ID PINTEREST_BOARD_ID
+
+      - name: Post one product video
+        env:
+          SOCIAL_FORCE_IMAGE_ONLY: ${{ github.event.inputs.force_image_only }}
+          NEXT_PUBLIC_SITE_URL: https://www.natureswaysoil.com
+        run: npm run social:manual
