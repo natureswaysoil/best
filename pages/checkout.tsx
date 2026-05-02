@@ -6,11 +6,14 @@ import CheckoutForm from '../components/CheckoutForm';
 import FreeShippingProgress from '../components/FreeShippingProgress';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { getProductById } from '../data/products';
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
+
+const queryValue = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
 
 const FREE_SHIPPING_THRESHOLD_CENTS = Math.max(
   0,
@@ -84,6 +87,44 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
+    if (!router.isReady || typeof window === 'undefined') {
+      return;
+    }
+
+    const productId = queryValue(router.query.productId);
+    if (!productId) {
+      return;
+    }
+
+    const product = getProductById(productId);
+    if (!product) {
+      setServerError('This checkout link is missing a valid product. Please return to the shop.');
+      return;
+    }
+
+    const requestedSizeName = queryValue(router.query.sizeName);
+    const requestedSku = queryValue(router.query.sku);
+    const requestedQuantity = Math.max(1, parseNumber(queryValue(router.query.quantity), 1));
+    const size = product.sizes?.find((option) => option.sku === requestedSku)
+      ?? product.sizes?.find((option) => option.name === requestedSizeName)
+      ?? product.sizes?.[0];
+
+    const preloadedSelection: CheckoutSelection = {
+      productId: product.id,
+      productName: product.name,
+      productImage: product.videoPoster ?? product.image,
+      sizeName: size?.name,
+      price: size?.price ?? product.price,
+      quantity: requestedQuantity,
+      sku: size?.sku,
+    };
+
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(preloadedSelection));
+    setSelection(preloadedSelection);
+    setQuantity(requestedQuantity);
+  }, [router.isReady, router.query.productId, router.query.quantity, router.query.sizeName, router.query.sku]);
+
+  useEffect(() => {
     const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
     if (!key) {
       setStripeError('Stripe publishable key is not configured. Please add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your environment.');
@@ -139,7 +180,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: codeToApply,
-          subtotal: computedSubtotal * 100, // Convert to cents
+          subtotal: computedSubtotal * 100,
         }),
       });
 
@@ -168,7 +209,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    const coupon = Array.isArray(router.query.coupon) ? router.query.coupon[0] : router.query.coupon;
+    const coupon = queryValue(router.query.coupon);
 
     if (coupon) {
       applyCoupon(coupon);
@@ -327,7 +368,7 @@ export default function CheckoutPage() {
           </div>
           {discountCents > 0 && (
             <div className="flex justify-between text-green-600">
-              <span>Discount ({couponCode})</span>
+              <span>First purchase discount ({couponCode})</span>
               <span>-{formatCurrency(discountCents)}</span>
             </div>
           )}
@@ -495,7 +536,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-medium text-gray-800 mb-3">💰 Have a coupon code?</h3>
+                <h3 className="font-medium text-gray-800 mb-3">💰 First purchase discount</h3>
                 {!couponApplied ? (
                   <div className="flex gap-2">
                     <input
@@ -516,7 +557,7 @@ export default function CheckoutPage() {
                 ) : (
                   <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
                     <div className="flex items-center text-green-700">
-                      <span className="text-sm font-medium">✅ Coupon "{couponCode}" applied!</span>
+                      <span className="text-sm font-medium">✅ First purchase coupon "{couponCode}" applied!</span>
                       <span className="ml-2 text-sm">Save {formatCurrency(couponDiscount)}</span>
                     </div>
                     <button
@@ -528,6 +569,7 @@ export default function CheckoutPage() {
                     </button>
                   </div>
                 )}
+                <p className="text-xs text-gray-500 mt-2">SAVE15 is intended for first-time direct website customers only.</p>
                 {couponError && (
                   <p className="text-red-600 text-sm mt-2">{couponError}</p>
                 )}
