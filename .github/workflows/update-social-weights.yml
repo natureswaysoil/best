@@ -1,0 +1,67 @@
+name: Update Social Weights from Stripe
+
+on:
+  schedule:
+    # Run once daily at ~6am Eastern (10 UTC)
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-weights:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check required GitHub secret
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
+            echo "❌ Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Load Stripe secret
+        run: |
+          if gcloud secrets describe STRIPE_SECRET_KEY >/dev/null 2>&1; then
+            echo "STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY)" >> $GITHUB_ENV
+          else
+            echo "❌ STRIPE_SECRET_KEY not found in Google Secret Manager"
+            exit 1
+          fi
+
+      - name: Update weights from Stripe
+        env:
+          STRIPE_SECRET_KEY: ${{ env.STRIPE_SECRET_KEY }}
+          SALES_LOOKBACK_DAYS: 14
+        run: node scripts/update-social-weights-from-stripe.mjs
+
+      - name: Commit updated weights
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add config/social-performance.json
+          git commit -m "Auto-update social weights from Stripe" || echo "No changes"
+          git push
