@@ -15,6 +15,13 @@ on:
         description: Set to 1 to avoid video posts and use image fallback
         required: false
         default: '0'
+  schedule:
+    # GitHub cron runs in UTC. These are roughly 8am, 11am, 2pm, 5pm, and 8pm Eastern during daylight time.
+    - cron: '0 12 * * *'
+    - cron: '0 15 * * *'
+    - cron: '0 18 * * *'
+    - cron: '0 21 * * *'
+    - cron: '0 0 * * *'
 
 jobs:
   post:
@@ -88,8 +95,8 @@ jobs:
 
       - name: Post selected product video
         env:
-          PRODUCT_ID: ${{ github.event.inputs.product_id }}
-          POST_MODE: ${{ github.event.inputs.post_mode }}
-          SOCIAL_FORCE_IMAGE_ONLY: ${{ github.event.inputs.force_image_only }}
+          PRODUCT_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.product_id || '' }}
+          POST_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_mode || 'next' }}
+          SOCIAL_FORCE_IMAGE_ONLY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_image_only || '0' }}
           NEXT_PUBLIC_SITE_URL: https://www.natureswaysoil.com
         run: node scripts/social-media-top5-post.mjs
