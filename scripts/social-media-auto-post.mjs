@@ -11,21 +11,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createHmac } from 'crypto';
 import { buildForcedSocialContent } from './social-caption-overrides.mjs';
-generateSocialContent(product, platform) {const forced = buildForcedSocialContent({
-  product,
-  platform,
-  baseUrl: WEBSITE_BASE_URL,
-});
-
-if (forced) {
-  this.log(
-    `Using forced ${platform} variation caption for ${product.id}: ${
-      process.env.SOCIAL_VARIATION_HOOK || 'variation'
-    }`
-  );
-  return forced;
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
@@ -190,7 +175,19 @@ class SocialMediaAutoPoster {
         products.push({ id, name, description, category, keywords });
       }
 
-      return products.filter(p => /^NWS_\d{3}$/.test(p.id));
+      const filteredProducts = products.filter(p => /^NWS_\d{3}$/.test(p.id));
+      const lockedProductId = process.env.PRODUCT_ID;
+
+      if (lockedProductId) {
+        const lockedProducts = filteredProducts.filter((p) => p.id === lockedProductId);
+        if (lockedProducts.length > 0) {
+          this.log(`PRODUCT_ID lock active: ${lockedProductId}`);
+          return lockedProducts;
+        }
+        this.log(`PRODUCT_ID lock requested but not found: ${lockedProductId}`);
+      }
+
+      return filteredProducts;
     } catch (error) {
       this.log(`Error loading products: ${error.message}`);
       return [];
@@ -218,6 +215,21 @@ class SocialMediaAutoPoster {
   }
 
   generateSocialContent(product, platform) {
+    const forced = buildForcedSocialContent({
+      product,
+      platform,
+      baseUrl: WEBSITE_BASE_URL,
+    });
+
+    if (forced) {
+      this.log(
+        `Using forced ${platform} variation caption for ${product.id}: ${
+          process.env.SOCIAL_VARIATION_HOOK || 'variation'
+        }`
+      );
+      return forced;
+    }
+
     const lawnProblems = [
       'yellow grass', 'brown patches', 'thin lawn', 'bare spots', 
       'weeds', 'poor soil', 'lawn not growing', 'dead grass'
