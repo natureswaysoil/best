@@ -24,6 +24,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const couponCode = code.toUpperCase().trim();
 
+    // Direct social traffic coupon used by the automated content engine.
+    // This gives customers a simple reason to buy direct instead of Amazon.
+    if (couponCode === 'SAVE15') {
+      const discountAmount = Math.round(subtotal * 0.15);
+
+      return res.status(200).json({
+        valid: true,
+        discount: discountAmount,
+        discountPercent: 15,
+        code: couponCode,
+        description: '15% off when you shop direct'
+      });
+    }
+
     // Check if it's a valid SAVE15 coupon from exit intent popup
     if (couponCode.startsWith('SAVE15') && couponCode.length >= 8) {
       // 15% discount on subtotal (in cents)
