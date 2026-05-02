@@ -1,0 +1,28 @@
+{
+  "mode": "weighted",
+  "learningWindowDays": 14,
+  "minWeight": 1,
+  "maxWeight": 8,
+  "defaultWeight": 3,
+  "weights": {
+    "NWS_014": 5,
+    "NWS_011": 3,
+    "NWS_013": 3,
+    "NWS_021": 2,
+    "NWS_018": 2
+  },
+  "performance": {
+    "NWS_014": { "clicks": 0, "orders": 0, "revenue": 0, "score": 5 },
+    "NWS_011": { "clicks": 0, "orders": 0, "revenue": 0, "score": 3 },
+    "NWS_013": { "clicks": 0, "orders": 0, "revenue": 0, "score": 3 },
+    "NWS_021": { "clicks": 0, "orders": 0, "revenue": 0, "score": 2 },
+    "NWS_018": { "clicks": 0, "orders": 0, "revenue": 0, "score": 2 }
+  },
+  "rules": {
+    "ordersWeight": 4,
+    "revenueWeight": 0.05,
+    "clicksWeight": 0.1,
+    "winnerBoost": 2,
+    "loserPenalty": 1
+  }
+}
