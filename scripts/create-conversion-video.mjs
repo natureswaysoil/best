@@ -50,7 +50,7 @@ function buildPlan(product) {
     productName: product.name,
     funnelUrl: product.funnelUrl,
     checkoutUrl: product.checkoutUrl,
-    voiceover: "Your dog is not the problem. Yellow lawn spots happen when urine salts build up and stress the soil. Nature's Way Soil Dog Urine Neutralizer helps treat affected areas at the soil level. Just spray, water in, and support real lawn recovery. Pet-safe. Not a dye. Shop direct and save 15% on your first order.",
+    voiceover: "Your dog is not the problem. Yellow lawn spots happen when urine salts build up and stress the soil. Nature's Way Soil Dog Urine Neutralizer helps treat affected areas at the soil level. Just spray, water in, and support real lawn recovery. Pet-safe. Not a dye. Shop direct and save 15 percent on your first order.",
     scenes: [
       { duration: 3, text: 'Your dog is not the problem.', query: 'dog walking on green lawn' },
       { duration: 4, text: 'Urine salts stress the soil.', query: 'yellow patch grass lawn' },
@@ -58,7 +58,7 @@ function buildPlan(product) {
       { duration: 4, text: 'Spray affected spots.', query: 'spraying lawn garden' },
       { duration: 4, text: 'Water in and let soil recover.', query: 'watering grass lawn' },
       { duration: 4, text: 'Pet-safe. Not a dye.', query: 'dog on backyard lawn' },
-      { duration: 3, text: 'Save 15% on your first order.\nnatureswaysoil.com/lawn-repair', type: 'product' }
+      { duration: 3, text: 'Save 15 percent on your first order.\nnatureswaysoil.com/lawn-repair', type: 'product' }
     ]
   };
 }
