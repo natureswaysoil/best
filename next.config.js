@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
+const videoPublicBaseUrl = (
+  process.env.VIDEO_PUBLIC_BASE_URL ||
+  process.env.NEXT_PUBLIC_VIDEO_PUBLIC_BASE_URL ||
+  'https://storage.googleapis.com/natureswaysoil-videos/seed-videos'
+).replace(/\/$/, '')
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -8,6 +14,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'd3uryq9bhgb5qr.cloudfront.net' },
       { protocol: 'https', hostname: 'cdn.abacus.ai' },
+      { protocol: 'https', hostname: 'storage.googleapis.com' },
     ],
     formats: ['image/webp', 'image/avif']
   },
@@ -16,10 +23,21 @@ const nextConfig = {
       {
         source: '/videos/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          { key: 'Access-Control-Allow-Origin', value: '*' }
         ]
       }
     ]
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/videos/:path*',
+          destination: `${videoPublicBaseUrl}/:path*`,
+        },
+      ],
+    }
   },
   async redirects() {
     return [
