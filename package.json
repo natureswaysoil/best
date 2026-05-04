@@ -10,6 +10,7 @@
     "lint": "eslint app components config data lib pages --ext .js,.ts,.tsx",
     "type-check": "tsc --noEmit",
     "videos": "node scripts/create-quality-seed-videos.mjs --all",
+    "video:social": "node scripts/cloud-video-social-job.mjs",
     "seed:videos": "node scripts/create-quality-seed-videos.mjs --all",
     "seed:video": "node scripts/create-quality-seed-videos.mjs",
     "legacy:videos": "node scripts/generate-product-videos.mjs",
