@@ -128,11 +128,11 @@ function uploadOutputsToCloudStorage() {
     return;
   }
 
-  run('gsutil', ['-m', 'cp', ...files, destination]);
-  run('gsutil', ['-m', 'setmeta', '-h', 'Cache-Control:public, max-age=31536000, immutable', `${destination}*`]);
+  run('gcloud', ['storage', 'cp', '--recursive', ...files, destination]);
+  run('gcloud', ['storage', 'objects', 'update', `${destination}*`, '--cache-control=public, max-age=31536000, immutable']);
 
   if (process.env.MAKE_GCS_VIDEOS_PUBLIC === '1') {
-    run('gsutil', ['-m', 'acl', 'ch', '-r', '-u', 'AllUsers:R', destination]);
+    run('gcloud', ['storage', 'objects', 'update', `${destination}*`, '--add-acl-grant=entity=AllUsers,role=READER']);
   }
 
   const publicBase = (process.env.VIDEO_PUBLIC_BASE_URL || `https://storage.googleapis.com/${bucket}/${prefix}`).replace(/\/$/, '');
