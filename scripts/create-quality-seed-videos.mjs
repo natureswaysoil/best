@@ -2,18 +2,7 @@
 
 /**
  * Quality seed-style vertical video generator.
- *
- * Builds 1080x1920 MP4 ads for the top five Nature's Way Soil products.
- * It uses product images, optional local b-roll, optional Pexels b-roll, and a branded
- * motion fallback so the output is not just a plain slideshow.
- *
- * Run:
- *   npm run videos
- *   PRODUCT_ID=NWS_014 npm run seed:video
- *
- * Optional local b-roll folders:
- *   public/broll/{PRODUCT_ID}/
- *   public/broll/shared/
+ * Builds 1080x1920 MP4 ads for Nature's Way Soil products.
  */
 
 import fs from 'fs';
@@ -238,7 +227,10 @@ async function pexels(query, outFile) {
   } catch {}
   return false;
 }
-function brand(y = 110) { return `drawtext=text='Nature\\'s Way Soil':fontcolor=white:fontsize=44:box=1:boxcolor=black@0.26:boxborderw=16:x=72:y=${y}`; }
+function brand(y = 110) {
+  const brandFile = textFile("Nature's Way Soil", 28);
+  return `drawtext=textfile='${ff(brandFile)}':fontcolor=white:fontsize=44:box=1:boxcolor=black@0.26:boxborderw=16:x=72:y=${y}`;
+}
 function caption(file, y = 'h-520', size = 64) { return `drawtext=textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.48:boxborderw=28:x=72:y=${y}:line_spacing=16`; }
 function motionScene(text, out, seconds, productName) {
   const tf = textFile(text, 25);
@@ -268,13 +260,21 @@ function productScene(image, text, out, seconds, product, endCard = false) {
 }
 function imageScene(image, text, out, seconds) {
   const tf = textFile(text, 25);
-  const filter = [`[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0010,1.08)':d=${seconds * FPS}:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`, `[bg]${brand(110)}[branded]`, `[branded]${caption(tf, 'h-520', 64)}[vout]`].join(';');
+  const filter = [
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0010,1.08)':d=${seconds * FPS}:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`,
+    `[bg]${brand(110)}[branded]`,
+    `[branded]${caption(tf, 'h-520', 64)}[vout]`
+  ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
 }
 function brollScene(input, text, out, seconds) {
   const tf = textFile(text, 25);
-  const filter = [`scale=${W}:${H}:force_original_aspect_ratio=increase`, `crop=${W}:${H}`, `trim=duration=${seconds}`, `setpts=PTS-STARTPTS`, brand(110), caption(tf, 'h-520', 64)].join(',');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-stream_loop', '1', '-i', input, '-t', String(seconds), '-vf', filter, '-an', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
+  const filter = [
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},trim=duration=${seconds},setpts=PTS-STARTPTS[bg]`,
+    `[bg]${brand(110)}[branded]`,
+    `[branded]${caption(tf, 'h-520', 64)}[vout]`
+  ].join(';');
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-stream_loop', '1', '-i', input, '-t', String(seconds), '-filter_complex', filter, '-map', '[vout]', '-an', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
 }
 async function build(product) {
   const images = productImages(product);
