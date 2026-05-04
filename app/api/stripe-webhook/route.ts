@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { sendOrderNotification } from "@/lib/order-email";
+import { getServiceSupabase } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
@@ -65,6 +66,26 @@ export async function POST(req: Request) {
       ? Number(pi.metadata.subtotal_cents) / 100 / (qty || 1)
       : undefined;
 
+    const paidTotal = typeof pi.amount_received === "number" ? pi.amount_received / 100 : undefined;
+
+    try {
+      const supabase = getServiceSupabase();
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "paid",
+          total: paidTotal,
+          shipping_phone: phone || null,
+        })
+        .eq("pi_id", pi.id);
+
+      if (error) {
+        console.warn("Supabase paid status update failed:", error.message);
+      }
+    } catch (error) {
+      console.warn("Supabase paid status update error:", error);
+    }
+
     const shipstationOrder: Record<string, unknown> = {
       orderNumber,
       orderDate: new Date().toISOString(),
@@ -74,7 +95,7 @@ export async function POST(req: Request) {
       shipTo: { name, street1, street2, city, state, postalCode, country, phone },
       notes: `Stripe PI: ${pi.id}`,
       internalNotes: `Charge: ${pi.latest_charge ?? ""}`,
-      amountPaid: typeof pi.amount_received === "number" ? pi.amount_received / 100 : undefined,
+      amountPaid: paidTotal,
       items: [{ name: productName, sku, quantity: qty, unitPrice }],
     };
 
@@ -108,7 +129,7 @@ export async function POST(req: Request) {
       discount: pi.metadata?.discount_cents ? Number(pi.metadata.discount_cents) / 100 : undefined,
       shipping: pi.metadata?.shipping_cents ? Number(pi.metadata.shipping_cents) / 100 : undefined,
       tax: pi.metadata?.tax_cents ? Number(pi.metadata.tax_cents) / 100 : undefined,
-      total: typeof pi.amount_received === "number" ? pi.amount_received / 100 : undefined,
+      total: paidTotal,
       packingSlipUrl: `${baseUrl}/admin/packing-slip/${pi.id}`,
     });
   }
