@@ -3,9 +3,10 @@ import { getServiceSupabase } from '../../../lib/supabase';
 
 type Props = {
   order: any | null;
+  items: any[];
 };
 
-export default function PackingSlip({ order }: Props) {
+export default function PackingSlip({ order, items }: Props) {
   if (!order) return <p style={{ padding: 40 }}>Order not found.</p>;
 
   return (
@@ -23,7 +24,24 @@ export default function PackingSlip({ order }: Props) {
       </p>
 
       <h3>Items</h3>
-      <p>(Pull items from order_items table if needed)</p>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={{ borderBottom: '1px solid #000', textAlign: 'left' }}>SKU</th>
+            <th style={{ borderBottom: '1px solid #000', textAlign: 'left' }}>Qty</th>
+            <th style={{ borderBottom: '1px solid #000', textAlign: 'left' }}>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, i) => (
+            <tr key={i}>
+              <td>{item.sku}</td>
+              <td>{item.qty}</td>
+              <td>${item.price}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <h3>Total</h3>
       <p>${order.total}</p>
@@ -37,11 +55,16 @@ export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   const id = ctx.params?.id as string;
   const supabase = getServiceSupabase();
 
-  const { data } = await supabase
+  const { data: order } = await supabase
     .from('orders')
     .select('*')
     .eq('pi_id', id)
     .single();
 
-  return { props: { order: data || null } };
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('*')
+    .eq('order_id', order?.id);
+
+  return { props: { order: order || null, items: items || [] } };
 };
