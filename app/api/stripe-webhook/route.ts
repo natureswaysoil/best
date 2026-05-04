@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import { sendOrderNotification } from "@/lib/order-email";
 
 export const runtime = "nodejs";
 
@@ -37,21 +38,13 @@ export async function POST(req: Request) {
     const addr = ship?.address;
 
     const name = ship?.name || pi.metadata?.shipName || "";
-
     const email = pi.receipt_email || (pi.metadata?.email as string | undefined) || "";
-
     const phone = ship?.phone || (pi.metadata?.phone as string | undefined) || "";
-
     const street1 = addr?.line1 || (pi.metadata?.shipStreet1 as string | undefined) || "";
-
     const street2 = addr?.line2 || (pi.metadata?.shipStreet2 as string | undefined) || "";
-
     const city = addr?.city || (pi.metadata?.shipCity as string | undefined) || "";
-
     const state = addr?.state || (pi.metadata?.shipState as string | undefined) || "";
-
     const postalCode = addr?.postal_code || (pi.metadata?.shipPostalCode as string | undefined) || "";
-
     const country = addr?.country || (pi.metadata?.shipCountry as string | undefined) || "US";
 
     if (!name || !email || !street1 || !city || !state || !postalCode) {
@@ -67,8 +60,10 @@ export async function POST(req: Request) {
     const qty = Number(pi.metadata?.quantity || 1);
     const productName = (pi.metadata?.product_name as string | undefined) || pi.description || "Item";
     const sku = (pi.metadata?.sku as string | undefined) || "";
-
     const orderNumber = (pi.metadata?.orderNumber as string | undefined) || `NWS-${pi.id}`;
+    const unitPrice = pi.metadata?.subtotal_cents
+      ? Number(pi.metadata.subtotal_cents) / 100 / (qty || 1)
+      : undefined;
 
     const shipstationOrder: Record<string, unknown> = {
       orderNumber,
@@ -76,29 +71,11 @@ export async function POST(req: Request) {
       orderStatus: "awaiting_shipment",
       customerEmail: email,
       billTo: { name, email },
-      shipTo: {
-        name,
-        street1,
-        street2,
-        city,
-        state,
-        postalCode,
-        country,
-        phone,
-      },
+      shipTo: { name, street1, street2, city, state, postalCode, country, phone },
       notes: `Stripe PI: ${pi.id}`,
       internalNotes: `Charge: ${pi.latest_charge ?? ""}`,
       amountPaid: typeof pi.amount_received === "number" ? pi.amount_received / 100 : undefined,
-      items: [
-        {
-          name: productName,
-          sku,
-          quantity: qty,
-          unitPrice: pi.metadata?.subtotal_cents
-            ? Number(pi.metadata.subtotal_cents) / 100 / (qty || 1)
-            : undefined,
-        },
-      ],
+      items: [{ name: productName, sku, quantity: qty, unitPrice }],
     };
 
     const auth = "Basic " + Buffer.from(`${shipKey}:${shipSecret}`).toString("base64");
@@ -116,6 +93,24 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://natureswaysoil.com").replace(/\/$/, "");
+
+    await sendOrderNotification({
+      orderNumber,
+      paymentIntentId: pi.id,
+      customerName: name,
+      customerEmail: email,
+      customerPhone: phone,
+      shippingAddress: { line1: street1, line2: street2, city, state, postalCode, country },
+      items: [{ name: productName, sku, quantity: qty, unitPrice }],
+      subtotal: pi.metadata?.subtotal_cents ? Number(pi.metadata.subtotal_cents) / 100 : undefined,
+      discount: pi.metadata?.discount_cents ? Number(pi.metadata.discount_cents) / 100 : undefined,
+      shipping: pi.metadata?.shipping_cents ? Number(pi.metadata.shipping_cents) / 100 : undefined,
+      tax: pi.metadata?.tax_cents ? Number(pi.metadata.tax_cents) / 100 : undefined,
+      total: typeof pi.amount_received === "number" ? pi.amount_received / 100 : undefined,
+      packingSlipUrl: `${baseUrl}/admin/packing-slip/${pi.id}`,
+    });
   }
 
   return NextResponse.json({ received: true });
