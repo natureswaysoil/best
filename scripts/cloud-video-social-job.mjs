@@ -6,11 +6,9 @@
  * Pipeline:
  * 1. Hydrate environment variables from Google Secret Manager.
  * 2. Generate the top-five quality seed-style videos.
- * 3. Optionally upload videos/posters/plans to Cloud Storage.
- * 4. Run the existing social-media auto-poster.
- *
- * This script is intentionally conservative: it never hardcodes credentials and it
- * can run with only Secret Manager + platform env vars supplied by Cloud Run Job.
+ * 3. Upload videos/posters/plans to Cloud Storage.
+ * 4. Set social posting video URLs to website URLs.
+ * 5. Run the existing social-media auto-poster.
  */
 
 import fs from 'fs';
@@ -24,9 +22,13 @@ const PROJECT = path.resolve(__dirname, '..');
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const PLANS_DIR = path.join(PROJECT, 'content', 'generated-videos');
 const SECRET_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || process.env.PROJECT_ID;
+const DEFAULT_SITE_URL = 'https://www.natureswaysoil.com';
 const SECRET_NAMES = [
   'PEXELS_API_KEY',
   'NEXT_PUBLIC_SITE_URL',
+  'VIDEO_OUTPUT_BUCKET',
+  'VIDEO_OUTPUT_PREFIX',
+  'VIDEO_PUBLIC_BASE_URL',
   'INSTAGRAM_ACCESS_TOKEN',
   'INSTAGRAM_IG_ID',
   'FACEBOOK_PAGE_ID',
@@ -94,13 +96,20 @@ function hydrateSecrets() {
   console.log(`[Cloud Video Job] Loaded ${loaded} secret value(s).`);
 }
 
+function setWebsiteVideoEnvironment() {
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, '');
+  process.env.NEXT_PUBLIC_SITE_URL = siteUrl;
+  process.env.WEBSITE_BASE_URL = siteUrl;
+  process.env.SOCIAL_VIDEO_BASE_URL = `${siteUrl}/videos`;
+  console.log(`[Cloud Video Job] Social video URLs will use website path: ${process.env.SOCIAL_VIDEO_BASE_URL}/{PRODUCT_ID}.mp4`);
+}
+
 function uploadOutputsToCloudStorage() {
-  const bucket = process.env.VIDEO_OUTPUT_BUCKET || process.env.GCS_VIDEO_BUCKET;
-  if (!bucket) {
-    console.log('[Cloud Video Job] VIDEO_OUTPUT_BUCKET not set. Skipping Cloud Storage upload.');
-    return;
-  }
+  const bucket = process.env.VIDEO_OUTPUT_BUCKET || process.env.GCS_VIDEO_BUCKET || 'natureswaysoil-videos';
   const prefix = (process.env.VIDEO_OUTPUT_PREFIX || 'seed-videos').replace(/^\/+|\/+$/g, '');
+  process.env.VIDEO_OUTPUT_BUCKET = bucket;
+  process.env.VIDEO_OUTPUT_PREFIX = prefix;
+
   const destination = `gs://${bucket}/${prefix}/`;
   console.log(`[Cloud Video Job] Uploading generated videos and plans to ${destination}`);
   const files = [];
@@ -118,10 +127,18 @@ function uploadOutputsToCloudStorage() {
     console.log('[Cloud Video Job] No generated files found to upload.');
     return;
   }
+
   run('gsutil', ['-m', 'cp', ...files, destination]);
+  run('gsutil', ['-m', 'setmeta', '-h', 'Cache-Control:public, max-age=31536000, immutable', `${destination}*`]);
+
   if (process.env.MAKE_GCS_VIDEOS_PUBLIC === '1') {
     run('gsutil', ['-m', 'acl', 'ch', '-r', '-u', 'AllUsers:R', destination]);
   }
+
+  const publicBase = (process.env.VIDEO_PUBLIC_BASE_URL || `https://storage.googleapis.com/${bucket}/${prefix}`).replace(/\/$/, '');
+  process.env.VIDEO_PUBLIC_BASE_URL = publicBase;
+  process.env.NEXT_PUBLIC_VIDEO_PUBLIC_BASE_URL = publicBase;
+  console.log(`[Cloud Video Job] Website /videos/* should rewrite to: ${publicBase}/*`);
 }
 
 function runSocialPoster() {
@@ -136,6 +153,7 @@ function runSocialPoster() {
 function main() {
   console.log('[Cloud Video Job] Starting Nature\'s Way Soil video + social pipeline.');
   hydrateSecrets();
+  setWebsiteVideoEnvironment();
   console.log('[Cloud Video Job] Generating videos...');
   run('node', ['scripts/create-quality-seed-videos.mjs', '--all']);
   uploadOutputsToCloudStorage();
