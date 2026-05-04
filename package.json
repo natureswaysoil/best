@@ -53,6 +53,7 @@
     "optimize:images": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
+    "@react-email/render": "^1.4.0",
     "@stripe/react-stripe-js": "^5.2.0",
     "@stripe/stripe-js": "^8.1.0",
     "@supabase/supabase-js": "^2.75.1",
