@@ -1,11 +1,21 @@
-# Dockerfile for Social Media Automation with HeyGen Integration
-FROM node:18-slim
+# Dockerfile for Social Media Automation with Google Cloud + video processing
+FROM node:20-slim
 
-# Install system dependencies for video processing
-RUN apt-get update && apt-get install -y \
+# Install system dependencies, FFmpeg, and Google Cloud CLI.
+# The cloud video job uses `gcloud secrets ...` and `gcloud storage ...`,
+# so the runtime image must include google-cloud-cli.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     curl \
     ca-certificates \
+    gnupg \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+      | gpg --dearmor -o /etc/apt/keyrings/google-cloud-cli.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/google-cloud-cli.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+      > /etc/apt/sources.list.d/google-cloud-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends google-cloud-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -14,21 +24,22 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install production dependencies
+RUN npm ci --omit=dev
 
 # Copy application code
 COPY . .
 
 # Create directories for video storage
-RUN mkdir -p /app/public/videos /app/public/videos/blog
+RUN mkdir -p /app/public/videos /app/public/videos/blog /app/content/video-scripts /app/content/generated-videos /app/logs
 
 # Make scripts executable
-RUN chmod +x scripts/*.mjs scripts/*.sh
+RUN chmod +x scripts/*.mjs scripts/*.sh || true
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV DISABLE_TWITTER_POSTING=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
