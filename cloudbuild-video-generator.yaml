@@ -1,0 +1,12 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - cloud/video-generator/Dockerfile
+      - -t
+      - gcr.io/$PROJECT_ID/nws-video-generator:latest
+      - .
+
+images:
+  - gcr.io/$PROJECT_ID/nws-video-generator:latest
