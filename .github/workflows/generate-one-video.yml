@@ -1,0 +1,57 @@
+name: Generate One Test Video
+
+on:
+  workflow_dispatch:
+    inputs:
+      product_id:
+        description: Product ID to generate
+        required: false
+        default: NWS_014
+  push:
+    paths:
+      - .github/workflows/generate-one-video.yml
+      - scripts/create-one-test-video.mjs
+      - scripts/create-quality-seed-videos.mjs
+      - config/top-products.json
+
+jobs:
+  generate-one-video:
+    runs-on: ubuntu-latest
+    env:
+      PRODUCT_ID: ${{ github.event.inputs.product_id || 'NWS_014' }}
+      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate one video
+        run: node scripts/create-one-test-video.mjs
+
+      - name: Verify generated video
+        run: |
+          test -f public/videos/${PRODUCT_ID}.mp4
+          ffprobe -v error -show_entries stream=width,height,duration -of json public/videos/${PRODUCT_ID}.mp4
+
+      - name: Upload generated video artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: one-test-video-${{ env.PRODUCT_ID }}
+          path: |
+            public/videos/${{ env.PRODUCT_ID }}.mp4
+            public/videos/${{ env.PRODUCT_ID }}.jpg
+            content/generated-videos/${{ env.PRODUCT_ID }}-quality-seed-plan.json
+          if-no-files-found: error
