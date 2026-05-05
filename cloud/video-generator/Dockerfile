@@ -24,4 +24,4 @@ ENV FFMPEG_TIMEOUT_MS=900000
 ENV JOB_STEP_TIMEOUT_MS=1800000
 ENV GOOGLE_CLOUD_VIDEO_JOB=true
 
-CMD ["npm", "run", "video:social"]
+CMD ["npm", "run", "video:seed-rotation"]
