@@ -8,7 +8,7 @@
  * 2. Generate the top-five quality seed-style videos.
  * 3. Upload videos/posters/plans to Cloud Storage.
  * 4. Set social posting video URLs to website URLs.
- * 5. Run the existing social-media auto-poster.
+ * 5. Run the five-product social poster wrapper.
  */
 
 import fs from 'fs';
@@ -36,12 +36,6 @@ const SECRET_NAMES = [
   'FACEBOOK_PAGE_ACCESS_TOKEN',
   'PINTEREST_ACCESS_TOKEN',
   'PINTEREST_BOARD_ID',
-  'TWITTER_API_KEY',
-  'TWITTER_API_SECRET',
-  'TWITTER_ACCESS_TOKEN',
-  'TWITTER_ACCESS_TOKEN_SECRET',
-  'TWITTER_ACCESS_SECRET',
-  'TWITTER_BEARER_TOKEN',
   'YT_CLIENT_ID',
   'YT_CLIENT_SECRET',
   'YT_REFRESH_TOKEN'
@@ -146,15 +140,15 @@ function runSocialPoster() {
     console.log('[Cloud Video Job] SKIP_SOCIAL_POSTING=1. Skipping social posting.');
     return;
   }
-  console.log('[Cloud Video Job] Running social media auto-poster...');
-  run('node', ['scripts/social-media-auto-post.mjs']);
+  console.log('[Cloud Video Job] Running five-product social media auto-poster...');
+  run('node', ['scripts/social-media-auto-post-five-products.mjs']);
 }
 
 function main() {
   console.log('[Cloud Video Job] Starting Nature\'s Way Soil video + social pipeline.');
   hydrateSecrets();
   setWebsiteVideoEnvironment();
-  console.log('[Cloud Video Job] Generating videos...');
+  console.log('[Cloud Video Job] Generating top-five product videos...');
   run('node', ['scripts/create-quality-seed-videos.mjs', '--all']);
   uploadOutputsToCloudStorage();
   runSocialPoster();
