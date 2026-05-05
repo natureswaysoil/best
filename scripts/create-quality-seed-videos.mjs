@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
 /**
- * Quality seed-style vertical video generator.
- * Builds 1080x1920 MP4 ads for Nature's Way Soil products.
+ * Robust quality seed-style vertical video generator.
+ *
+ * Key safety fixes:
+ * - Probes images with ffprobe before use so corrupt/placeholder .jpg files do not crash FFmpeg.
+ * - Falls back to branded motion scenes when no usable image or b-roll is available.
+ * - Honors PRODUCT_ID / VIDEO_PRODUCT_ID for one-product test runs unless --all is passed.
  */
 
 import fs from 'fs';
@@ -32,8 +36,8 @@ function run(command, args) {
   if (result.status !== 0) throw new Error(`${command} failed with exit ${result.status}`);
 }
 function capture(command, args) {
-  const result = spawnSync(command, args, { encoding: 'utf8' });
-  return result.status === 0 ? result.stdout : '';
+  const result = spawnSync(command, args, { encoding: 'utf8', timeout: 30000 });
+  return result.status === 0 ? result.stdout.trim() : '';
 }
 function requireTool(command) {
   const result = spawnSync(command, ['-version'], { stdio: 'ignore' });
@@ -83,6 +87,11 @@ function listRecursive(dir, re, limit = 500) {
     }
   }
   return found;
+}
+function probeMedia(file) {
+  if (!fs.existsSync(file) || fs.statSync(file).size < 1000) return false;
+  const out = capture('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file]);
+  return /^\d+,\d+/.test(out);
 }
 
 const SEEDS = {
@@ -185,13 +194,18 @@ function productImages(product) {
   ];
   const seen = new Set();
   const files = [];
+  let skipped = 0;
   for (const root of roots) {
     for (const file of listRecursive(root, /\.(png|jpe?g|webp)$/i)) {
       const lower = file.toLowerCase();
       const matched = lower.includes(product.id.toLowerCase()) || product.keywords.some((k) => lower.includes(k.toLowerCase()));
-      if (matched && !seen.has(file)) { seen.add(file); files.push(file); }
+      if (!matched || seen.has(file)) continue;
+      seen.add(file);
+      if (probeMedia(file)) files.push(file);
+      else skipped++;
     }
   }
+  if (skipped) console.log(`Skipped ${skipped} invalid image file(s) for ${product.id}.`);
   return files.sort((a, b) => score(a, product.keywords) - score(b, product.keywords));
 }
 function localBroll(product, scene) {
@@ -201,7 +215,7 @@ function localBroll(product, scene) {
     path.join(PROJECT, 'public', 'videos', 'broll', product.id),
     path.join(PROJECT, 'public', 'videos', 'broll', 'shared')
   ];
-  return roots.flatMap((root) => listRecursive(root, /\.(mp4|mov|m4v|webm)$/i)).sort((a, b) => score(a, scene.broll || []) - score(b, scene.broll || []));
+  return roots.flatMap((root) => listRecursive(root, /\.(mp4|mov|m4v|webm)$/i)).filter(probeMedia).sort((a, b) => score(a, scene.broll || []) - score(b, scene.broll || []));
 }
 async function pexels(query, outFile) {
   if (!PEXELS_API_KEY) return false;
@@ -222,7 +236,7 @@ async function pexels(query, outFile) {
       const pick = files[0];
       if (!pick) continue;
       const dl = spawnSync('curl', ['-L', '--fail', '--max-time', '60', pick.link, '-o', outFile], { stdio: 'ignore', timeout: 75000 });
-      if (dl.status === 0 && fs.existsSync(outFile) && fs.statSync(outFile).size > 10000) return true;
+      if (dl.status === 0 && probeMedia(outFile)) return true;
     }
   } catch {}
   return false;
@@ -245,6 +259,7 @@ function motionScene(text, out, seconds, productName) {
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
 }
 function productScene(image, text, out, seconds, product, endCard = false) {
+  if (!image || !probeMedia(image)) return motionScene(endCard ? product.cta : text, out, seconds, product.productName);
   const tf = textFile(endCard ? product.cta : text, endCard ? 28 : 26);
   const pf = textFile(product.productName, 24);
   const filter = [
@@ -258,7 +273,8 @@ function productScene(image, text, out, seconds, product, endCard = false) {
   ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
 }
-function imageScene(image, text, out, seconds) {
+function imageScene(image, text, out, seconds, product) {
+  if (!image || !probeMedia(image)) return motionScene(text, out, seconds, product.productName);
   const tf = textFile(text, 25);
   const filter = [
     `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0010,1.08)':d=${seconds * FPS}:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`,
@@ -278,12 +294,12 @@ function brollScene(input, text, out, seconds) {
 }
 async function build(product) {
   const images = productImages(product);
-  if (!images.length) throw new Error(`No product images found for ${product.id}. Add images under public/images/products/${product.id}/ or name files with product keywords.`);
+  if (!images.length) console.log(`No usable product images found for ${product.id}; using branded motion fallback.`);
   const work = fs.mkdtempSync(path.join(os.tmpdir(), `nws_quality_${product.id}_`));
   const scenes = [];
   const audit = [];
   console.log(`\n🎬 ${product.id}: ${product.productName}`);
-  console.log(`Product images found: ${images.length}`);
+  console.log(`Usable product images found: ${images.length}`);
   for (let i = 0; i < product.scenes.length; i++) {
     const scene = product.scenes[i];
     const out = path.join(work, `scene_${i}.mp4`);
@@ -291,12 +307,12 @@ async function build(product) {
     console.log(`Scene ${i + 1}/${product.scenes.length}: ${scene.text}`);
     if (scene.product || scene.endCard) {
       productScene(images[0], scene.text, out, scene.seconds, product, scene.endCard);
-      audit.push({ scene: i + 1, type: scene.endCard ? 'end-card' : 'product-card', source: path.relative(PROJECT, images[0]), text: scene.text });
+      audit.push({ scene: i + 1, type: scene.endCard ? 'end-card' : 'product-card', source: images[0] ? path.relative(PROJECT, images[0]) : 'motion-fallback', text: scene.text });
     } else {
       const local = localBroll(product, scene)[0];
       if (local) { brollScene(local, scene.text, out, scene.seconds); audit.push({ scene: i + 1, type: 'local-broll', source: path.relative(PROJECT, local), text: scene.text }); }
       else if (await pexels(scene.query, raw)) { brollScene(raw, scene.text, out, scene.seconds); audit.push({ scene: i + 1, type: 'pexels-broll', query: scene.query, text: scene.text }); }
-      else if (images.length > 1) { imageScene(images[i % images.length], scene.text, out, scene.seconds); audit.push({ scene: i + 1, type: 'product-image-motion', source: path.relative(PROJECT, images[i % images.length]), text: scene.text }); }
+      else if (images.length > 1) { imageScene(images[i % images.length], scene.text, out, scene.seconds, product); audit.push({ scene: i + 1, type: 'product-image-motion', source: path.relative(PROJECT, images[i % images.length]), text: scene.text }); }
       else { motionScene(scene.text, out, scene.seconds, product.productName); audit.push({ scene: i + 1, type: 'branded-motion-fallback', text: scene.text }); }
     }
     scenes.push(out);
