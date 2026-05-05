@@ -5,7 +5,7 @@
  *
  * Pipeline:
  * 1. Hydrate environment variables from Google Secret Manager.
- * 2. Generate the top-five quality seed-style videos.
+ * 2. Generate five video rotations for each top-five product.
  * 3. Upload videos/posters/plans to Cloud Storage.
  * 4. Set social posting video URLs to website URLs.
  * 5. Run the five-product social poster wrapper.
@@ -148,8 +148,8 @@ function main() {
   console.log('[Cloud Video Job] Starting Nature\'s Way Soil video + social pipeline.');
   hydrateSecrets();
   setWebsiteVideoEnvironment();
-  console.log('[Cloud Video Job] Generating top-five product videos...');
-  run('node', ['scripts/create-quality-seed-videos.mjs', '--all']);
+  console.log('[Cloud Video Job] Generating five video rotations for each top-five product...');
+  run('node', ['scripts/create-five-product-video-rotation.mjs']);
   uploadOutputsToCloudStorage();
   runSocialPoster();
   console.log('[Cloud Video Job] Done.');
