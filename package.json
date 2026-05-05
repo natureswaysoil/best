@@ -11,6 +11,8 @@
     "type-check": "tsc --noEmit",
     "videos": "node scripts/create-quality-seed-videos.mjs --all",
     "video:social": "node scripts/cloud-video-social-job.mjs",
+    "video:seed-rotation": "node scripts/run-seed-rotation.mjs",
+    "social:seed-rotation": "node scripts/social-seed-rotation-runner.mjs",
     "seed:videos": "node scripts/create-quality-seed-videos.mjs --all",
     "seed:video": "node scripts/create-quality-seed-videos.mjs",
     "legacy:videos": "node scripts/generate-product-videos.mjs",
