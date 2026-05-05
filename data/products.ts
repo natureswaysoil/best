@@ -291,113 +291,135 @@ export const allProducts: ProductData[] = [
   {
     id: 'NWS_013',
     asin: 'B0DDCPYLG1',
-    name: 'Enhanced Living Compost with Fermented Duckweed',
+    name: 'Living Compost with Worm Castings & Biochar',
     price: 29.99,
-  image: '/images/products/NWS_013/main.jpg',
-    description: 'Superior living compost blend with 20% worm castings, 20% activated biochar, and 60% weed-free aged compost. Premium blend with fermented duckweed extract.',
+    image: '/images/products/NWS_013/main.jpg',
+    description: 'Concentrated living compost with 20% worm castings, 20% activated biochar, and living microbes to improve root-zone biology in raised beds, containers, and gardens.',
     category: 'Compost',
-    tags: ['compost', 'worm-castings', 'biochar', 'living-soil', 'microbes', 'duckweed'],
+    tags: ['compost', 'worm-castings', 'biochar', 'garden-mix', 'raised-beds', 'living-soil'],
     features: [
-      'Contains billions of beneficial soil microbes',
-      '20% Premium Worm Castings for slow-release nutrition',
-      '20% Activated BioChar for soil structure',
-      '60% Weed-Free Compost base',
-      'Fermented Duckweed Extract for enhanced microbiology',
-      'Enriches soil biology dramatically',
-      'Stimulates healthy root development',
-      'Provides slow-release nutrition'
+      'Concentrated living soil blend with 20% worm castings + 20% activated biochar',
+      'Small bag, high impact: use 1–2 cups per plant or a 1:4 soil mix',
+      'Supports transplant shock recovery and stronger early root establishment',
+      'Biochar helps hold moisture and nutrients near the root zone',
+      'Small-batch processed to preserve biologically active microbial life'
     ],
     images: [
       '/images/products/NWS_013/main.jpg',
       '/images/products/NWS_013/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_013.mp4',
-  videoWebm: '/videos/NWS_013.webm',
-  videoPoster: '/videos/NWS_013.jpg',
+    video: '/videos/NWS_013.mp4',
+    videoWebm: '/videos/NWS_013.webm',
+    videoPoster: '/videos/NWS_013.jpg',
     sizes: [
-      { name: '10 lb', price: 29.99, sku: 'WK-558E-QZUL' }
+      { name: '10 Pounds', price: 29.99, sku: 'WK-558E-QZUL' }
     ],
     usage: [
-      'Spread a 1-2 inch layer over garden beds and incorporate into the top 3-4 inches of soil.',
-      'Blend up to 25% by volume into potting mixes for containers and raised beds.',
-      'Topdress around established plants with a 0.5-inch layer, then water thoroughly.',
-      'Apply in spring and fall or whenever soil needs a microbial refresh.'
+      'Blend into beds or containers at roughly 1 part compost to 4 parts existing soil.',
+      'For transplants, place 1-2 cups in the planting hole and backfill around roots.',
+      'Topdress established plants with a light ring around the drip line, then water in.',
+      'Reapply during active growth to keep biology and structure strong in high-demand beds.'
     ]
   },
   {
     id: 'NWS_014',
     asin: 'B0FG38PQQX',
-    name: 'Dog Urine Neutralizer & Lawn Repair',
+    name: 'Dog Urine Neutralizer & Lawn Revitalizer',
     price: 29.99,
-  image: '/images/products/NWS_014/main.jpg',
-    description: 'Professional-strength dog urine neutralizer that eliminates yellow spots caused by pet urine burn. Pet-safe formula that neutralizes salts and revives grass.',
+    image: '/images/products/NWS_014/main.jpg',
+    description: 'Pet-safe enzyme and humic treatment designed to support lawn recovery in dog urine-stressed areas by helping address odor residues and soil imbalance.',
     category: 'Lawn Care',
-    tags: ['dog-urine', 'lawn-repair', 'pet-safe', 'yellow-spots', 'odor-control'],
+    tags: ['dog-urine', 'lawn-revival', 'pet-safe', 'odor-control', 'lawn-cluster'],
     features: [
-      'Eliminates yellow spots from pet urine',
-      'Neutralizes harmful salts instantly',
-      'Eliminates odors naturally',
-      'Revives damaged grass quickly',
-      '100% safe for dogs, cats, and pets',
-      'No waiting period - pets can walk immediately',
-      'Professional-strength formula',
-      'Essential for pet owners'
+      'Designed for soil-level lawn support, not a temporary green dye',
+      'Enzymes help break down urine residues linked to recurring burn spots',
+      'Humic and fulvic acids support improved soil conditions for regrowth',
+      'Helps neutralize odor markers that encourage repeat marking',
+      'Pet-safe, plant-based formula made in small batches in the USA'
     ],
     images: [
       '/images/products/NWS_014/main.jpg',
       '/images/products/NWS_014/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_014.mp4',
-  videoWebm: '/videos/NWS_014.webm',
-  videoPoster: '/videos/NWS_014.jpg',
+    video: '/videos/NWS_014.mp4',
+    videoWebm: '/videos/NWS_014.webm',
+    videoPoster: '/videos/NWS_014.jpg',
     sizes: [
-      { name: '32 oz', price: 29.99, sku: 'EG-PJ13-DA9T' },
+      { name: '32 Ounce', price: 29.99, sku: 'EG-PJ13-DA9T' },
       { name: '1 Gallon', price: 59.99, sku: 'T0-MB9Q-JIKC' }
     ],
     usage: [
-      'Shake bottle vigorously before every use to activate neutralizing microbes.',
-      'For fresh spots, mix 4 ounces with 1 gallon of water and saturate the area immediately.',
-      'For stubborn burn spots, pre-wet soil and apply undiluted product until runoff.',
-      'Reapply every 1-2 weeks in high-traffic areas to maintain soil balance and odor control.'
+      'Shake thoroughly before each use to activate the enzyme and humic blend.',
+      'Dilute according to label directions and spray directly on yellow or stressed areas.',
+      'Treat both the damaged spot and surrounding root zone for better coverage.',
+      'Repeat in high-traffic pet zones as part of an ongoing lawn recovery routine.'
+    ]
+  },
+  {
+    id: 'NWS_023',
+    asin: 'B0GFC45K6T',
+    name: 'Liquid Lawn Fertilizer for Yellow & Heat-Stressed Grass',
+    price: 39.99,
+    image: '/images/products/NWS_023/main.jpg',
+    description: 'Concentrated 5-3-4 living-soil lawn fertilizer with humic and kelp support for greener color, stronger roots, and stress recovery in established turf.',
+    category: 'Lawn Care',
+    tags: ['lawn-fertilizer', '5-3-4', 'heat-stress', 'yellow-grass', 'lawn-cluster'],
+    features: [
+      'Liquid 5-3-4 nutrition helps correct pale, weak, and slow-growing grass',
+      'Concentrated formula covers approximately 5,000-10,000 sq ft depending on dilution',
+      'Feeds both grass and soil with humic support for longer-lasting performance',
+      'Low-burn formulation suitable for routine use on established turf',
+      'Simple mix-and-spray application with hose-end sprayers or watering cans'
+    ],
+    images: [
+      '/images/products/NWS_023/main.jpg',
+      '/images/products/NWS_023/thumb.jpg'
+    ],
+    inStock: true,
+    sizes: [
+      { name: '1 Gallon', price: 39.99, sku: 'NWS-LAWN-1GAL' }
+    ],
+    usage: [
+      'Shake well, then dilute per label rate for your sprayer style and lawn condition.',
+      'Apply evenly over established turf during cool parts of the day.',
+      'Water lightly after application to move nutrition toward the root zone.',
+      'Repeat every 2-4 weeks through active growing season as needed.'
     ]
   },
   {
     id: 'NWS_016',
     asin: 'B0D9HT7ND8',
-    name: 'Organic Hydroponic Fertilizer Concentrate',
+    name: 'Organic Hydroponic Nutrients - Liquid Concentrate',
     price: 29.99,
-  image: '/images/products/NWS_016/main.jpg',
-    description: 'Made fresh weekly - 32 oz makes 512 gallons of nutrient solution. Organic plant food for hydroponic systems and aquaponics.',
+    image: '/images/products/NWS_016/main.jpg',
+    description: 'Organic hydroponic nutrient concentrate powered by fermented duckweed, kelp, and humic support. One 32 oz bottle makes up to 64 gallons of feed solution.',
     category: 'Fertilizer',
-    tags: ['hydroponic', 'aquaponic', 'organic', 'concentrate', 'indoor-growing', 'pet-safe'],
+    tags: ['hydroponic', 'organic', 'duckweed', 'kelp', 'indoor-growing', 'nutrient-solution'],
     features: [
-      'Makes up to 512 gallons of nutrient solution',
-      'Perfectly balanced nutrition for rapid growth',
-      'Pet-safe and chemical-free formula',
-      'Made fresh weekly with live microbes',
-      'Ideal for hydroponic and aquaponic systems',
-      'Perfect for indoor growing and greenhouses',
-      'Supports healthy development naturally',
-      'Easy to use - just mix with water'
+      'One 32 oz bottle makes up to 64 gallons of nutrient solution',
+      'Water-soluble formula for hydroponics, coco, raised beds, and soil gardens',
+      'Fermented duckweed and kelp blend supports balanced plant growth',
+      'Humic and fulvic acids help improve nutrient availability',
+      'Low-salt, non-burn formula suitable for routine feedings'
     ],
     images: [
       '/images/products/NWS_016/main.jpg',
       '/images/products/NWS_016/thumb.jpg'
     ],
-  video: '/videos/NWS_016.mp4',
-  videoWebm: '/videos/NWS_016.webm',
-  videoPoster: '/videos/NWS_016.jpg',
+    video: '/videos/NWS_016.mp4',
+    videoWebm: '/videos/NWS_016.webm',
+    videoPoster: '/videos/NWS_016.jpg',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 29.99, sku: 'FR-IJ8R-6LQK' }
+      { name: '32 Fluid Ounces', price: 29.99, sku: 'FR-IJ8R-6LQK' }
     ],
     usage: [
-      'Shake well before measuring concentrate to distribute nutrients evenly.',
-      'Start seedlings at 1 teaspoon per gallon and increase to 1 tablespoon for mature plants.',
-      'Maintain reservoir pH between 5.8 and 6.2 and refresh solution every 7-10 days.',
-      'Compatible with drip, NFT, ebb-and-flow, and aquaponic systems when used as directed.'
+      'Shake bottle well before measuring concentrate.',
+      'Use 1 tablespoon per gallon of water for routine feeding in most systems.',
+      'Monitor EC and pH regularly and refresh reservoir solution every 7-10 days.',
+      'Compatible with DWC, drip, coco, and soil drench programs when used as directed.'
     ]
   },
   {
@@ -444,39 +466,67 @@ export const allProducts: ProductData[] = [
   {
     id: 'NWS_021',
     asin: 'B0DJ1JNQW4',
-    name: 'Horse Safe Hay, Pasture & Lawn Fertilizer',
+    name: 'Hay and Pasture Liquid Fertilizer',
     price: 39.99,
-  image: '/images/products/NWS_021/main.jpg',
-    description: 'Premium horse-safe microbial nitrogen fertilizer blend for hay fields, pastures, and lawns. Naturally feeds grass while supporting sustained growth and greener lawns.',
+    image: '/images/products/NWS_021/main.jpg',
+    description: 'Organic non-toxic pasture fertilizer formulated for horse and livestock safety. Supports stronger forage growth, nutrient uptake, and long-term soil health.',
     category: 'Fertilizer',
-    tags: ['hay', 'pasture', 'lawn', 'horse-safe', 'livestock', 'microbial', 'nitrogen'],
+    tags: ['hay', 'pasture', 'horse-safe', 'livestock', 'forage', 'microbial'],
     features: [
-      'Safe for horses and livestock - no waiting period',
-      'Microbial nitrogen blend for sustained growth',
-      'Creates greener lawns and pastures',
-      'Improves soil structure naturally',
-      'Perfect for organic farms and horse pastures',
-      'Feeds grass and turf naturally',
-      'Supports beneficial soil microbes',
-      'Suitable for hay fields and residential lawns'
+      'Concentrated formula can cover up to 5 acres per gallon when diluted 1:50',
+      'Helps accelerate regrowth between cuttings with biology-first nutrition',
+      '100% safe for horses, cattle, and livestock with no withdrawal period',
+      'Introduces beneficial microorganisms for long-term soil health',
+      'Easy application with hose-end, backpack, or boom sprayer systems'
     ],
     images: [
       '/images/products/NWS_021/main.jpg',
       '/images/products/NWS_021/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_021.mp4',
-  videoWebm: '/videos/NWS_021.webm',
-  videoPoster: '/videos/NWS_021.jpg',
+    video: '/videos/NWS_021.mp4',
+    videoWebm: '/videos/NWS_021.webm',
+    videoPoster: '/videos/NWS_021.jpg',
     sizes: [
       { name: '1 Gallon', price: 39.99, sku: 'VY-T7ZM-760R' },
       { name: '2.5 Gallon', price: 99.99, sku: 'N4-E00Z-BB9W' }
     ],
     usage: [
-      'Shake well, then dilute 8 ounces per gallon of water for broadcast spraying.',
-      'Apply to approximately 1,000 sq ft, coating foliage and soil for best results.',
-      'Irrigate or allow rainfall within 24 hours to carry nutrients into the root zone.',
-      'Horses and livestock may graze once the spray has dried, typically after 2 hours.'
+      'Dilute concentrate 1:50 with water (or follow label rates for your sprayer).',
+      'Spray evenly over hay fields, pasture grass, or forage zones.',
+      'Apply before rainfall or irrigate to move biology into the root zone.',
+      'Repeat on a regular feeding cadence to maintain forage density and color.'
+    ]
+  },
+  {
+    id: 'NWS_022',
+    asin: 'B0GTBZ7N56',
+    name: 'Fruit Tree Fertilizer - Liquid Concentrate',
+    price: 29.99,
+    image: '/images/products/NWS_022/main.jpg',
+    description: 'Liquid concentrate for apple, peach, pear, citrus, banana, and other fruit trees. Supports blooms, fruit set, root strength, and seasonal tree vigor.',
+    category: 'Fertilizer',
+    tags: ['fruit-tree', 'orchard', 'citrus', 'apple', 'peach', 'liquid-fertilizer'],
+    features: [
+      'Supports healthier roots and stronger overall fruit tree performance',
+      'Formulated to support blooms, fruit set, and in-season vigor',
+      '32 oz concentrate makes up to 64 gallons for broad orchard coverage',
+      'Suitable for young transplants, mature trees, and stressed trees',
+      'Easy soil-drench application via watering can, sprayer, or hose-end system'
+    ],
+    images: [
+      '/images/products/NWS_022/main.jpg',
+      '/images/products/NWS_022/thumb.jpg'
+    ],
+    inStock: true,
+    sizes: [
+      { name: '32 Fluid Ounces', price: 29.99, sku: 'NWS-FRUIT-32OZ' }
+    ],
+    usage: [
+      'Shake concentrate thoroughly before mixing.',
+      'Dilute in water and apply as a soil drench around the drip line.',
+      'Feed routinely from spring green-up through fruiting season.',
+      'Use after transplanting or stress events to support root recovery.'
     ]
   }
 ];
