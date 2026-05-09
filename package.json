@@ -15,7 +15,7 @@
     "social:seed-rotation": "node scripts/social-seed-rotation-runner.mjs",
     "seed:videos": "node scripts/create-quality-seed-videos.mjs --all",
     "seed:video": "node scripts/create-quality-seed-videos.mjs",
-    "legacy:videos": "node scripts/generate-product-videos.mjs",
+    "legacy:videos": "node scripts/generate-product-videos-fixed.mjs",
     "check:videos": "node scripts/check-videos.mjs",
     "heygen:test": "node scripts/heygen-video-generator.mjs test",
     "heygen:avatars": "node scripts/heygen-video-generator.mjs avatars",
