@@ -20,17 +20,17 @@ const runtimePath = path.join(__dirname, '.generate-product-videos.runtime.mjs')
 
 let source = fs.readFileSync(sourcePath, 'utf8');
 
-const pexelsEnhancer = String.raw`function enhanceHeyGenVideoWithBroll(videoPath, prod) {
-  console.log([96m[1m` + '`   🎥 Pexels b-roll enhancement active for ${prod.id}`' + `[0m);
+function pexelsEnhancerFunction(videoPath, prod) {
+  console.log(`   🎥 Pexels b-roll enhancement active for ${prod.id}`);
 
   if (!hasFfmpeg()) {
-    console.log(` + '`   ⚠️  FFmpeg not available, skipping Pexels b-roll enhancement for ${prod.id}`' + `);
+    console.log(`   ⚠️  FFmpeg not available, skipping Pexels b-roll enhancement for ${prod.id}`);
     return false;
   }
 
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) {
-    console.log(` + '`   ⚠️  PEXELS_API_KEY not set, skipping Pexels b-roll for ${prod.id}`' + `);
+    console.log(`   ⚠️  PEXELS_API_KEY not set, skipping Pexels b-roll for ${prod.id}`);
     return false;
   }
 
@@ -201,13 +201,16 @@ const pexelsEnhancer = String.raw`function enhanceHeyGenVideoWithBroll(videoPath
 
   return true;
 }
-`;
+
+const pexelsEnhancer = pexelsEnhancerFunction
+  .toString()
+  .replace('function pexelsEnhancerFunction', 'function enhanceHeyGenVideoWithBroll');
 
 const originalEnhancerPattern = /function enhanceHeyGenVideoWithBroll\(videoPath, prod\) \{[\s\S]*?\n\}\n\nfunction makeSegments/;
 if (!originalEnhancerPattern.test(source)) {
   console.warn('⚠️  Could not find b-roll enhancer function; running original script unchanged.');
 } else {
-  source = source.replace(originalEnhancerPattern, `${pexelsEnhancer}\nfunction makeSegments`);
+  source = source.replace(originalEnhancerPattern, `${pexelsEnhancer}\n\nfunction makeSegments`);
 }
 
 fs.writeFileSync(runtimePath, source, 'utf8');
