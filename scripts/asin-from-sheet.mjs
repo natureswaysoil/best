@@ -5,32 +5,64 @@
  * Usage:
  *   node scripts/asin-from-sheet.mjs <spreadsheetId> <sheetGid> <outputFile>
  *
- * Or with env vars:
+ * Or with env vars / Google Secret Manager:
  *   GOOGLE_SHEET_ID=... GOOGLE_SHEET_GID=... node scripts/asin-from-sheet.mjs
  *   GOOGLE_SHEET_CSV_URL=... node scripts/asin-from-sheet.mjs
  *
- * Notes:
- * - This uses the Google Sheets CSV export URL, so the sheet must be accessible
- *   to the environment running the script. For private sheets, publish/share the
- *   sheet appropriately or provide a working GOOGLE_SHEET_CSV_URL.
- * - No extra npm dependencies are required.
+ * Secret Manager support:
+ * - If GCP_SECRET_GOOGLE_SHEET_CSV_URL is set, it reads that secret as the CSV URL.
+ * - If GCP_SECRET_GOOGLE_SHEET_ID is set, it reads that secret as the sheet ID.
+ * - If GCP_SECRET_GOOGLE_SHEET_GID is set, it reads that secret as the sheet gid.
+ * - It also tries common secret names directly: GOOGLE_SHEET_CSV_URL,
+ *   CSV_URL, GOOGLE_SHEET_ID, and GOOGLE_SHEET_GID.
  */
 
 import fs from 'fs';
 import path from 'path';
 
 const args = process.argv.slice(2);
-const spreadsheetId = args[0] || process.env.GOOGLE_SHEET_ID || '';
-const sheetGid = args[1] || process.env.GOOGLE_SHEET_GID || '0';
-const outputFile = args[2] || path.join('content', 'video-scripts', 'sheet-products.json');
-const directCsvUrl = process.env.GOOGLE_SHEET_CSV_URL || process.env.CSV_URL || '';
+const DEFAULT_OUTPUT_FILE = path.join('content', 'video-scripts', 'sheet-products.json');
 
-function buildCsvUrl() {
+async function getSecretPayload(secretRef) {
+  if (!secretRef) return '';
+  try {
+    const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
+    const client = new SecretManagerServiceClient();
+    const name = secretRef.includes('/versions/') ? secretRef : secretRef.startsWith('projects/') ? `${secretRef}/versions/latest` : '';
+    if (!name) return '';
+    const [accessResponse] = await client.accessSecretVersion({ name });
+    return accessResponse.payload?.data?.toString('utf8')?.trim() || '';
+  } catch {
+    return '';
+  }
+}
+
+async function getNamedSecret(secretName) {
+  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
+  if (!projectId || !secretName) return '';
+  return getSecretPayload(`projects/${projectId}/secrets/${secretName}/versions/latest`);
+}
+
+async function getConfigValue(envName, explicitValue = '') {
+  if (explicitValue) return explicitValue;
+  if (process.env[envName]) return process.env[envName].trim();
+
+  const pointer = process.env[`GCP_SECRET_${envName}`];
+  const fromPointer = await getSecretPayload(pointer);
+  if (fromPointer) return fromPointer;
+
+  const fromNamedSecret = await getNamedSecret(envName);
+  if (fromNamedSecret) return fromNamedSecret;
+
+  return '';
+}
+
+function buildCsvUrl(spreadsheetId, sheetGid, directCsvUrl) {
   if (directCsvUrl) return directCsvUrl;
   if (!spreadsheetId) {
-    throw new Error('Missing spreadsheet ID. Set GOOGLE_SHEET_ID or GOOGLE_SHEET_CSV_URL.');
+    throw new Error('Missing spreadsheet ID. Set GOOGLE_SHEET_ID, GOOGLE_SHEET_CSV_URL, or matching Google Secret Manager secrets.');
   }
-  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${sheetGid}`;
+  return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${sheetGid || '0'}`;
 }
 
 function parseCsv(text) {
@@ -118,12 +150,20 @@ function normalizeProduct(record, index) {
   };
 }
 
+function redactUrl(url) {
+  return String(url || '').replace(/([?&](?:key|token|access_token)=)[^&]+/gi, '$1***');
+}
+
 async function main() {
-  const csvUrl = buildCsvUrl();
+  const spreadsheetId = await getConfigValue('GOOGLE_SHEET_ID', args[0] || '');
+  const sheetGid = await getConfigValue('GOOGLE_SHEET_GID', args[1] || '0');
+  const outputFile = args[2] || process.env.SHEET_PRODUCTS_OUTPUT || DEFAULT_OUTPUT_FILE;
+  const directCsvUrl = await getConfigValue('GOOGLE_SHEET_CSV_URL', process.env.CSV_URL || '');
+  const csvUrl = buildCsvUrl(spreadsheetId, sheetGid, directCsvUrl);
 
   console.log('📋 Google Sheet Product Sync');
   console.log('============================');
-  console.log(`CSV URL: ${csvUrl.replace(/([?&](?:key|token|access_token)=)[^&]+/gi, '$1***')}`);
+  console.log(`CSV URL: ${redactUrl(csvUrl)}`);
   console.log(`Output file: ${outputFile}`);
   console.log('');
 
