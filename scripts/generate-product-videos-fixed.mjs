@@ -5,13 +5,15 @@
  * Fixes FFmpeg b-roll enhancement and upgrades the enhancement layer to use
  * moving Pexels video clips instead of static product image overlays.
  *
- * Required for Pexels mode:
- *   PEXELS_API_KEY=your_pexels_key
+ * Secret support:
+ * - HEYGEN_API_KEY can be provided as an env var, a Secret Manager secret named
+ *   HEYGEN_API_KEY, or a pointer env var GCP_SECRET_HEYGEN_API_KEY.
+ * - PEXELS_API_KEY can be provided the same way.
  */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawnSync } from 'child_process';
+import { spawnSync, execFileSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +21,77 @@ const sourcePath = path.join(__dirname, 'generate-product-videos.mjs');
 const runtimePath = path.join(__dirname, '.generate-product-videos.runtime.mjs');
 
 let source = fs.readFileSync(sourcePath, 'utf8');
+
+function runGcloud(args) {
+  try {
+    return execFileSync('gcloud', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return '';
+  }
+}
+
+function getProjectId() {
+  return process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.GCP_PROJECT_ID ||
+    process.env.PROJECT_ID ||
+    runGcloud(['config', 'get-value', 'project']);
+}
+
+async function getSecretPayload(secretRef) {
+  if (!secretRef) return '';
+
+  const normalizedName = secretRef.includes('/versions/')
+    ? secretRef
+    : secretRef.startsWith('projects/')
+      ? `${secretRef}/versions/latest`
+      : '';
+
+  if (!normalizedName) return '';
+
+  try {
+    const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
+    const client = new SecretManagerServiceClient();
+    const [accessResponse] = await client.accessSecretVersion({ name: normalizedName });
+    const value = accessResponse.payload?.data?.toString('utf8')?.trim() || '';
+    if (value) return value;
+  } catch {}
+
+  const projectId = normalizedName.split('/')[1];
+  const secretName = normalizedName.split('/secrets/')[1]?.split('/')[0];
+  if (secretName) {
+    const gcloudArgs = ['secrets', 'versions', 'access', 'latest', '--secret', secretName];
+    if (projectId) gcloudArgs.push('--project', projectId);
+    const value = runGcloud(gcloudArgs);
+    if (value) return value.trim();
+  }
+
+  return '';
+}
+
+async function getNamedSecret(secretName) {
+  const projectId = getProjectId();
+  if (!projectId || !secretName) return '';
+  return getSecretPayload(`projects/${projectId}/secrets/${secretName}/versions/latest`);
+}
+
+async function loadSecretBackedEnv(envName) {
+  if (process.env[envName]) return;
+
+  const pointer = process.env[`GCP_SECRET_${envName}`];
+  const fromPointer = await getSecretPayload(pointer);
+  if (fromPointer) {
+    process.env[envName] = fromPointer;
+    console.log(`🔐 Loaded ${envName} from ${`GCP_SECRET_${envName}`}`);
+    return;
+  }
+
+  const fromNamedSecret = await getNamedSecret(envName);
+  if (fromNamedSecret) {
+    process.env[envName] = fromNamedSecret;
+    console.log(`🔐 Loaded ${envName} from Google Secret Manager`);
+  }
+}
 
 function pexelsEnhancerFunction(videoPath, prod) {
   console.log(`   🎥 Pexels b-roll enhancement active for ${prod.id}`);
@@ -212,6 +285,9 @@ if (!originalEnhancerPattern.test(source)) {
 } else {
   source = source.replace(originalEnhancerPattern, `${pexelsEnhancer}\n\nfunction makeSegments`);
 }
+
+await loadSecretBackedEnv('HEYGEN_API_KEY');
+await loadSecretBackedEnv('PEXELS_API_KEY');
 
 fs.writeFileSync(runtimePath, source, 'utf8');
 
