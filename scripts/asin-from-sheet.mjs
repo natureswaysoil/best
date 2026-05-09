@@ -2,45 +2,72 @@
 /**
  * Sync product rows from Google Sheets into content/video-scripts/sheet-products.json.
  *
- * Usage:
- *   node scripts/asin-from-sheet.mjs <spreadsheetId> <sheetGid> <outputFile>
- *
- * Or with env vars / Google Secret Manager:
- *   GOOGLE_SHEET_ID=... GOOGLE_SHEET_GID=... node scripts/asin-from-sheet.mjs
- *   GOOGLE_SHEET_CSV_URL=... node scripts/asin-from-sheet.mjs
- *
  * Secret Manager support:
- * - If GCP_SECRET_GOOGLE_SHEET_CSV_URL is set, it reads that secret as the CSV URL.
- * - If GCP_SECRET_GOOGLE_SHEET_ID is set, it reads that secret as the sheet ID.
- * - If GCP_SECRET_GOOGLE_SHEET_GID is set, it reads that secret as the sheet gid.
- * - It also tries common secret names directly: GOOGLE_SHEET_CSV_URL,
- *   CSV_URL, GOOGLE_SHEET_ID, and GOOGLE_SHEET_GID.
+ * - Reads env vars first: GOOGLE_SHEET_CSV_URL, CSV_URL, GOOGLE_SHEET_ID, GOOGLE_SHEET_GID.
+ * - Reads pointer env vars: GCP_SECRET_GOOGLE_SHEET_CSV_URL, GCP_SECRET_GOOGLE_SHEET_ID, GCP_SECRET_GOOGLE_SHEET_GID.
+ * - Reads named secrets from the active gcloud project using either the Node
+ *   Secret Manager client or the gcloud CLI.
  */
 
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
 
 const args = process.argv.slice(2);
 const DEFAULT_OUTPUT_FILE = path.join('content', 'video-scripts', 'sheet-products.json');
 
-async function getSecretPayload(secretRef) {
-  if (!secretRef) return '';
+function runGcloud(args) {
   try {
-    const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
-    const client = new SecretManagerServiceClient();
-    const name = secretRef.includes('/versions/') ? secretRef : secretRef.startsWith('projects/') ? `${secretRef}/versions/latest` : '';
-    if (!name) return '';
-    const [accessResponse] = await client.accessSecretVersion({ name });
-    return accessResponse.payload?.data?.toString('utf8')?.trim() || '';
+    return execFileSync('gcloud', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   } catch {
     return '';
   }
 }
 
+function getProjectId() {
+  return process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.GCP_PROJECT_ID ||
+    process.env.PROJECT_ID ||
+    runGcloud(['config', 'get-value', 'project']);
+}
+
+async function getSecretPayload(secretRef) {
+  if (!secretRef) return '';
+
+  const normalizedName = secretRef.includes('/versions/')
+    ? secretRef
+    : secretRef.startsWith('projects/')
+      ? `${secretRef}/versions/latest`
+      : '';
+
+  if (normalizedName) {
+    try {
+      const { SecretManagerServiceClient } = await import('@google-cloud/secret-manager');
+      const client = new SecretManagerServiceClient();
+      const [accessResponse] = await client.accessSecretVersion({ name: normalizedName });
+      const value = accessResponse.payload?.data?.toString('utf8')?.trim() || '';
+      if (value) return value;
+    } catch {}
+
+    const gcloudValue = runGcloud(['secrets', 'versions', 'access', 'latest', '--secret', normalizedName.split('/secrets/')[1]?.split('/')[0] || '']);
+    if (gcloudValue) return gcloudValue.trim();
+  }
+
+  return '';
+}
+
 async function getNamedSecret(secretName) {
-  const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT_ID || process.env.PROJECT_ID;
-  if (!projectId || !secretName) return '';
-  return getSecretPayload(`projects/${projectId}/secrets/${secretName}/versions/latest`);
+  if (!secretName) return '';
+  const projectId = getProjectId();
+  if (!projectId) return '';
+
+  const fullName = `projects/${projectId}/secrets/${secretName}/versions/latest`;
+  const fromClient = await getSecretPayload(fullName);
+  if (fromClient) return fromClient;
+
+  const fromGcloud = runGcloud(['secrets', 'versions', 'access', 'latest', '--project', projectId, '--secret', secretName]);
+  return fromGcloud.trim();
 }
 
 async function getConfigValue(envName, explicitValue = '') {
@@ -60,7 +87,7 @@ async function getConfigValue(envName, explicitValue = '') {
 function buildCsvUrl(spreadsheetId, sheetGid, directCsvUrl) {
   if (directCsvUrl) return directCsvUrl;
   if (!spreadsheetId) {
-    throw new Error('Missing spreadsheet ID. Set GOOGLE_SHEET_ID, GOOGLE_SHEET_CSV_URL, or matching Google Secret Manager secrets.');
+    throw new Error('Missing spreadsheet ID. Set GOOGLE_SHEET_ID, GOOGLE_SHEET_CSV_URL, or matching Google Secret Manager secrets. Also check: gcloud config get-value project');
   }
   return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${sheetGid || '0'}`;
 }
@@ -163,6 +190,7 @@ async function main() {
 
   console.log('📋 Google Sheet Product Sync');
   console.log('============================');
+  console.log(`Project: ${getProjectId() || '(not set)'}`);
   console.log(`CSV URL: ${redactUrl(csvUrl)}`);
   console.log(`Output file: ${outputFile}`);
   console.log('');
