@@ -2,10 +2,10 @@
 /**
  * Marketing-mode entrypoint for legacy product video generation.
  *
- * This wraps the existing fixed runner but forces the runtime-generated product
- * video script to use heygen-marketing-generator.mjs instead of the older
- * generic HeyGen generator.
+ * This runs the fixed runner through a temporary copy and swaps the HeyGen
+ * generator import to the marketing generator.
  */
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -13,26 +13,21 @@ import { spawnSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const fixedRunner = path.join(__dirname, 'generate-product-videos-fixed.mjs');
 const runtimeRunner = path.join(__dirname, '.generate-product-videos-marketing.runtime.mjs');
 
 let source = fs.readFileSync(fixedRunner, 'utf8');
 
 source = source.replace(
-  "let source = fs.readFileSync(sourcePath, 'utf8');",
-  "let source = fs.readFileSync(sourcePath, 'utf8');\nsource = source.replace(\"import HeyGenVideoGenerator from './heygen-video-generator.mjs';\", \"import HeyGenVideoGenerator from './heygen-marketing-generator.mjs';\");"
+  /import HeyGenVideoGenerator from ['"]\.\/heygen-video-generator\.mjs['"];/,
+  "import HeyGenVideoGenerator from './heygen-marketing-generator.mjs';"
 );
 
-source = source.replace(
-  "await loadSecretBackedEnv('OPENAI_API_KEY');",
-  "await loadSecretBackedEnv('OPENAI_API_KEY');"
-);
-
-// Older fixed runners may not yet load OpenAI. Add it if missing.
 if (!source.includes("loadSecretBackedEnv('OPENAI_API_KEY')")) {
   source = source.replace(
-    "await loadSecretBackedEnv('PEXELS_API_KEY');",
-    "await loadSecretBackedEnv('PEXELS_API_KEY');\nawait loadSecretBackedEnv('OPENAI_API_KEY');"
+    /await loadSecretBackedEnv\(['"]PEXELS_API_KEY['"]\);\s*/,
+    "await loadSecretBackedEnv('PEXELS_API_KEY');\nawait loadSecretBackedEnv('OPENAI_API_KEY');\n"
   );
 }
 
