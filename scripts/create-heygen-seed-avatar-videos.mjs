@@ -122,23 +122,12 @@ function sceneScript(product) {
 
 function backgroundFor(product) {
   const category = String(product.category || '').toLowerCase();
-  const name = product.productName;
-  if (category.includes('pasture') || category.includes('farm')) {
-    return {
-      type: 'text',
-      prompt: `Natural farm and pasture background for ${name}: green field, healthy grass, small farm, warm sunlight, trustworthy soil-care product education.`
-    };
-  }
-  if (category.includes('compost') || category.includes('soil')) {
-    return {
-      type: 'text',
-      prompt: `Organic garden background for ${name}: raised beds, rich dark soil, compost, healthy plants, natural sunlight, family farm style.`
-    };
-  }
-  return {
-    type: 'text',
-    prompt: `Garden and lawn background for ${name}: green lawn, healthy plants, watering scene, natural sunlight, clean product education style.`
-  };
+  const color = category.includes('pasture') || category.includes('farm')
+    ? '#2f5f2f'
+    : category.includes('compost') || category.includes('soil')
+      ? '#3b2f24'
+      : '#0d3b2a';
+  return { type: 'color', value: process.env.HEYGEN_BACKGROUND_COLOR || color };
 }
 
 async function createAvatarVideo(generator, product) {
@@ -205,6 +194,7 @@ async function createAvatarVideo(generator, product) {
     category: product.category,
     avatarId,
     voiceId,
+    background: backgroundFor(product),
     script,
     output: path.relative(PROJECT, outFile),
     heygenVideoId: videoId,
