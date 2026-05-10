@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
 /**
- * Robust quality seed-style vertical video generator.
+ * Quality seed-style vertical video generator.
  *
- * Key safety fixes:
- * - Probes images with ffprobe before use so corrupt/placeholder .jpg files do not crash FFmpeg.
- * - Falls back to branded motion scenes when no usable image or b-roll is available.
- * - Honors PRODUCT_ID / VIDEO_PRODUCT_ID for one-product test runs unless --all is passed.
+ * Source of truth:
+ * - config/top-products.json supplies the seed list of products, scenes, CTAs,
+ *   categories, keywords, and garden/farm avatar aliases.
+ *
+ * B-roll behavior:
+ * - Uses Pexels first when PEXELS_API_KEY is available.
+ * - Falls back to local b-roll, product images, then branded motion scenes.
+ * - Enforces at least 4 non-product b-roll scenes per configured product.
  */
 
 import fs from 'fs';
@@ -28,8 +32,19 @@ const W = 1080;
 const H = 1920;
 const FPS = 30;
 
+const FALLBACK_SCENES = [
+  { text: 'Start with the soil.', query: 'healthy garden soil close up', seconds: 4, broll: ['soil', 'garden'] },
+  { text: 'Support stronger roots.', query: 'plant roots in soil close up', seconds: 4, broll: ['roots', 'soil'] },
+  { text: 'Apply during active growth.', query: 'watering garden plants', seconds: 4, broll: ['watering', 'garden'] },
+  { text: 'Built for naturally stronger soil.', query: 'green garden sunlight', seconds: 4, broll: ['garden', 'plants'] },
+  { text: 'Shop direct and save.', product: true, endCard: true, seconds: 4 }
+];
+
 function ensureDir(dir) { fs.mkdirSync(dir, { recursive: true }); }
-function readJson(file, fallback = {}) { try { return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback; } catch { return fallback; } }
+function readJson(file, fallback = {}) {
+  try { return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback; }
+  catch { return fallback; }
+}
 function run(command, args) {
   const result = spawnSync(command, args, { stdio: 'inherit', timeout: Number(process.env.FFMPEG_TIMEOUT_MS || 300000) });
   if (result.error) throw result.error;
@@ -93,92 +108,27 @@ function probeMedia(file) {
   const out = capture('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file]);
   return /^\d+,\d+/.test(out);
 }
-
-const SEEDS = {
-  NWS_014: {
-    productName: 'Dog Urine Neutralizer & Lawn Repair',
-    funnelUrl: '/lawn-repair',
-    keywords: ['dog', 'urine', 'neutralizer', 'lawn', 'repair'],
-    cta: 'Save 15 percent on your first order.\nnatureswaysoil.com/lawn-repair',
-    scenes: [
-      { text: 'Your dog is not the problem.', query: 'dog walking on green lawn', seconds: 3, broll: ['dog', 'lawn'] },
-      { text: 'Urine salts stress the soil.', query: 'yellow patch grass lawn', seconds: 4, broll: ['yellow', 'patch', 'grass'] },
-      { text: 'Treat the soil - not just the color.', product: true, seconds: 4 },
-      { text: 'Spray affected spots.', query: 'spraying lawn garden', seconds: 4, broll: ['spray', 'lawn'] },
-      { text: 'Water in and support recovery.', query: 'watering grass lawn', seconds: 4, broll: ['water', 'grass'] },
-      { text: 'Pet-safe. Not a dye.', product: true, seconds: 4 },
-      { text: 'Shop direct and save.', product: true, endCard: true, seconds: 4 }
-    ]
-  },
-  NWS_011: {
-    productName: 'Liquid Humic & Fulvic Acid with Kelp',
-    funnelUrl: '/soil-boost',
-    keywords: ['humic', 'fulvic', 'kelp'],
-    cta: 'Feed the soil first.\nnatureswaysoil.com/soil-boost',
-    scenes: [
-      { text: 'Plants need more than fertilizer.', query: 'healthy garden soil roots', seconds: 3, broll: ['garden', 'roots'] },
-      { text: 'Humic and fulvic support uptake.', query: 'rich soil close up', seconds: 4, broll: ['soil'] },
-      { text: 'Kelp supports root vigor.', query: 'green garden plants sunlight', seconds: 4, broll: ['plants'] },
-      { text: 'For lawns, trees, gardens, and containers.', product: true, seconds: 4 },
-      { text: 'Build naturally stronger soil.', query: 'watering garden plants', seconds: 4, broll: ['watering', 'garden'] },
-      { text: 'Shop direct and save.', product: true, endCard: true, seconds: 4 }
-    ]
-  },
-  NWS_013: {
-    productName: 'Enhanced Living Compost with Worm Castings & Biochar',
-    funnelUrl: '/living-compost',
-    keywords: ['compost', 'worm', 'castings', 'biochar', 'duckweed'],
-    cta: 'Upgrade your soil naturally.\nnatureswaysoil.com/living-compost',
-    scenes: [
-      { text: 'This is not bulk filler compost.', query: 'rich compost soil close up', seconds: 3, broll: ['compost', 'soil'] },
-      { text: 'Worm castings feed soil biology.', query: 'worm castings compost soil', seconds: 4, broll: ['worm', 'castings'] },
-      { text: 'Biochar helps hold water and nutrients.', query: 'biochar soil garden', seconds: 4, broll: ['biochar'] },
-      { text: 'Use in beds, containers, and transplant zones.', product: true, seconds: 4 },
-      { text: 'Small bag. Big soil impact.', query: 'raised bed vegetable garden', seconds: 4, broll: ['raised', 'bed'] },
-      { text: 'Shop direct and save.', product: true, endCard: true, seconds: 4 }
-    ]
-  },
-  NWS_021: {
-    productName: 'Hay, Pasture & Lawn Fertilizer',
-    funnelUrl: '/pasture-boost',
-    keywords: ['hay', 'pasture', 'lawn', 'fertilizer'],
-    cta: 'Support thicker grass growth.\nnatureswaysoil.com/pasture-boost',
-    scenes: [
-      { text: 'Thin pasture starts with tired soil.', query: 'green pasture grass field', seconds: 3, broll: ['pasture'] },
-      { text: 'Feed grass during active growth.', query: 'hay field pasture grass', seconds: 4, broll: ['hay', 'field'] },
-      { text: 'Easy liquid pasture nutrition.', product: true, seconds: 4 },
-      { text: 'For hay, pasture, and lawns.', query: 'lawn grass close up', seconds: 4, broll: ['lawn', 'grass'] },
-      { text: 'Built for landowners.', query: 'farm pasture landscape', seconds: 4, broll: ['farm', 'pasture'] },
-      { text: 'Shop direct and save.', product: true, endCard: true, seconds: 4 }
-    ]
-  },
-  NWS_018: {
-    productName: 'Seaweed & Humic Acid Lawn Treatment',
-    funnelUrl: '/soil-boost',
-    keywords: ['seaweed', 'humic', 'lawn', 'kelp'],
-    cta: 'Support the root zone.\nnatureswaysoil.com/soil-boost',
-    scenes: [
-      { text: 'Your lawn needs more than nitrogen.', query: 'lush green lawn close up', seconds: 3, broll: ['lawn'] },
-      { text: 'Seaweed supports plant vigor.', query: 'seaweed kelp ocean natural', seconds: 4, broll: ['seaweed', 'kelp'] },
-      { text: 'Humic acid supports nutrient movement.', query: 'healthy soil roots grass', seconds: 4, broll: ['roots', 'grass'] },
-      { text: 'Feed the root zone.', product: true, seconds: 4 },
-      { text: 'Use during active growth.', query: 'watering lawn grass', seconds: 4, broll: ['watering', 'lawn'] },
-      { text: 'Shop direct and save.', product: true, endCard: true, seconds: 4 }
-    ]
+function productSeeds() {
+  const topProducts = readJson(TOP_PRODUCTS_FILE, { topProducts: [] }).topProducts || [];
+  return topProducts
+    .map((product) => ({
+      ...product,
+      productName: product.name || product.productName || product.id,
+      scenes: Array.isArray(product.scenes) && product.scenes.length ? product.scenes : FALLBACK_SCENES,
+      keywords: Array.isArray(product.keywords) ? product.keywords : []
+    }))
+    .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+}
+function validateSeed(product) {
+  const brollScenes = product.scenes.filter((scene) => !scene.product && !scene.endCard && scene.query);
+  if (brollScenes.length < 4) {
+    throw new Error(`${product.id} needs at least 4 Pexels b-roll scenes in config/top-products.json; found ${brollScenes.length}.`);
   }
-};
-
-function products() {
-  const configured = readJson(TOP_PRODUCTS_FILE, { topProducts: [] }).topProducts || [];
-  return Object.entries(SEEDS).map(([id, seed]) => {
-    const match = configured.find((p) => p.id === id) || {};
-    return { id, ...seed, ...match, productName: match.name || seed.productName };
-  }).sort((a, b) => (a.priority || 999) - (b.priority || 999));
 }
 function score(file, words = []) {
   const name = path.basename(file).toLowerCase();
   let s = 100;
-  for (const word of words) if (name.includes(word.toLowerCase())) s -= 12;
+  for (const word of words) if (name.includes(String(word).toLowerCase())) s -= 12;
   if (name.includes('main')) s -= 35;
   if (name.includes('front')) s -= 28;
   if (name.includes('bottle') || name.includes('jug') || name.includes('bag')) s -= 20;
@@ -198,7 +148,7 @@ function productImages(product) {
   for (const root of roots) {
     for (const file of listRecursive(root, /\.(png|jpe?g|webp)$/i)) {
       const lower = file.toLowerCase();
-      const matched = lower.includes(product.id.toLowerCase()) || product.keywords.some((k) => lower.includes(k.toLowerCase()));
+      const matched = lower.includes(product.id.toLowerCase()) || product.keywords.some((k) => lower.includes(String(k).toLowerCase()));
       if (!matched || seen.has(file)) continue;
       seen.add(file);
       if (probeMedia(file)) files.push(file);
@@ -223,7 +173,7 @@ async function pexels(query, outFile) {
     const url = new URL('https://api.pexels.com/videos/search');
     url.searchParams.set('query', query);
     url.searchParams.set('orientation', 'portrait');
-    url.searchParams.set('per_page', '8');
+    url.searchParams.set('per_page', '10');
     const response = await fetch(url, { headers: { Authorization: PEXELS_API_KEY } });
     if (!response.ok) return false;
     const data = await response.json();
@@ -293,30 +243,45 @@ function brollScene(input, text, out, seconds) {
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-stream_loop', '1', '-i', input, '-t', String(seconds), '-filter_complex', filter, '-map', '[vout]', '-an', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
 }
 async function build(product) {
+  validateSeed(product);
   const images = productImages(product);
-  if (!images.length) console.log(`No usable product images found for ${product.id}; using branded motion fallback.`);
+  if (!images.length) console.log(`No usable product images found for ${product.id}; using branded motion fallback for product cards.`);
   const work = fs.mkdtempSync(path.join(os.tmpdir(), `nws_quality_${product.id}_`));
   const scenes = [];
   const audit = [];
   console.log(`\n🎬 ${product.id}: ${product.productName}`);
   console.log(`Usable product images found: ${images.length}`);
+  console.log(PEXELS_API_KEY ? 'Pexels enabled and preferred for b-roll scenes.' : 'Pexels not configured. Using local/product/motion fallback scenes.');
+
   for (let i = 0; i < product.scenes.length; i++) {
     const scene = product.scenes[i];
     const out = path.join(work, `scene_${i}.mp4`);
     const raw = path.join(work, `raw_${i}.mp4`);
+    const seconds = Number(scene.seconds || 4);
     console.log(`Scene ${i + 1}/${product.scenes.length}: ${scene.text}`);
+
     if (scene.product || scene.endCard) {
-      productScene(images[0], scene.text, out, scene.seconds, product, scene.endCard);
+      productScene(images[0], scene.text, out, seconds, product, scene.endCard);
       audit.push({ scene: i + 1, type: scene.endCard ? 'end-card' : 'product-card', source: images[0] ? path.relative(PROJECT, images[0]) : 'motion-fallback', text: scene.text });
+    } else if (await pexels(scene.query, raw)) {
+      brollScene(raw, scene.text, out, seconds);
+      audit.push({ scene: i + 1, type: 'pexels-broll', query: scene.query, text: scene.text });
     } else {
       const local = localBroll(product, scene)[0];
-      if (local) { brollScene(local, scene.text, out, scene.seconds); audit.push({ scene: i + 1, type: 'local-broll', source: path.relative(PROJECT, local), text: scene.text }); }
-      else if (await pexels(scene.query, raw)) { brollScene(raw, scene.text, out, scene.seconds); audit.push({ scene: i + 1, type: 'pexels-broll', query: scene.query, text: scene.text }); }
-      else if (images.length > 1) { imageScene(images[i % images.length], scene.text, out, scene.seconds, product); audit.push({ scene: i + 1, type: 'product-image-motion', source: path.relative(PROJECT, images[i % images.length]), text: scene.text }); }
-      else { motionScene(scene.text, out, scene.seconds, product.productName); audit.push({ scene: i + 1, type: 'branded-motion-fallback', text: scene.text }); }
+      if (local) {
+        brollScene(local, scene.text, out, seconds);
+        audit.push({ scene: i + 1, type: 'local-broll', source: path.relative(PROJECT, local), text: scene.text });
+      } else if (images.length > 1) {
+        imageScene(images[i % images.length], scene.text, out, seconds, product);
+        audit.push({ scene: i + 1, type: 'product-image-motion', source: path.relative(PROJECT, images[i % images.length]), text: scene.text });
+      } else {
+        motionScene(scene.text, out, seconds, product.productName);
+        audit.push({ scene: i + 1, type: 'branded-motion-fallback', text: scene.text });
+      }
     }
     scenes.push(out);
   }
+
   const concat = path.join(work, 'concat.txt');
   fs.writeFileSync(concat, scenes.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join('\n'));
   const mp4 = path.join(OUT_DIR, `${product.id}.mp4`);
@@ -325,16 +290,33 @@ async function build(product) {
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-ss', '00:00:01', '-i', mp4, '-frames:v', '1', '-q:v', '3', jpg]);
   const probe = capture('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height,duration', '-of', 'json', mp4]);
   const metadata = probe ? JSON.parse(probe).streams?.[0] || {} : {};
-  const plan = { productId: product.id, productName: product.productName, funnelUrl: product.funnelUrl, checkoutUrl: product.checkoutUrl, cta: product.cta, output: path.relative(PROJECT, mp4), poster: path.relative(PROJECT, jpg), metadata, productImages: images.map((x) => path.relative(PROJECT, x)), sceneAudit: audit, generatedAt: new Date().toISOString() };
+  const plan = {
+    productId: product.id,
+    productName: product.productName,
+    category: product.category,
+    avatarAlias: product.avatar_id || product.heygenAvatarId || null,
+    funnelUrl: product.funnelUrl,
+    checkoutUrl: product.checkoutUrl,
+    cta: product.cta,
+    output: path.relative(PROJECT, mp4),
+    poster: path.relative(PROJECT, jpg),
+    metadata,
+    productImages: images.map((x) => path.relative(PROJECT, x)),
+    sceneAudit: audit,
+    generatedAt: new Date().toISOString()
+  };
   fs.writeFileSync(path.join(PLAN_DIR, `${product.id}-quality-seed-plan.json`), JSON.stringify(plan, null, 2));
   console.log(`✅ Ready: ${path.relative(PROJECT, mp4)}`);
 }
 async function main() {
-  ensureDir(OUT_DIR); ensureDir(PLAN_DIR); requireTool('ffmpeg'); requireTool('ffprobe');
-  const selected = BUILD_ALL ? products() : products().filter((p) => p.id === TARGET_PRODUCT_ID);
-  if (!selected.length) throw new Error(`No matching product for ${TARGET_PRODUCT_ID}`);
-  console.log(`Building ${selected.length} quality seed-style video(s).`);
-  console.log(PEXELS_API_KEY ? 'Pexels enabled.' : 'Pexels not configured. Using local b-roll/product/motion fallback scenes.');
+  ensureDir(OUT_DIR);
+  ensureDir(PLAN_DIR);
+  requireTool('ffmpeg');
+  requireTool('ffprobe');
+  const allProducts = productSeeds();
+  const selected = BUILD_ALL ? allProducts : allProducts.filter((p) => p.id === TARGET_PRODUCT_ID);
+  if (!selected.length) throw new Error(`No matching product for ${TARGET_PRODUCT_ID} in config/top-products.json`);
+  console.log(`Building ${selected.length} quality seed-style video(s) from config/top-products.json.`);
   for (const product of selected) await build(product);
 }
 main().catch((error) => { console.error(`❌ Quality seed video generation failed: ${error.message}`); process.exit(1); });
