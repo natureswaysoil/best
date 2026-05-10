@@ -1,49 +1,49 @@
 #!/usr/bin/env node
 /**
- * Test marketing video generation for the 5 seed products.
- * Uses config/top-products.json and forces the marketing generator
- * (5 scenes, b-roll, lower-right avatar).
+ * Marketing-mode entrypoint for legacy product video generation.
+ *
+ * Runs the fixed runner through a temporary copy and swaps the HeyGen
+ * generator import to the marketing generator (5 scenes, b-roll, lower-corner avatar).
  */
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot  = path.resolve(__dirname, '..');
-const seedFile  = path.join(repoRoot, 'config', 'top-products.json');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
-if (!fs.existsSync(seedFile)) {
-  console.error(`Seed file not found: ${seedFile}`);
-  process.exit(1);
-}
+const fixedRunner   = path.join(__dirname, 'generate-product-videos-fixed.mjs');
+const runtimeRunner = path.join(__dirname, '.generate-product-videos-marketing.runtime.mjs');
 
-const raw = JSON.parse(fs.readFileSync(seedFile, 'utf8'));
-const list = raw.topProducts || raw.products || (Array.isArray(raw) ? raw : []);
-const ids = list.map(p => p.id).filter(Boolean);
+let source = fs.readFileSync(fixedRunner, 'utf8');
 
-if (!ids.length) {
-  console.error('No product IDs found in seed file.');
-  process.exit(1);
-}
-
-console.log(`🌱 Marketing video test for seed products: ${ids.join(', ')}`);
-
-const result = spawnSync(
-  process.execPath,
-  [path.join(__dirname, 'generate-product-videos-marketing.mjs')],
-  {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      NWS_MARKETING_MODE: '1',
-      PRODUCT_IDS: ids.join(','),
-      PRODUCT_ID_FILTER: ids.join(','),
-      ONLY_PRODUCT_IDS: ids.join(','),
-      FORCE_REGENERATE: '1',
-    },
-  }
+source = source.replace(
+  /import HeyGenVideoGenerator from ['"]\.\/heygen-video-generator\.mjs['"];/,
+  "import HeyGenVideoGenerator from './heygen-marketing-generator.mjs';"
 );
+
+if (!source.includes("loadSecretBackedEnv('OPENAI_API_KEY')")) {
+  source = source.replace(
+    /await loadSecretBackedEnv\(['"]PEXELS_API_KEY['"]\);\s*/,
+    "await loadSecretBackedEnv('PEXELS_API_KEY');\nawait loadSecretBackedEnv('OPENAI_API_KEY');\n"
+  );
+}
+
+fs.writeFileSync(runtimeRunner, source, 'utf8');
+
+const result = spawnSync(process.execPath, [runtimeRunner, ...process.argv.slice(2)], {
+  cwd: path.resolve(__dirname, '..'),
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    NWS_MARKETING_MODE: '1',
+  },
+});
+
+try {
+  if (fs.existsSync(runtimeRunner)) fs.unlinkSync(runtimeRunner);
+} catch {}
 
 process.exit(result.status ?? 1);
