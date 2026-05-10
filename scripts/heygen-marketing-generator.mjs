@@ -1,4 +1,3 @@
-cat > scripts/heygen-marketing-generator.mjs <<'EOF'
 #!/usr/bin/env node
 /**
  * Marketing-mode HeyGen generator.
@@ -58,8 +57,12 @@ function list(value) {
 function getRowValue(product, names) {
   const row = product?._sourceRecord || product?.sourceRecord || {};
   for (const name of names) {
-    if (product?.[name] !== undefined && product?.[name] !== null && String(product[name]).trim()) return String(product[name]).trim();
-    if (row?.[name] !== undefined && row?.[name] !== null && String(row[name]).trim()) return String(row[name]).trim();
+    if (product?.[name] !== undefined && product?.[name] !== null && String(product[name]).trim()) {
+      return String(product[name]).trim();
+    }
+    if (row?.[name] !== undefined && row?.[name] !== null && String(row[name]).trim()) {
+      return String(row[name]).trim();
+    }
   }
   return '';
 }
@@ -100,8 +103,10 @@ function getMarketingContext(product) {
 }
 
 function isPastureOrFarm(product) {
-  const text = [product?.name, product?.category, product?.description, ...(Array.isArray(product?.keywords) ? product.keywords : [])]
-    .filter(Boolean).join(' ').toLowerCase();
+  const text = [
+    product?.name, product?.category, product?.description,
+    ...(Array.isArray(product?.keywords) ? product.keywords : []),
+  ].filter(Boolean).join(' ').toLowerCase();
   return /hay|pasture|forage|horse|cattle|livestock|farm|field/.test(text);
 }
 
@@ -130,14 +135,18 @@ async function fetchPexelsBackground(queries) {
         vid?.video_files?.find(f => f.quality === 'hd') ||
         vid?.video_files?.[0];
       if (file?.link) return file.link;
-    } catch { /* try next */ }
+    } catch {
+      // try next
+    }
   }
   return null;
 }
 
 function splitScriptIntoFiveScenes(fullScript, ctx) {
   const sentences = String(fullScript || '')
-    .split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(Boolean);
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
   if (sentences.length >= 5) {
     const per = Math.ceil(sentences.length / 5);
@@ -318,7 +327,7 @@ export class HeyGenMarketingVideoGenerator extends BaseHeyGenVideoGenerator {
           avatar_id: avatarId,
           avatar_style: 'normal',
           scale: 0.32,
-          offset: { x: 0.33, y: 0.33 }, // lower-right corner
+          offset: { x: 0.33, y: 0.33 },
         },
         voice: {
           type: 'text',
@@ -364,5 +373,3 @@ export class HeyGenMarketingVideoGenerator extends BaseHeyGenVideoGenerator {
 }
 
 export default HeyGenMarketingVideoGenerator;
-EOF
-
