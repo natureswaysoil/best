@@ -8,8 +8,9 @@
  *   categories, keywords, and garden/farm avatar aliases.
  *
  * B-roll behavior:
+ * - Hydrates PEXELS_API_KEY from Google Secret Manager when available.
  * - Uses Pexels first when PEXELS_API_KEY is available.
- * - Falls back to local b-roll, product images, then branded motion scenes.
+ * - Falls back to local b-roll, product images, then simple branded motion scenes.
  * - Enforces at least 4 non-product b-roll scenes per configured product.
  */
 
@@ -25,12 +26,15 @@ const PROJECT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(PROJECT, 'public', 'videos');
 const PLAN_DIR = path.join(PROJECT, 'content', 'generated-videos');
 const TOP_PRODUCTS_FILE = path.join(PROJECT, 'config', 'top-products.json');
-const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
+const SECRET_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || process.env.PROJECT_ID;
+let PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 const BUILD_ALL = process.argv.includes('--all');
 const TARGET_PRODUCT_ID = process.env.PRODUCT_ID || process.env.VIDEO_PRODUCT_ID || 'NWS_014';
-const W = 1080;
-const H = 1920;
-const FPS = 30;
+const W = Number(process.env.VIDEO_WIDTH || 1080);
+const H = Number(process.env.VIDEO_HEIGHT || 1920);
+const FPS = Number(process.env.VIDEO_FPS || 30);
+const FFMPEG_TIMEOUT_MS = Number(process.env.FFMPEG_TIMEOUT_MS || 900000);
+const FFMPEG_PRESET = process.env.FFMPEG_PRESET || 'veryfast';
 
 const FALLBACK_SCENES = [
   { text: 'Start with the soil.', query: 'healthy garden soil close up', seconds: 4, broll: ['soil', 'garden'] },
@@ -45,18 +49,36 @@ function readJson(file, fallback = {}) {
   try { return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback; }
   catch { return fallback; }
 }
-function run(command, args) {
-  const result = spawnSync(command, args, { stdio: 'inherit', timeout: Number(process.env.FFMPEG_TIMEOUT_MS || 300000) });
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, { stdio: 'inherit', timeout: FFMPEG_TIMEOUT_MS, cwd: PROJECT, ...options });
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(`${command} failed with exit ${result.status}`);
 }
-function capture(command, args) {
-  const result = spawnSync(command, args, { encoding: 'utf8', timeout: 30000 });
+function capture(command, args, timeout = 30000) {
+  const result = spawnSync(command, args, { cwd: PROJECT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout });
   return result.status === 0 ? result.stdout.trim() : '';
 }
 function requireTool(command) {
   const result = spawnSync(command, ['-version'], { stdio: 'ignore' });
   if (result.status !== 0) throw new Error(`${command} is required. Install FFmpeg before generating videos.`);
+}
+function hydrateSecrets() {
+  if (PEXELS_API_KEY) {
+    console.log('Pexels key found in environment.');
+    return;
+  }
+  if (!SECRET_PROJECT_ID) {
+    console.log('No Google Cloud project id found. Set GOOGLE_CLOUD_PROJECT, GCLOUD_PROJECT, GCP_PROJECT, or PROJECT_ID to hydrate secrets.');
+    return;
+  }
+  const value = capture('gcloud', ['secrets', 'versions', 'access', 'latest', '--secret', 'PEXELS_API_KEY', '--project', SECRET_PROJECT_ID], 45000);
+  if (value) {
+    process.env.PEXELS_API_KEY = value;
+    PEXELS_API_KEY = value;
+    console.log('Loaded PEXELS_API_KEY from Google Secret Manager.');
+  } else {
+    console.log('PEXELS_API_KEY was not loaded from Google Secret Manager. Check secret name, project id, and gcloud auth.');
+  }
 }
 function clean(text) {
   return String(text || '')
@@ -121,9 +143,7 @@ function productSeeds() {
 }
 function validateSeed(product) {
   const brollScenes = product.scenes.filter((scene) => !scene.product && !scene.endCard && scene.query);
-  if (brollScenes.length < 4) {
-    throw new Error(`${product.id} needs at least 4 Pexels b-roll scenes in config/top-products.json; found ${brollScenes.length}.`);
-  }
+  if (brollScenes.length < 4) throw new Error(`${product.id} needs at least 4 Pexels b-roll scenes in config/top-products.json; found ${brollScenes.length}.`);
 }
 function score(file, words = []) {
   const name = path.basename(file).toLowerCase();
@@ -175,7 +195,10 @@ async function pexels(query, outFile) {
     url.searchParams.set('orientation', 'portrait');
     url.searchParams.set('per_page', '10');
     const response = await fetch(url, { headers: { Authorization: PEXELS_API_KEY } });
-    if (!response.ok) return false;
+    if (!response.ok) {
+      console.log(`Pexels lookup failed for "${query}" with HTTP ${response.status}.`);
+      return false;
+    }
     const data = await response.json();
     for (const video of data.videos || []) {
       const files = (video.video_files || []).filter((f) => f.link && f.width && f.height).sort((a, b) => {
@@ -188,50 +211,53 @@ async function pexels(query, outFile) {
       const dl = spawnSync('curl', ['-L', '--fail', '--max-time', '60', pick.link, '-o', outFile], { stdio: 'ignore', timeout: 75000 });
       if (dl.status === 0 && probeMedia(outFile)) return true;
     }
-  } catch {}
+  } catch (error) {
+    console.log(`Pexels lookup failed for "${query}": ${error.message}`);
+  }
   return false;
 }
 function brand(y = 110) {
   const brandFile = textFile("Nature's Way Soil", 28);
   return `drawtext=textfile='${ff(brandFile)}':fontcolor=white:fontsize=44:box=1:boxcolor=black@0.26:boxborderw=16:x=72:y=${y}`;
 }
-function caption(file, y = 'h-520', size = 64) { return `drawtext=textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.48:boxborderw=28:x=72:y=${y}:line_spacing=16`; }
+function caption(file, y = 'h-520', size = 64) {
+  return `drawtext=textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.48:boxborderw=28:x=72:y=${y}:line_spacing=16`;
+}
+function encodeArgs(out) {
+  return ['-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', '23', '-pix_fmt', 'yuv420p', '-r', String(FPS), out];
+}
 function motionScene(text, out, seconds, productName) {
   const tf = textFile(text, 25);
   const pf = textFile(productName, 24);
   const filter = [
-    `color=c=0x244f31:s=${W}x${H}:d=${seconds}[base]`,
-    `[base]geq=r='36+18*sin((X+T*80)/155)':g='79+18*sin((Y+T*55)/180)':b='49+10*sin((X+Y+T*90)/220)'[motion]`,
-    `[motion]${brand(110)}[branded]`,
+    `${brand(110)}[branded]`,
     `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:x=72:y=260:line_spacing=12[name]`,
     `[name]${caption(tf, 'h-560', 66)}[vout]`
   ].join(';');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', `[0:v]${filter}`, '-map', '[vout]', ...encodeArgs(out)]);
 }
 function productScene(image, text, out, seconds, product, endCard = false) {
   if (!image || !probeMedia(image)) return motionScene(endCard ? product.cta : text, out, seconds, product.productName);
   const tf = textFile(endCard ? product.cta : text, endCard ? 28 : 26);
   const pf = textFile(product.productName, 24);
   const filter = [
-    `color=c=0x244f31:s=${W}x${H}:d=${seconds}[bg0]`,
-    `[bg0]geq=r='34+10*sin((X+T*70)/180)':g='80+12*sin((Y+T*50)/150)':b='49+8*sin((X+Y+T*60)/210)'[bg]`,
     `[1:v]scale=${endCard ? 760 : 820}:-2:force_original_aspect_ratio=decrease,format=rgba[prod]`,
-    `[bg][prod]overlay=x=(W-w)/2:y=${endCard ? 300 : 360}[withprod]`,
+    `[0:v][prod]overlay=x=(W-w)/2:y=${endCard ? 300 : 360}[withprod]`,
     `[withprod]${brand(100)}[branded]`,
     `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:box=1:boxcolor=black@0.18:boxborderw=14:x=72:y=${endCard ? 1080 : 1220}:line_spacing=10[name]`,
     `[name]${caption(tf, endCard ? 'h-520' : 'h-410', endCard ? 58 : 62)}[vout]`
   ].join(';');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
 }
 function imageScene(image, text, out, seconds, product) {
   if (!image || !probeMedia(image)) return motionScene(text, out, seconds, product.productName);
   const tf = textFile(text, 25);
   const filter = [
-    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0010,1.08)':d=${seconds * FPS}:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`,
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},format=yuv420p[bg]`,
     `[bg]${brand(110)}[branded]`,
     `[branded]${caption(tf, 'h-520', 64)}[vout]`
   ].join(';');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
 }
 function brollScene(input, text, out, seconds) {
   const tf = textFile(text, 25);
@@ -240,7 +266,7 @@ function brollScene(input, text, out, seconds) {
     `[bg]${brand(110)}[branded]`,
     `[branded]${caption(tf, 'h-520', 64)}[vout]`
   ].join(';');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-stream_loop', '1', '-i', input, '-t', String(seconds), '-filter_complex', filter, '-map', '[vout]', '-an', '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), out]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-stream_loop', '1', '-i', input, '-t', String(seconds), '-filter_complex', filter, '-map', '[vout]', '-an', ...encodeArgs(out)]);
 }
 async function build(product) {
   validateSeed(product);
@@ -286,7 +312,7 @@ async function build(product) {
   fs.writeFileSync(concat, scenes.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join('\n'));
   const mp4 = path.join(OUT_DIR, `${product.id}.mp4`);
   const jpg = path.join(OUT_DIR, `${product.id}.jpg`);
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', concat, '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', mp4]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', concat, '-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', '23', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', mp4]);
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-ss', '00:00:01', '-i', mp4, '-frames:v', '1', '-q:v', '3', jpg]);
   const probe = capture('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height,duration', '-of', 'json', mp4]);
   const metadata = probe ? JSON.parse(probe).streams?.[0] || {} : {};
@@ -311,6 +337,7 @@ async function build(product) {
 async function main() {
   ensureDir(OUT_DIR);
   ensureDir(PLAN_DIR);
+  hydrateSecrets();
   requireTool('ffmpeg');
   requireTool('ffprobe');
   const allProducts = productSeeds();
