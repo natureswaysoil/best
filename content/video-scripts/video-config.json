@@ -8,7 +8,7 @@
   "vp9Crf": 33,
   "vp9Speed": 4,
   "heygen": {
-    "_comment": "Default avatar and voice used across all product videos. Override per category below.",
+    "_comment": "Use garden/farm style avatars across Nature's Way Soil product videos. Product/category overrides keep lawn, garden, compost, and pasture videos matched to the right presenter.",
     "defaultAvatarId": "Anna_public_3_20240108",
     "defaultVoiceId": "ybOJaAgPlBdcGBEpCJzA",
     "categoryOverrides": {
@@ -17,21 +17,45 @@
         "voiceId": "ybOJaAgPlBdcGBEpCJzA"
       },
       "Soil Amendment": {
-        "avatarId": "Anna_public_3_20240108",
+        "avatarId": "Abigail_expressive_2024112501",
         "voiceId": "ybOJaAgPlBdcGBEpCJzA"
       },
       "Compost": {
-        "avatarId": "Anna_public_3_20240108",
+        "avatarId": "Abigail_expressive_2024112501",
         "voiceId": "ybOJaAgPlBdcGBEpCJzA"
       },
       "Pet Care": {
         "avatarId": "Anna_public_3_20240108",
         "voiceId": "3o5awrz3sR3uP9rxaD80"
+      },
+      "Pasture": {
+        "avatarId": "Aditya_public_1",
+        "voiceId": "ybOJaAgPlBdcGBEpCJzA"
+      },
+      "Farm": {
+        "avatarId": "Aditya_public_1",
+        "voiceId": "ybOJaAgPlBdcGBEpCJzA"
       }
     },
     "productOverrides": {
-      "_comment": "Use product ID as key to override avatar/voice for a specific product.",
-      "_example": {
+      "_comment": "Use product ID as key to override avatar/voice for a specific product. These keep seed-list videos on garden/farm presenters.",
+      "NWS_014": {
+        "avatarId": "Anna_public_3_20240108",
+        "voiceId": "3o5awrz3sR3uP9rxaD80"
+      },
+      "NWS_011": {
+        "avatarId": "Abigail_expressive_2024112501",
+        "voiceId": "ybOJaAgPlBdcGBEpCJzA"
+      },
+      "NWS_013": {
+        "avatarId": "Abigail_expressive_2024112501",
+        "voiceId": "ybOJaAgPlBdcGBEpCJzA"
+      },
+      "NWS_021": {
+        "avatarId": "Aditya_public_1",
+        "voiceId": "ybOJaAgPlBdcGBEpCJzA"
+      },
+      "NWS_018": {
         "avatarId": "Anna_public_3_20240108",
         "voiceId": "ybOJaAgPlBdcGBEpCJzA"
       }
