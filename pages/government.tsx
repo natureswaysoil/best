@@ -140,6 +140,44 @@ const biocharUses = [
   },
 ];
 
+const resourceLinks = [
+  {
+    title: 'EPA Superfund Green Remediation',
+    href: 'https://www.epa.gov/superfund/superfund-green-remediation',
+    description: 'EPA overview of greener cleanup strategies and reduced-footprint remediation practices.',
+  },
+  {
+    title: 'EPA Green Remediation BMPs: Mining Sites',
+    href: 'https://www.epa.gov/sites/default/files/2015-04/documents/gr_factsheet_miningsites.pdf',
+    description: 'EPA fact sheet for disturbed land, mining sites, and restoration BMP planning.',
+  },
+  {
+    title: 'EPA Green Remediation BMPs: Bioremediation',
+    href: 'https://19january2021snapshot.epa.gov/remedytech/green-remediation-best-management-practices-bioremediation_.html',
+    description: 'EPA resource on biological cleanup approaches for soil, sediment, and groundwater projects.',
+  },
+  {
+    title: 'EPA PFAS Resources',
+    href: 'https://www.epa.gov/pfas',
+    description: 'EPA public information hub for PFAS research, regulation, and cleanup activity.',
+  },
+  {
+    title: 'USDA BioPreferred Catalog',
+    href: 'https://www.biopreferred.gov/BioPreferred/faces/catalog/Catalog.xhtml',
+    description: 'Federal catalog for researching biobased products and procurement options.',
+  },
+  {
+    title: 'SBA HUBZone Program',
+    href: 'https://www.sba.gov/federal-contracting/contracting-assistance-programs/hubzone-program',
+    description: 'Official SBA resource for HUBZone contracting and small-business procurement.',
+  },
+  {
+    title: 'SAM.gov Entity Information',
+    href: 'https://sam.gov/entity-information',
+    description: 'Federal vendor registration lookup for agency buyers and contracting teams.',
+  },
+];
+
 export default function GovernmentPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -256,6 +294,12 @@ export default function GovernmentPage() {
                   className="rounded-xl border border-[#c6cebc] bg-white px-5 py-3 text-sm font-semibold text-[#1f2a1f] transition hover:bg-[#f1f4ec]"
                 >
                   Request Invoice / Quote
+                </Link>
+                <Link
+                  href="#research-links"
+                  className="rounded-xl border border-[#c6cebc] bg-white px-5 py-3 text-sm font-semibold text-[#1f2a1f] transition hover:bg-[#f1f4ec]"
+                >
+                  Research & Government Links
                 </Link>
               </div>
 
@@ -479,6 +523,38 @@ export default function GovernmentPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="research-links" className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#567547]">
+              Research & Government Links
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">
+              Useful links for buyers and project teams
+            </h2>
+            <p className="mt-4 text-base leading-7 text-[#495549]">
+              Public resources for green remediation, biobased purchasing, HUBZone verification,
+              PFAS information, and federal vendor checks. These links help agency buyers,
+              contractors, and project teams review the background behind biobased soil restoration.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {resourceLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm transition hover:border-[#3e6b2f] hover:shadow-md"
+              >
+                <h3 className="text-lg font-semibold text-[#1f2a1f]">{link.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-[#4f5a4f]">{link.description}</p>
+                <p className="mt-4 text-sm font-semibold text-[#3e6b2f]">Open resource →</p>
+              </a>
+            ))}
           </div>
         </section>
 
