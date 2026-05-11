@@ -12,6 +12,12 @@
  * - Uses Pexels first when PEXELS_API_KEY is available.
  * - Falls back to local b-roll, product images, then simple branded motion scenes.
  * - Enforces at least 4 non-product b-roll scenes per configured product.
+ *
+ * Quality upgrades:
+ * - Prefers high-resolution portrait Pexels clips and rejects tiny/poor sources.
+ * - Uses slower/higher-quality FFmpeg defaults unless overridden.
+ * - Adds subtle zoom/pan motion to still product images so videos feel less static.
+ * - Creates cleaner product cards with a soft shadow and readable lower-third copy.
  */
 
 import fs from 'fs';
@@ -34,7 +40,10 @@ const W = Number(process.env.VIDEO_WIDTH || 1080);
 const H = Number(process.env.VIDEO_HEIGHT || 1920);
 const FPS = Number(process.env.VIDEO_FPS || 30);
 const FFMPEG_TIMEOUT_MS = Number(process.env.FFMPEG_TIMEOUT_MS || 900000);
-const FFMPEG_PRESET = process.env.FFMPEG_PRESET || 'veryfast';
+const FFMPEG_PRESET = process.env.FFMPEG_PRESET || 'medium';
+const VIDEO_CRF = String(process.env.VIDEO_CRF || '18');
+const PEXELS_MIN_HEIGHT = Number(process.env.PEXELS_MIN_HEIGHT || 1080);
+const PEXELS_PER_PAGE = Number(process.env.PEXELS_PER_PAGE || 20);
 
 const FALLBACK_SCENES = [
   { text: 'Start with the soil.', query: 'healthy garden soil close up', seconds: 4, broll: ['soil', 'garden'] },
@@ -130,6 +139,11 @@ function probeMedia(file) {
   const out = capture('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file]);
   return /^\d+,\d+/.test(out);
 }
+function mediaSize(file) {
+  const out = capture('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file]);
+  const [width, height] = out.split(',').map(Number);
+  return { width: width || 0, height: height || 0 };
+}
 function productSeeds() {
   const topProducts = readJson(TOP_PRODUCTS_FILE, { topProducts: [] }).topProducts || [];
   return topProducts
@@ -185,7 +199,26 @@ function localBroll(product, scene) {
     path.join(PROJECT, 'public', 'videos', 'broll', product.id),
     path.join(PROJECT, 'public', 'videos', 'broll', 'shared')
   ];
-  return roots.flatMap((root) => listRecursive(root, /\.(mp4|mov|m4v|webm)$/i)).filter(probeMedia).sort((a, b) => score(a, scene.broll || []) - score(b, scene.broll || []));
+  return roots
+    .flatMap((root) => listRecursive(root, /\.(mp4|mov|m4v|webm)$/i))
+    .filter((file) => {
+      if (!probeMedia(file)) return false;
+      const { height } = mediaSize(file);
+      return height >= 720;
+    })
+    .sort((a, b) => score(a, scene.broll || []) - score(b, scene.broll || []));
+}
+function pexelsFileScore(file, video) {
+  const width = Number(file.width || 0);
+  const height = Number(file.height || 0);
+  const portrait = height >= width;
+  const verticalRatio = width ? height / width : 0;
+  const duration = Number(video.duration || 0);
+  const resolutionScore = Math.abs(height - H) + Math.abs(width - W);
+  const ratioPenalty = Math.abs(verticalRatio - H / W) * 1200;
+  const durationPenalty = duration >= 4 ? 0 : 5000;
+  const landscapePenalty = portrait ? 0 : 8000;
+  return landscapePenalty + durationPenalty + ratioPenalty + resolutionScore;
 }
 async function pexels(query, outFile) {
   if (!PEXELS_API_KEY) return false;
@@ -193,23 +226,29 @@ async function pexels(query, outFile) {
     const url = new URL('https://api.pexels.com/videos/search');
     url.searchParams.set('query', query);
     url.searchParams.set('orientation', 'portrait');
-    url.searchParams.set('per_page', '10');
+    url.searchParams.set('size', 'large');
+    url.searchParams.set('per_page', String(PEXELS_PER_PAGE));
     const response = await fetch(url, { headers: { Authorization: PEXELS_API_KEY } });
     if (!response.ok) {
       console.log(`Pexels lookup failed for "${query}" with HTTP ${response.status}.`);
       return false;
     }
     const data = await response.json();
+    const candidates = [];
     for (const video of data.videos || []) {
-      const files = (video.video_files || []).filter((f) => f.link && f.width && f.height).sort((a, b) => {
-        const ap = a.height >= a.width ? 0 : 1;
-        const bp = b.height >= b.width ? 0 : 1;
-        return ap - bp || Math.abs(a.height - 1920) - Math.abs(b.height - 1920);
-      });
-      const pick = files[0];
-      if (!pick) continue;
-      const dl = spawnSync('curl', ['-L', '--fail', '--max-time', '60', pick.link, '-o', outFile], { stdio: 'ignore', timeout: 75000 });
-      if (dl.status === 0 && probeMedia(outFile)) return true;
+      for (const file of video.video_files || []) {
+        if (!file.link || !file.width || !file.height) continue;
+        if (Number(file.height) < PEXELS_MIN_HEIGHT) continue;
+        candidates.push({ file, video, score: pexelsFileScore(file, video) });
+      }
+    }
+    candidates.sort((a, b) => a.score - b.score);
+    for (const { file } of candidates.slice(0, 6)) {
+      const dl = spawnSync('curl', ['-L', '--fail', '--max-time', '90', file.link, '-o', outFile], { stdio: 'ignore', timeout: 105000 });
+      if (dl.status === 0 && probeMedia(outFile)) {
+        const { height } = mediaSize(outFile);
+        if (height >= 720) return true;
+      }
     }
   } catch (error) {
     console.log(`Pexels lookup failed for "${query}": ${error.message}`);
@@ -221,40 +260,51 @@ function brand(y = 110) {
   return `drawtext=textfile='${ff(brandFile)}':fontcolor=white:fontsize=44:box=1:boxcolor=black@0.26:boxborderw=16:x=72:y=${y}`;
 }
 function caption(file, y = 'h-520', size = 64) {
-  return `drawtext=textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.48:boxborderw=28:x=72:y=${y}:line_spacing=16`;
+  return `drawtext=textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.54:boxborderw=30:x=72:y=${y}:line_spacing=16`;
 }
 function encodeArgs(out) {
-  return ['-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', '23', '-pix_fmt', 'yuv420p', '-r', String(FPS), out];
+  return ['-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', VIDEO_CRF, '-pix_fmt', 'yuv420p', '-r', String(FPS), out];
 }
 function motionScene(text, out, seconds, productName) {
   const tf = textFile(text, 25);
   const pf = textFile(productName, 24);
   const filter = [
-    `${brand(110)}[branded]`,
+    `[0:v]format=yuv420p,drawbox=x=0:y=0:w=iw:h=ih:color=0x244f31@1:t=fill[base]`,
+    `[base]drawbox=x=80:y=320:w=920:h=1020:color=white@0.08:t=fill[panel]`,
+    `[panel]${brand(110)}[branded]`,
     `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:x=72:y=260:line_spacing=12[name]`,
     `[name]${caption(tf, 'h-560', 66)}[vout]`
   ].join(';');
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', `[0:v]${filter}`, '-map', '[vout]', ...encodeArgs(out)]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
 }
 function productScene(image, text, out, seconds, product, endCard = false) {
   if (!image || !probeMedia(image)) return motionScene(endCard ? product.cta : text, out, seconds, product.productName);
   const tf = textFile(endCard ? product.cta : text, endCard ? 28 : 26);
   const pf = textFile(product.productName, 24);
+  const frames = Math.max(1, seconds * FPS);
+  const productWidth = endCard ? 760 : 820;
+  const productY = endCard ? 285 : 330;
+  const titleY = endCard ? 1080 : 1185;
+  const captionY = endCard ? 'h-530' : 'h-430';
   const filter = [
-    `[1:v]scale=${endCard ? 760 : 820}:-2:force_original_aspect_ratio=decrease,format=rgba[prod]`,
-    `[0:v][prod]overlay=x=(W-w)/2:y=${endCard ? 300 : 360}[withprod]`,
+    `[0:v]format=yuv420p,drawbox=x=0:y=0:w=iw:h=ih:color=0x244f31@1:t=fill[base]`,
+    `[base]drawbox=x=70:y=250:w=940:h=1150:color=white@0.10:t=fill[panel]`,
+    `[1:v]scale=${productWidth}:-2:force_original_aspect_ratio=decrease,format=rgba,zoompan=z='min(zoom+0.0009,1.045)':d=${frames}:s=${productWidth}x${Math.round(productWidth * 1.18)}:fps=${FPS}[prod]`,
+    `[panel][prod]overlay=x=(W-w)/2:y=${productY}:format=auto[withprod]`,
     `[withprod]${brand(100)}[branded]`,
-    `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:box=1:boxcolor=black@0.18:boxborderw=14:x=72:y=${endCard ? 1080 : 1220}:line_spacing=10[name]`,
-    `[name]${caption(tf, endCard ? 'h-520' : 'h-410', endCard ? 58 : 62)}[vout]`
+    `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:box=1:boxcolor=black@0.22:boxborderw=14:x=72:y=${titleY}:line_spacing=10[name]`,
+    `[name]${caption(tf, captionY, endCard ? 58 : 62)}[vout]`
   ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
 }
 function imageScene(image, text, out, seconds, product) {
   if (!image || !probeMedia(image)) return motionScene(text, out, seconds, product.productName);
   const tf = textFile(text, 25);
+  const frames = Math.max(1, seconds * FPS);
   const filter = [
-    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},format=yuv420p[bg]`,
-    `[bg]${brand(110)}[branded]`,
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0007,1.035)':d=${frames}:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`,
+    `[bg]drawbox=x=0:y=0:w=iw:h=ih:color=black@0.10:t=fill[shade]`,
+    `[shade]${brand(110)}[branded]`,
     `[branded]${caption(tf, 'h-520', 64)}[vout]`
   ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
@@ -262,8 +312,9 @@ function imageScene(image, text, out, seconds, product) {
 function brollScene(input, text, out, seconds) {
   const tf = textFile(text, 25);
   const filter = [
-    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},trim=duration=${seconds},setpts=PTS-STARTPTS[bg]`,
-    `[bg]${brand(110)}[branded]`,
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},trim=duration=${seconds},setpts=PTS-STARTPTS,format=yuv420p[bg]`,
+    `[bg]drawbox=x=0:y=0:w=iw:h=ih:color=black@0.10:t=fill[shade]`,
+    `[shade]${brand(110)}[branded]`,
     `[branded]${caption(tf, 'h-520', 64)}[vout]`
   ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-stream_loop', '1', '-i', input, '-t', String(seconds), '-filter_complex', filter, '-map', '[vout]', '-an', ...encodeArgs(out)]);
@@ -277,6 +328,7 @@ async function build(product) {
   const audit = [];
   console.log(`\n🎬 ${product.id}: ${product.productName}`);
   console.log(`Usable product images found: ${images.length}`);
+  console.log(`Encoding: ${W}x${H}, ${FPS}fps, preset=${FFMPEG_PRESET}, crf=${VIDEO_CRF}`);
   console.log(PEXELS_API_KEY ? 'Pexels enabled and preferred for b-roll scenes.' : 'Pexels not configured. Using local/product/motion fallback scenes.');
 
   for (let i = 0; i < product.scenes.length; i++) {
@@ -312,8 +364,8 @@ async function build(product) {
   fs.writeFileSync(concat, scenes.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join('\n'));
   const mp4 = path.join(OUT_DIR, `${product.id}.mp4`);
   const jpg = path.join(OUT_DIR, `${product.id}.jpg`);
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', concat, '-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', '23', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', mp4]);
-  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-ss', '00:00:01', '-i', mp4, '-frames:v', '1', '-q:v', '3', jpg]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', concat, '-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', VIDEO_CRF, '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart', mp4]);
+  run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-ss', '00:00:01', '-i', mp4, '-frames:v', '1', '-q:v', '2', jpg]);
   const probe = capture('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height,duration', '-of', 'json', mp4]);
   const metadata = probe ? JSON.parse(probe).streams?.[0] || {} : {};
   const plan = {
