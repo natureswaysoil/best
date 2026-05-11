@@ -12,6 +12,7 @@ export default function Header({ transparent = false }: HeaderProps) {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
+    { name: 'Government', href: '/government' },
     { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
@@ -52,15 +53,19 @@ export default function Header({ transparent = false }: HeaderProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`font-medium transition-colors duration-200 ${
-                  transparent 
-                    ? 'text-white hover:text-nature-green-200' 
-                    : 'text-gray-700 hover:text-nature-green-600'
+                  item.name === 'Government'
+                    ? transparent
+                      ? 'rounded-full border border-white/40 px-3 py-1.5 text-white hover:bg-white/10'
+                      : 'rounded-full bg-nature-green-50 px-3 py-1.5 text-nature-green-700 hover:bg-nature-green-100'
+                    : transparent
+                      ? 'text-white hover:text-nature-green-200'
+                      : 'text-gray-700 hover:text-nature-green-600'
                 }`}
               >
                 {item.name}
@@ -103,9 +108,13 @@ export default function Header({ transparent = false }: HeaderProps) {
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
                   className={`font-medium py-2 transition-colors duration-200 ${
-                    transparent 
-                      ? 'text-white hover:text-nature-green-200' 
-                      : 'text-gray-700 hover:text-nature-green-600'
+                    item.name === 'Government'
+                      ? transparent
+                        ? 'rounded-lg border border-white/30 px-3 text-white hover:bg-white/10'
+                        : 'rounded-lg bg-nature-green-50 px-3 text-nature-green-700 hover:bg-nature-green-100'
+                      : transparent
+                        ? 'text-white hover:text-nature-green-200'
+                        : 'text-gray-700 hover:text-nature-green-600'
                   }`}
                 >
                   {item.name}
