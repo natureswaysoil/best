@@ -28,6 +28,16 @@ interface CheckoutRequestBody {
   sku?: string;
   shippingMethodId?: string;
   shippingCost?: number;
+  successPath?: string;
+  cancelPath?: string;
+}
+
+function normalizeReturnPath(path: unknown, fallback: string): string {
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) {
+    return fallback;
+  }
+
+  return path;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -48,6 +58,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sku,
       shippingMethodId,
       shippingCost = 0,
+      successPath,
+      cancelPath,
     } = req.body as CheckoutRequestBody;
 
     if (!productId || !productName || !price) {
@@ -62,6 +74,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const safeSuccessPath = normalizeReturnPath(successPath, '/shop?session_id={CHECKOUT_SESSION_ID}');
+    const safeCancelPath = normalizeReturnPath(cancelPath, `/product/${productId}`);
+    const successUrl = safeSuccessPath.includes('{CHECKOUT_SESSION_ID}')
+      ? `${origin}${safeSuccessPath}`
+      : `${origin}${safeSuccessPath}${safeSuccessPath.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`;
 
     const lineItems = [
       {
@@ -113,8 +130,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sku: sku || '',
         shippingMethod: shippingMethodId || '',
       },
-      success_url: `${origin}/shop?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/product/${productId}`,
+      success_url: successUrl,
+      cancel_url: `${origin}${safeCancelPath}`,
     });
 
     return res.status(200).json({ url: session.url });
