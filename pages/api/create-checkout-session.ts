@@ -30,6 +30,7 @@ interface CheckoutRequestBody {
   shippingCost?: number;
   successPath?: string;
   cancelPath?: string;
+  checkoutMode?: 'hosted' | 'embedded';
 }
 
 function normalizeReturnPath(path: unknown, fallback: string): string {
@@ -60,6 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       shippingCost = 0,
       successPath,
       cancelPath,
+      checkoutMode = 'hosted',
     } = req.body as CheckoutRequestBody;
 
     if (!productId || !productName || !price) {
@@ -117,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const session = await stripeClient.checkout.sessions.create({
+    const commonSessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
       payment_method_types: ['card', 'link'],
       billing_address_collection: 'auto',
@@ -130,6 +132,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sku: sku || '',
         shippingMethod: shippingMethodId || '',
       },
+    };
+
+    if (checkoutMode === 'embedded') {
+      const session = await stripeClient.checkout.sessions.create({
+        ...commonSessionParams,
+        ui_mode: 'embedded',
+        return_url: successUrl,
+        redirect_on_completion: 'if_required',
+      });
+
+      return res.status(200).json({ clientSecret: session.client_secret });
+    }
+
+    const session = await stripeClient.checkout.sessions.create({
+      ...commonSessionParams,
       success_url: successUrl,
       cancel_url: `${origin}${safeCancelPath}`,
     });
