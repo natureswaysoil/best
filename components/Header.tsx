@@ -12,6 +12,7 @@ export default function Header({ transparent = false }: HeaderProps) {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
+    { name: 'Lawn Recovery', href: '/homeowners-landscapers-government' },
     { name: 'Government', href: '/government' },
     { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
@@ -59,7 +60,7 @@ export default function Header({ transparent = false }: HeaderProps) {
                 key={item.name}
                 href={item.href}
                 className={`font-medium transition-colors duration-200 ${
-                  item.name === 'Government'
+                  item.name === 'Government' || item.name === 'Lawn Recovery'
                     ? transparent
                       ? 'rounded-full border border-white/40 px-3 py-1.5 text-white hover:bg-white/10'
                       : 'rounded-full bg-nature-green-50 px-3 py-1.5 text-nature-green-700 hover:bg-nature-green-100'
@@ -108,7 +109,7 @@ export default function Header({ transparent = false }: HeaderProps) {
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
                   className={`font-medium py-2 transition-colors duration-200 ${
-                    item.name === 'Government'
+                    item.name === 'Government' || item.name === 'Lawn Recovery'
                       ? transparent
                         ? 'rounded-lg border border-white/30 px-3 text-white hover:bg-white/10'
                         : 'rounded-lg bg-nature-green-50 px-3 text-nature-green-700 hover:bg-nature-green-100'
