@@ -482,7 +482,7 @@ export const allProducts: ProductData[] = [
   {
     id: 'NWS_022',
     name: "Nature's Way Soil Hay, Pasture & Lawn Recovery System with Liquid Biochar",
-    price: 79.99,
+    price: 179.00,
     image: '/images/products/NWS_021/main.jpg',
     description: 'Concentrated soil-support formula for hay fields, pastures, lawns, turf, and food plots. Combines liquid biochar, humic acid, fulvic acid, kelp extract, BM-1 beneficial biology, and yucca extract to support stressed soil and grass recovery.',
     category: 'Fertilizer',
@@ -503,8 +503,7 @@ export const allProducts: ProductData[] = [
     ],
     inStock: true,
     sizes: [
-      { name: '1 Gallon', price: 79.99, sku: 'NWS-HPLRS-1GAL' },
-      { name: '2.5 Gallon', price: 149.99, sku: 'NWS-HPLRS-25GAL' }
+      { name: '2.5 Gallon', price: 179.00, sku: 'NWS-HPLRS-25GAL' }
     ],
     usage: [
       'Shake well before each use to distribute biochar, humic, kelp, and biology evenly.',
