@@ -478,6 +478,74 @@ export const allProducts: ProductData[] = [
       'Irrigate or allow rainfall within 24 hours to carry nutrients into the root zone.',
       'Horses and livestock may graze once the spray has dried, typically after 2 hours.'
     ]
+  },
+  {
+    id: 'NWS_022',
+    name: "Nature's Way Soil Hay, Pasture & Lawn Recovery System with Liquid Biochar",
+    price: 79.99,
+    image: '/images/products/NWS_021/main.jpg',
+    description: 'Concentrated soil-support formula for hay fields, pastures, lawns, turf, and food plots. Combines liquid biochar, humic acid, fulvic acid, kelp extract, BM-1 beneficial biology, and yucca extract to support stressed soil and grass recovery.',
+    category: 'Fertilizer',
+    tags: ['hay', 'pasture', 'lawn', 'recovery', 'liquid-biochar', 'humic-acid', 'fulvic-acid', 'kelp', 'bm-1', 'yucca'],
+    features: [
+      'Liquid biochar supports soil carbon, water holding, and nutrient retention',
+      'Humic and fulvic acids support nutrient availability and soil structure',
+      'Kelp extract supports root growth, stress response, and plant vigor',
+      'BM-1 beneficial biology helps support microbial activity in the root zone',
+      'Yucca extract supports soil wetting and better moisture movement',
+      'Built for heat, drought, poor green-up, and seasonal stress recovery',
+      'Designed for hay fields, pastures, lawns, turf, and food plots',
+      'Concentrated formula for broadcast spraying or soil drench applications'
+    ],
+    images: [
+      '/images/products/NWS_021/main.jpg',
+      '/images/products/NWS_021/thumb.jpg'
+    ],
+    inStock: true,
+    sizes: [
+      { name: '1 Gallon', price: 79.99, sku: 'NWS-HPLRS-1GAL' },
+      { name: '2.5 Gallon', price: 149.99, sku: 'NWS-HPLRS-25GAL' }
+    ],
+    usage: [
+      'Shake well before each use to distribute biochar, humic, kelp, and biology evenly.',
+      'Dilute with water before applying as a foliar spray, soil drench, or broadcast field spray.',
+      'For stressed lawns, hay fields, and pastures, apply during cool morning or evening conditions.',
+      'Water in after application or apply ahead of rainfall/irrigation to move the formula into the root zone.'
+    ]
+  },
+  {
+    id: 'NWS_023',
+    name: "Nature's Way Soil Living Soil Revitalizer",
+    price: 24.99,
+    image: '/images/products/NWS_013/main.jpg',
+    description: 'Premium living soil amendment built with worm castings, activated biochar, compost, natural nutrients, and beneficial soil biology to help restore tired garden beds, raised beds, containers, and potted plants.',
+    category: 'Soil Amendment',
+    tags: ['living-soil', 'soil-revitalizer', 'worm-castings', 'biochar', 'compost', 'raised-beds', 'garden', 'containers', 'microbes'],
+    features: [
+      'Worm castings help add gentle nutrition and beneficial soil biology',
+      'Activated biochar supports nutrient holding, moisture retention, and microbial habitat',
+      'Compost base helps improve texture, organic matter, and soil structure',
+      'Designed to refresh tired soil in gardens, raised beds, and containers',
+      'Supports healthier roots, better nutrient cycling, and stronger plant performance',
+      'Easy topdress or mix-in application for vegetables, flowers, herbs, and houseplants',
+      'Small-batch soil amendment from Nature\'s Way Soil',
+      'Natural soil-building alternative to synthetic quick-fix fertilizers'
+    ],
+    images: [
+      '/images/products/NWS_013/main.jpg',
+      '/images/products/NWS_013/thumb.jpg'
+    ],
+    inStock: true,
+    sizes: [
+      { name: '4 lb', price: 24.99, sku: 'NWS-LSR-4LB' },
+      { name: '6 lb', price: 29.99, sku: 'NWS-LSR-6LB' }
+    ],
+    usage: [
+      'For containers, mix 1-2 cups into the top few inches of soil and water thoroughly.',
+      'For raised beds and garden rows, spread a thin layer around plants and gently work into the surface.',
+      'For transplants, blend a small handful into the planting hole before watering in.',
+      'Reapply every 30-45 days during active growth or whenever soil needs a biology and organic matter refresh.'
+    ]
   }
 ];
 
