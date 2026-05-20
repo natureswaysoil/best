@@ -2,36 +2,36 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Resend } from 'resend';
 
-const TEST_SECRET = 'nws-test-2026';
+const TEST_SECRET = process.env.NWS_TEST_SYSTEMS_SECRET;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Allow GET or POST, check secret in query or header
-  const secret = req.query.secret || req.headers['x-test-secret'];
-  if (secret !== TEST_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized — add ?secret=nws-test-2026 to the URL' });
+  if (!TEST_SECRET) {
+    return res.status(503).json({ error: 'NWS_TEST_SYSTEMS_SECRET is not configured.' });
   }
 
-  // CORS headers so browser console works
+  const secret = req.query.secret || req.headers['x-test-secret'];
+  if (secret !== TEST_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
 
   const results: any = { timestamp: new Date().toISOString(), env: {}, email: {}, supabase: {} };
 
-  // 1. Check env vars
   results.env = {
-    RESEND_API_KEY: process.env.RESEND_API_KEY ? '✅ set' : '❌ MISSING',
-    RESEND_FROM: process.env.RESEND_FROM || '(not set — using default)',
-    SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('placeholder') ? '✅ set' : '❌ MISSING/placeholder',
-    SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? (process.env.SUPABASE_SERVICE_ROLE_KEY.includes('placeholder') ? '❌ still placeholder' : `✅ set (starts: ${process.env.SUPABASE_SERVICE_ROLE_KEY.slice(0,12)}...)`) : '❌ NOT SET — variable missing entirely',
-    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ? '✅ set' : '❌ MISSING',
+    RESEND_API_KEY: process.env.RESEND_API_KEY ? 'set' : 'MISSING',
+    RESEND_FROM: process.env.RESEND_FROM || '(not set)',
+    SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'MISSING',
+    SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'set' : 'MISSING',
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ? 'set' : 'MISSING',
   };
 
-  // 2. Send real test emails
   if (process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const from = "Nature's Way Soil <no-reply@natureswaysoil.com>";
+    const from = process.env.RESEND_FROM || "Nature's Way Soil <no-reply@natureswaysoil.com>";
     const html = `
-      <h2 style="color:#2d5016;">🧪 Email System Test</h2>
+      <h2 style="color:#2d5016;">Email System Test</h2>
       <p>This is a live test from Nature's Way Soil order notification system.</p>
       <table style="font-size:15px;line-height:1.8;border-collapse:collapse;">
         <tr><td style="padding:4px 12px 4px 0"><strong>Customer:</strong></td><td>Test Customer</td></tr>
@@ -39,69 +39,73 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <tr><td style="padding:4px 12px 4px 0"><strong>Total:</strong></td><td><strong>$50.99</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0"><strong>Ship to:</strong></td><td>123 Test St, Snow Hill NC 28580</td></tr>
       </table>
-      <p style="color:#666;font-size:13px;margin-top:16px;">✅ If you received this, order notifications are working correctly.</p>
+      <p style="color:#666;font-size:13px;margin-top:16px;">If you received this, order notifications are working correctly.</p>
     `;
 
-    for (const [key, addr] of [
-      ['natureswaysoil', 'natureswaysoil@natureswaysoil.com'],
-      ['james', 'james@natureswaysoil.com'],
-      ['sales', 'sales@natureswaysoil.com'],
-    ]) {
+    const recipients = (process.env.NWS_TEST_EMAIL_RECIPIENTS || 'support@natureswaysoil.com')
+      .split(',')
+      .map((addr) => addr.trim())
+      .filter(Boolean);
+
+    for (const addr of recipients) {
       try {
         const r = await resend.emails.send({
           from,
-          to: addr as string,
-          subject: '🧪 TEST: New Order Notification — System Check',
+          to: addr,
+          subject: 'TEST: New Order Notification — System Check',
           html,
         });
-        results.email[key] = r.error ? `❌ ${r.error.message}` : `✅ Delivered (id: ${r.data?.id})`;
+        results.email[addr] = r.error ? `failed: ${r.error.message}` : `delivered: ${r.data?.id}`;
       } catch (e: any) {
-        results.email[key] = `❌ ${e.message}`;
+        results.email[addr] = `failed: ${e.message}`;
       }
       await new Promise(resolve => setTimeout(resolve, 600));
     }
   } else {
-    results.email = { error: '❌ RESEND_API_KEY not set on Vercel — no emails sent' };
+    results.email = { error: 'RESEND_API_KEY is not set.' };
   }
 
-  // 3. Test Supabase via raw HTTP (bypass client library)
   try {
-    const SUPABASE_URL = 'https://gixjfavlefeldoostsij.supabase.co';
-    const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpeGpmYXZsZWZlbGRvb3N0c2lqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTg4NTU1OSwiZXhwIjoyMDc1NDYxNTU5fQ.tUkgA14BmnB6B-xN9xlvEW6WpXvfYx9N5q6o2i-q2iE';
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=id,total,created_at&order=created_at.desc&limit=5`, {
-      headers: {
-        'apikey': SERVICE_KEY,
-        'Authorization': `Bearer ${SERVICE_KEY}`,
-        'Content-Type': 'application/json',
-      }
-    });
-    const text = await resp.text();
-    if (resp.ok) {
-      const data = JSON.parse(text);
-      results.supabase.connection = '✅ Connected (raw HTTP)';
-      results.supabase.status = resp.status;
-      results.supabase.total_orders = data.length;
-      results.supabase.recent_orders = data.map((o: any) => ({
-        id: o.id?.slice(0, 8) + '...',
-        total: `$${o.total}`,
-        date: o.created_at?.slice(0, 10),
-      }));
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      results.supabase.connection = 'Skipped: Supabase environment variables are missing.';
     } else {
-      results.supabase.connection = `❌ HTTP ${resp.status}`;
-      results.supabase.error = text.slice(0, 300);
+      const resp = await fetch(`${supabaseUrl}/rest/v1/orders?select=id,total,created_at&order=created_at.desc&limit=5`, {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const text = await resp.text();
+      if (resp.ok) {
+        const data = JSON.parse(text);
+        results.supabase.connection = 'Connected';
+        results.supabase.status = resp.status;
+        results.supabase.total_orders = data.length;
+        results.supabase.recent_orders = data.map((o: any) => ({
+          id: o.id?.slice(0, 8) + '...',
+          total: `$${o.total}`,
+          date: o.created_at?.slice(0, 10),
+        }));
+      } else {
+        results.supabase.connection = `HTTP ${resp.status}`;
+        results.supabase.error = text.slice(0, 300);
+      }
     }
   } catch (e: any) {
-    results.supabase.connection = `❌ Fetch failed: ${e.message}`;
+    results.supabase.connection = `Fetch failed: ${e.message}`;
   }
 
-  // Return as pretty HTML if browser, JSON otherwise
   const acceptsHtml = req.headers.accept?.includes('text/html');
   if (acceptsHtml) {
     const html = `<!DOCTYPE html><html><head><title>NWS System Test</title>
     <style>body{font-family:monospace;padding:20px;background:#f5f5f5}
     pre{background:white;padding:20px;border-radius:8px;border:1px solid #ddd;font-size:14px;line-height:1.6;white-space:pre-wrap}
     h2{color:#2d5016}</style></head><body>
-    <h2>🌱 Nature's Way Soil — System Diagnostic</h2>
+    <h2>Nature's Way Soil — System Diagnostic</h2>
     <pre>${JSON.stringify(results, null, 2)}</pre>
     </body></html>`;
     res.setHeader('Content-Type', 'text/html');
@@ -110,5 +114,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json(results);
 }
-
-// This won't append correctly, use view first
