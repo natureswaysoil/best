@@ -117,6 +117,12 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
             "keywords": article.tags.join(', ')
           })}}
         />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.metaDescription || post.excerpt} />
+        <meta name="twitter:image" content={post.featuredImage?.startsWith?.("http") ? post.featuredImage : `https://natureswaysoil.com/images/blog/${post.slug}.jpg`} />
+        <meta name="twitter:site" content="@NaturesWaySoil" />
+
       </Head>
 
       {/* Reading Progress Bar */}

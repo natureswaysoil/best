@@ -30,6 +30,14 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
         <meta property="og:title" content="Gardening Blog - Nature's Way Soil" />
         <meta property="og:description" content="Expert gardening tips and sustainable growing techniques" />
         <meta property="og:type" content="website" />
+        <link rel="canonical" href="https://natureswaysoil.com/blog" />
+        <meta property="og:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Gardening Blog | Nature's Way Soil" />
+        <meta name="twitter:description" content="Expert organic gardening tips, soil health guides, and sustainable agriculture advice." />
+        <meta name="twitter:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
+        <meta name="twitter:site" content="@NaturesWaySoil" />
+
       </Head>
 
       <div className="bg-gradient-to-b from-nature-green-50 to-white">
