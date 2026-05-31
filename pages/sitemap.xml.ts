@@ -12,6 +12,11 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
     { url: '/about', priority: '0.7', changefreq: 'monthly' },
     { url: '/contact', priority: '0.6', changefreq: 'monthly' },
     { url: '/dog-urine-lawn-repair', priority: '0.7', changefreq: 'monthly' },
+    { url: '/dog-urine-neutralizer', priority: '0.8', changefreq: 'weekly' },
+    { url: '/garden-mix', priority: '0.8', changefreq: 'weekly' },
+    { url: '/hydroponic-nutrients', priority: '0.8', changefreq: 'weekly' },
+    { url: '/fruit-tree-fertilizer', priority: '0.8', changefreq: 'weekly' },
+    { url: '/pasture-revival', priority: '0.8', changefreq: 'weekly' },
     { url: '/home-garden-fertilizer', priority: '0.7', changefreq: 'monthly' },
     { url: '/pasture-hay-farmers', priority: '0.7', changefreq: 'monthly' },
   ];
