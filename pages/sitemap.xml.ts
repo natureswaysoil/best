@@ -8,12 +8,21 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   const staticPages = [
     { url: '/', priority: '1.0', changefreq: 'weekly' },
     { url: '/shop', priority: '0.9', changefreq: 'weekly' },
+    { url: '/solutions', priority: '0.9', changefreq: 'weekly' },
     { url: '/blog', priority: '0.8', changefreq: 'daily' },
-    { url: '/about', priority: '0.7', changefreq: 'monthly' },
-    { url: '/contact', priority: '0.6', changefreq: 'monthly' },
-    { url: '/dog-urine-lawn-repair', priority: '0.7', changefreq: 'monthly' },
+    { url: '/government', priority: '0.9', changefreq: 'weekly' },
+    { url: '/homeowners-landscapers-government', priority: '0.9', changefreq: 'weekly' },
+    { url: '/compacted-clay-soil', priority: '0.85', changefreq: 'weekly' },
+    { url: '/liquid-biochar-soil-restoration', priority: '0.85', changefreq: 'weekly' },
+    { url: '/pet-lawn-spot-odor-control', priority: '0.85', changefreq: 'weekly' },
+    { url: '/pasture-lawn-recovery', priority: '0.85', changefreq: 'weekly' },
+    { url: '/dog-urine-lawn-repair', priority: '0.8', changefreq: 'weekly' },
+    { url: '/lawn-repair', priority: '0.8', changefreq: 'weekly' },
+    { url: '/soil-recovery-systems', priority: '0.75', changefreq: 'monthly' },
     { url: '/home-garden-fertilizer', priority: '0.7', changefreq: 'monthly' },
     { url: '/pasture-hay-farmers', priority: '0.7', changefreq: 'monthly' },
+    { url: '/about', priority: '0.7', changefreq: 'monthly' },
+    { url: '/contact', priority: '0.6', changefreq: 'monthly' },
   ];
 
   // Deduplicate blog articles by slug
