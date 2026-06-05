@@ -1,9 +1,11 @@
 import Layout from '../components/Layout';
+import SEO from '../components/SEO';
 import Link from 'next/link';
 
 export default function BioPage() {
   return (
     <Layout>
+      <SEO title="About Our Family Farm | Nature's Way Soil" description="Meet the family farm behind Nature's Way Soil — organic liquid fertilizers, activated biochar, and living compost made fresh weekly in Snow Hill, NC." url="https://natureswaysoil.com/bio" type="website" />
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-6">
         <h1 className="text-3xl font-bold">Nature's Way Soil</h1>
         <p className="text-gray-600">Fix your soil. Grow better. Save on your first order.</p>

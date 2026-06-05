@@ -1,0 +1,15 @@
+{
+  "productId": "NWS_014",
+  "productName": "Dog Urine Neutralizer & Lawn Repair",
+  "category": "Pet Care",
+  "avatarId": "Anna_public_3_20240108",
+  "voiceId": "3o5awrz3sR3uP9rxaD80",
+  "background": {
+    "type": "color",
+    "value": "#0d3b2a"
+  },
+  "script": "Hi, I'm here from Nature's Way Soil. This is Dog Urine Neutralizer & Lawn Repair. Your dog is not the problem. Urine salts can stress the soil. Treat the soil - not just the color. Spray affected spots evenly. Water in to support recovery. Made for yards, runs, patios, and kennels. Pet-safe. Not a dye. Save 15 percent on your first order. natureswaysoil.com/lawn-repair",
+  "output": "public/videos/NWS_014-heygen-avatar.mp4",
+  "heygenVideoId": "5e61db64d9314f8e86b13188f7699d66",
+  "generatedAt": "2026-05-11T23:28:43.831Z"
+}

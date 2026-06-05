@@ -1,0 +1,15 @@
+{
+  "productId": "NWS_018",
+  "productName": "Seaweed & Humic Acid Lawn Treatment",
+  "category": "Fertilizer",
+  "avatarId": "Anna_public_3_20240108",
+  "voiceId": "ybOJaAgPlBdcGBEpCJzA",
+  "background": {
+    "type": "color",
+    "value": "#0d3b2a"
+  },
+  "script": "Hi, I'm here from Nature's Way Soil. This is Seaweed & Humic Acid Lawn Treatment. Your lawn needs more than nitrogen. Seaweed supports plant vigor. Humic acid supports the root zone. Feed the root zone. Use during active growth. Great for lawns, gardens, and landscape beds. Support the root zone. natureswaysoil.com/soil-boost",
+  "output": "public/videos/NWS_018-heygen-avatar.mp4",
+  "heygenVideoId": "4aeed2650d6a4f23879e84036505150c",
+  "generatedAt": "2026-05-10T21:43:19.224Z"
+}

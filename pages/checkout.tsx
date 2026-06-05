@@ -39,6 +39,7 @@ type PaymentBreakdown = {
 };
 
 const STORAGE_KEY = 'nws-checkout-selection';
+const SHIPPING_STORAGE_KEY = 'nws-checkout-shipping';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -69,15 +70,10 @@ export default function CheckoutPage() {
   const [stripeError, setStripeError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
+    if (typeof window === 'undefined') return;
     try {
       const stored = window.sessionStorage.getItem(STORAGE_KEY);
-      if (!stored) {
-        return;
-      }
+      if (!stored) return;
       const parsed = JSON.parse(stored) as CheckoutSelection;
       setSelection(parsed);
       setQuantity(Math.max(1, parsed.quantity || 1));
@@ -87,14 +83,9 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (!router.isReady || typeof window === 'undefined') {
-      return;
-    }
-
+    if (!router.isReady || typeof window === 'undefined') return;
     const productId = queryValue(router.query.productId);
-    if (!productId) {
-      return;
-    }
+    if (!productId) return;
 
     const product = getProductById(productId);
     if (!product) {
@@ -134,65 +125,41 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !selection) {
-      return;
-    }
-
+    if (typeof window === 'undefined' || !selection) return;
     const updated: CheckoutSelection = { ...selection, quantity };
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   }, [quantity, selection]);
 
   const computedSubtotal = useMemo(() => {
-    if (!selection) {
-      return 0;
-    }
+    if (!selection) return 0;
     return Number((selection.price * quantity).toFixed(2));
   }, [selection, quantity]);
 
-  const fieldsComplete = Boolean(
-    selection &&
-    name.trim() &&
-    email.trim() &&
-    address1.trim() &&
-    city.trim() &&
-    state.trim() &&
-    zip.trim()
-  );
+  const fieldsComplete = Boolean(selection && name.trim() && email.trim() && address1.trim() && city.trim() && state.trim() && zip.trim());
 
-  const formatCurrency = (value: number) => {
-    return `$${(value / 100).toFixed(2)}`;
-  };
+  const formatCurrency = (value: number) => `$${(value / 100).toFixed(2)}`;
 
   const applyCoupon = async (overrideCode?: string) => {
     const codeToApply = (overrideCode ?? couponCode).trim().toUpperCase();
-
     if (!codeToApply) {
       setCouponError('Please enter a coupon code');
       return;
     }
-
     setCouponError(null);
     setCouponCode(codeToApply);
-    
     try {
       const response = await fetch('/api/validate-coupon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: codeToApply,
-          subtotal: computedSubtotal * 100,
-        }),
+        body: JSON.stringify({ code: codeToApply, subtotal: computedSubtotal * 100 }),
       });
-
       const data = await response.json();
-
       if (!response.ok || !data.valid) {
         setCouponError(data.error || 'Invalid coupon code');
         setCouponDiscount(0);
         setCouponApplied(false);
         return;
       }
-
       setCouponDiscount(data.discount || 0);
       setCouponApplied(true);
       setCouponError(null);
@@ -205,15 +172,9 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    if (!router.isReady || !selection || computedSubtotal <= 0 || couponApplied) {
-      return;
-    }
-
+    if (!router.isReady || !selection || computedSubtotal <= 0 || couponApplied) return;
     const coupon = queryValue(router.query.coupon);
-
-    if (coupon) {
-      applyCoupon(coupon);
-    }
+    if (coupon) applyCoupon(coupon);
   }, [router.isReady, router.query.coupon, selection, computedSubtotal, couponApplied]);
 
   const removeCoupon = () => {
@@ -228,7 +189,6 @@ export default function CheckoutPage() {
       setServerError('Please select a product before checking out.');
       return;
     }
-
     if (!fieldsComplete) {
       setServerError('Please fill in all required fields before continuing.');
       return;
@@ -237,7 +197,26 @@ export default function CheckoutPage() {
     setServerError(null);
     setIsPreparing(true);
 
+    const customer = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim() || undefined,
+    };
+    const address = {
+      line1: address1.trim(),
+      line2: address2.trim() || undefined,
+      city: city.trim(),
+      state: state.trim(),
+      postal_code: zip.trim(),
+      country: 'US',
+      phone: phone.trim() || undefined,
+    };
+
     try {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify({ customer, address }));
+      }
+
       const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -251,25 +230,12 @@ export default function CheckoutPage() {
           quantity,
           couponCode: couponApplied ? couponCode : undefined,
           couponDiscount: couponApplied ? couponDiscount : undefined,
-          customer: {
-            name: name.trim(),
-            email: email.trim(),
-            phone: phone.trim() || undefined,
-          },
-          address: {
-            line1: address1.trim(),
-            line2: address2.trim() || undefined,
-            city: city.trim(),
-            state: state.trim(),
-            postal_code: zip.trim(),
-            country: 'US',
-            phone: phone.trim() || undefined,
-          },
+          customer,
+          address,
         }),
       });
 
       const data = await response.json().catch(() => null);
-
       if (!response.ok || !data?.clientSecret) {
         const message = data?.error || 'Unable to prepare payment. Please try again later.';
         throw new Error(message);
@@ -297,64 +263,32 @@ export default function CheckoutPage() {
 
   const renderSummary = () => {
     if (!selection) {
-      return (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm">
-          <p className="text-gray-600">Your cart is empty. Please return to the shop to select a product.</p>
-        </div>
-      );
+      return <div className="bg-white border border-gray-200 rounded-xl p-6 text-center shadow-sm"><p className="text-gray-600">Your cart is empty. Please return to the shop to select a product.</p></div>;
     }
-
     const subtotalCents = Math.round(computedSubtotal * 100);
     const discountCents = Math.round(couponDiscount);
     const subtotalAfterDiscountCents = subtotalCents - discountCents;
     const shippingCentsValue = breakdown ? breakdown.shipping : null;
     const taxCentsValue = breakdown ? breakdown.tax : null;
     const totalCentsValue = breakdown ? breakdown.total - discountCents : null;
-
     const subtotalDisplay = formatCurrency(subtotalCents);
     const subtotalAfterDiscountDisplay = formatCurrency(subtotalAfterDiscountCents);
-    const shippingDisplay = shippingCentsValue !== null
-      ? formatCurrency(shippingCentsValue)
-      : 'Calculated at payment step';
-    const taxDisplay = taxCentsValue !== null
-      ? formatCurrency(taxCentsValue)
-      : 'Calculated at payment step';
-    const totalDisplay = totalCentsValue !== null
-      ? formatCurrency(totalCentsValue)
-      : `${subtotalAfterDiscountDisplay} + shipping & tax`;
+    const shippingDisplay = shippingCentsValue !== null ? formatCurrency(shippingCentsValue) : 'Calculated at payment step';
+    const taxDisplay = taxCentsValue !== null ? formatCurrency(taxCentsValue) : 'Calculated at payment step';
+    const totalDisplay = totalCentsValue !== null ? formatCurrency(totalCentsValue) : `${subtotalAfterDiscountDisplay} + shipping & tax`;
 
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
         <div className="flex items-start gap-4">
-          {selection.productImage && (
-            <img
-              src={selection.productImage}
-              alt={selection.productName}
-              className="w-24 h-24 object-contain rounded-lg border border-gray-200 bg-white"
-            />
-          )}
+          {selection.productImage && <img src={selection.productImage} alt={selection.productName} className="w-24 h-24 object-contain rounded-lg border border-gray-200 bg-white" />}
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900">{selection.productName}</h2>
-            {selection.sizeName && (
-              <p className="text-sm text-gray-600 mt-1">Size: {selection.sizeName}</p>
-            )}
+            {selection.sizeName && <p className="text-sm text-gray-600 mt-1">Size: {selection.sizeName}</p>}
             <div className="flex items-center gap-3 mt-2">
               <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-                >
-                  −
-                </button>
+                <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-100">−</button>
                 <span className="px-4 py-1 text-sm font-medium text-gray-900">{quantity}</span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-                >
-                  +
-                </button>
+                <button type="button" onClick={() => setQuantity(quantity + 1)} className="px-3 py-1 text-sm font-semibold text-gray-700 hover:bg-gray-100">+</button>
               </div>
               <span className="text-sm text-gray-500">${selection.price.toFixed(2)} each</span>
             </div>
@@ -362,44 +296,15 @@ export default function CheckoutPage() {
         </div>
 
         <div className="border-t border-gray-200 pt-4 space-y-2 text-sm text-gray-700">
-          <div className="flex justify-between">
-            <span>Subtotal</span>
-            <span>{subtotalDisplay}</span>
-          </div>
-          {discountCents > 0 && (
-            <div className="flex justify-between text-green-600">
-              <span>First purchase discount ({couponCode})</span>
-              <span>-{formatCurrency(discountCents)}</span>
-            </div>
-          )}
-          <div className="flex justify-between">
-            <span>Shipping</span>
-            <span>{shippingDisplay}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Estimated Tax</span>
-            <span>{taxDisplay}</span>
-          </div>
-          <div className="flex justify-between text-base font-semibold text-gray-900 pt-2 border-t border-gray-200">
-            <span>Total</span>
-            <span>{totalDisplay}</span>
-          </div>
+          <div className="flex justify-between"><span>Subtotal</span><span>{subtotalDisplay}</span></div>
+          {discountCents > 0 && <div className="flex justify-between text-green-600"><span>First purchase discount ({couponCode})</span><span>-{formatCurrency(discountCents)}</span></div>}
+          <div className="flex justify-between"><span>Shipping</span><span>{shippingDisplay}</span></div>
+          <div className="flex justify-between"><span>Estimated Tax</span><span>{taxDisplay}</span></div>
+          <div className="flex justify-between text-base font-semibold text-gray-900 pt-2 border-t border-gray-200"><span>Total</span><span>{totalDisplay}</span></div>
         </div>
 
-        {FREE_SHIPPING_THRESHOLD_CENTS > 0 && (
-          <div className="border-t border-gray-200 pt-4">
-            <FreeShippingProgress 
-              currentTotal={subtotalCents / 100} 
-              threshold={FREE_SHIPPING_THRESHOLD_CENTS / 100}
-            />
-          </div>
-        )}
-
-        {breakdown?.taxRatePercent !== undefined && breakdown.taxRatePercent > 0 && (
-          <p className="text-xs text-gray-500">
-            Effective tax rate: {breakdown.taxRatePercent.toFixed(2)}%
-          </p>
-        )}
+        {FREE_SHIPPING_THRESHOLD_CENTS > 0 && <div className="border-t border-gray-200 pt-4"><FreeShippingProgress currentTotal={subtotalCents / 100} threshold={FREE_SHIPPING_THRESHOLD_CENTS / 100} /></div>}
+        {breakdown?.taxRatePercent !== undefined && breakdown.taxRatePercent > 0 && <p className="text-xs text-gray-500">Effective tax rate: {breakdown.taxRatePercent.toFixed(2)}%</p>}
       </div>
     );
   };
@@ -413,201 +318,55 @@ export default function CheckoutPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
-
-        {stripeError && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
-            {stripeError}
-          </div>
-        )}
+        {stripeError && <div className="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">{stripeError}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           <div className="space-y-6">
             <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
               <h2 className="text-lg font-semibold text-gray-900">Shipping Information</h2>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="flex flex-col gap-2 text-sm text-gray-700">
-                  Full Name
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    placeholder="Jane Doe"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-2 text-sm text-gray-700">
-                  Email
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    placeholder="you@example.com"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-2 text-sm text-gray-700">
-                  Phone (optional)
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    placeholder="(555) 123-4567"
-                  />
-                </label>
+                <label className="flex flex-col gap-2 text-sm text-gray-700">Full Name<input type="text" value={name} onChange={(event) => setName(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="Jane Doe" /></label>
+                <label className="flex flex-col gap-2 text-sm text-gray-700">Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="you@example.com" /></label>
+                <label className="flex flex-col gap-2 text-sm text-gray-700">Phone (optional)<input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="(555) 123-4567" /></label>
               </div>
 
               <div className="space-y-4">
-                <label className="flex flex-col gap-2 text-sm text-gray-700">
-                  Address Line 1
-                  <input
-                    type="text"
-                    value={address1}
-                    onChange={(event) => setAddress1(event.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    placeholder="123 Garden Lane"
-                  />
-                </label>
-
-                <label className="flex flex-col gap-2 text-sm text-gray-700">
-                  Address Line 2 (optional)
-                  <input
-                    type="text"
-                    value={address2}
-                    onChange={(event) => setAddress2(event.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    placeholder="Apartment, suite, etc."
-                  />
-                </label>
-
+                <label className="flex flex-col gap-2 text-sm text-gray-700">Address Line 1<input type="text" value={address1} onChange={(event) => setAddress1(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="123 Garden Lane" /></label>
+                <label className="flex flex-col gap-2 text-sm text-gray-700">Address Line 2 (optional)<input type="text" value={address2} onChange={(event) => setAddress2(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="Apartment, suite, etc." /></label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <label className="flex flex-col gap-2 text-sm text-gray-700 md:col-span-2">
-                    City
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(event) => setCity(event.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                      placeholder="Raleigh"
-                    />
-                  </label>
-
-                  <label className="flex flex-col gap-2 text-sm text-gray-700">
-                    State
-                    <input
-                      type="text"
-                      value={state}
-                      onChange={(event) => setState(event.target.value.toUpperCase())}
-                      maxLength={2}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500 uppercase"
-                      placeholder="NC"
-                    />
-                  </label>
+                  <label className="flex flex-col gap-2 text-sm text-gray-700 md:col-span-2">City<input type="text" value={city} onChange={(event) => setCity(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="Raleigh" /></label>
+                  <label className="flex flex-col gap-2 text-sm text-gray-700">State<input type="text" value={state} onChange={(event) => setState(event.target.value.toUpperCase())} maxLength={2} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500 uppercase" placeholder="NC" /></label>
                 </div>
-
-                <label className="flex flex-col gap-2 text-sm text-gray-700">
-                  ZIP Code
-                  <input
-                    type="text"
-                    value={zip}
-                    onChange={(event) => setZip(event.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    placeholder="27513"
-                  />
-                </label>
+                <label className="flex flex-col gap-2 text-sm text-gray-700">ZIP Code<input type="text" value={zip} onChange={(event) => setZip(event.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-nature-green-500" placeholder="27513" /></label>
               </div>
 
-              {serverError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">
-                  {serverError}
-                </div>
-              )}
+              {serverError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 text-sm">{serverError}</div>}
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
                 <h3 className="font-medium text-blue-800 mb-2">🚚 Shipping Information</h3>
-                <div className="text-blue-700 space-y-1">
-                  <p><strong>FREE Standard Shipping</strong> on orders over $50!</p>
-                  <p>Orders under $50: Standard shipping starts at $4.99</p>
-                  <p>Expedited ($8.99) and overnight ($19.99) are premium paid services</p>
-                </div>
+                <div className="text-blue-700 space-y-1"><p><strong>FREE Standard Shipping</strong> on orders over $50!</p><p>Orders under $50: Standard shipping starts at $4.99</p><p>Expedited ($8.99) and overnight ($19.99) are premium paid services</p></div>
               </div>
 
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h3 className="font-medium text-gray-800 mb-3">💰 First purchase discount</h3>
                 {!couponApplied ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Enter coupon code (e.g., SAVE15)"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-nature-green-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => applyCoupon()}
-                      className="px-4 py-2 bg-nature-green-600 text-white text-sm font-medium rounded-lg hover:bg-nature-green-700 transition-colors"
-                    >
-                      Apply
-                    </button>
-                  </div>
+                  <div className="flex gap-2"><input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter coupon code (e.g., SAVE15)" className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-nature-green-500" /><button type="button" onClick={() => applyCoupon()} className="px-4 py-2 bg-nature-green-600 text-white text-sm font-medium rounded-lg hover:bg-nature-green-700 transition-colors">Apply</button></div>
                 ) : (
-                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex items-center text-green-700">
-                      <span className="text-sm font-medium">✅ First purchase coupon "{couponCode}" applied!</span>
-                      <span className="ml-2 text-sm">Save {formatCurrency(couponDiscount)}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={removeCoupon}
-                      className="text-red-600 hover:text-red-700 text-sm underline"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3"><div className="flex items-center text-green-700"><span className="text-sm font-medium">✅ First purchase coupon "{couponCode}" applied!</span><span className="ml-2 text-sm">Save {formatCurrency(couponDiscount)}</span></div><button type="button" onClick={removeCoupon} className="text-red-600 hover:text-red-700 text-sm underline">Remove</button></div>
                 )}
                 <p className="text-xs text-gray-500 mt-2">SAVE15 is intended for first-time direct website customers only.</p>
-                {couponError && (
-                  <p className="text-red-600 text-sm mt-2">{couponError}</p>
-                )}
+                {couponError && <p className="text-red-600 text-sm mt-2">{couponError}</p>}
               </div>
 
-              <button
-                type="button"
-                onClick={handlePreparePayment}
-                disabled={isPreparing}
-                className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-nature-green-600 hover:bg-nature-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {clientSecret ? 'Update Payment Details' : 'Continue to Payment'}
-              </button>
+              <button type="button" onClick={handlePreparePayment} disabled={isPreparing} className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-nature-green-600 hover:bg-nature-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">{clientSecret ? 'Update Payment Details' : 'Continue to Payment'}</button>
             </div>
 
             {clientSecret && intentId && stripePromise && (
               <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'flat' } }}>
-                <CheckoutForm
-                  intentId={intentId}
-                  name={name.trim()}
-                  email={email.trim()}
-                  address={{
-                    line1: address1.trim(),
-                    line2: address2.trim() || undefined,
-                    city: city.trim(),
-                    state: state.trim(),
-                    postal_code: zip.trim(),
-                    country: 'US',
-                    phone: phone.trim() || undefined,
-                  }}
-                  onSuccess={() => {
-                    // Nothing needed here because Stripe redirects via return_url.
-                  }}
-                />
+                <CheckoutForm intentId={intentId} name={name.trim()} email={email.trim()} address={{ line1: address1.trim(), line2: address2.trim() || undefined, city: city.trim(), state: state.trim(), postal_code: zip.trim(), country: 'US', phone: phone.trim() || undefined }} onSuccess={() => {}} />
               </Elements>
             )}
           </div>
-
           <div>{renderSummary()}</div>
         </div>
       </div>

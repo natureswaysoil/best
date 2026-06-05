@@ -10,3 +10,7 @@ node_modules
 # Generated files
 asins.json
 .env*.local
+
+google-cloud-sdk/
+__pycache__/
+cloud/

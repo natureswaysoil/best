@@ -1,0 +1,15 @@
+{
+  "productId": "NWS_021",
+  "productName": "Horse Safe Hay, Pasture & Lawn Fertilizer",
+  "category": "Pasture",
+  "avatarId": "Aditya_public_1",
+  "voiceId": "ybOJaAgPlBdcGBEpCJzA",
+  "background": {
+    "type": "color",
+    "value": "#2f5f2f"
+  },
+  "script": "Hi, I'm here from Nature's Way Soil. This is Horse Safe Hay, Pasture & Lawn Fertilizer. Thin pasture starts with tired soil. Feed grass during active growth. Easy liquid pasture nutrition. For hay, pasture, and lawns. Built for landowners and small farms. Support thicker, stronger-looking forage. Support thicker grass growth. natureswaysoil.com/pasture-boost",
+  "output": "public/videos/NWS_021-heygen-avatar.mp4",
+  "heygenVideoId": "5240184efbe74c689311de7878509eba",
+  "generatedAt": "2026-05-10T21:41:16.548Z"
+}

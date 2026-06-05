@@ -1,0 +1,15 @@
+{
+  "productId": "NWS_013",
+  "productName": "Enhanced Living Compost with Fermented Duckweed",
+  "category": "Compost",
+  "avatarId": "Abigail_expressive_2024112501",
+  "voiceId": "ybOJaAgPlBdcGBEpCJzA",
+  "background": {
+    "type": "color",
+    "value": "#3b2f24"
+  },
+  "script": "Hi, I'm here from Nature's Way Soil. This is Enhanced Living Compost with Fermented Duckweed. This is not bulk filler compost. Worm castings feed soil biology. Biochar helps hold water and nutrients. Fermented duckweed adds natural plant nutrients. Use in beds, containers, and transplant zones. Small bag. Big soil impact. Upgrade your soil naturally. natureswaysoil.com/living-compost",
+  "output": "public/videos/NWS_013-heygen-avatar.mp4",
+  "heygenVideoId": "f22436d8c46f477dab2ce23c4519d794",
+  "generatedAt": "2026-05-10T21:36:10.396Z"
+}

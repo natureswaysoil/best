@@ -1,9 +1,11 @@
 import Layout from '../components/Layout';
+import SEO from '../components/SEO';
 import Link from 'next/link';
 
 export default function PastureBoost() {
   return (
     <Layout>
+      <SEO title="Pasture & Hay Field Fertilizer | Nature's Way Soil" description="Liquid fertilizer to thicken hay fields and horse pastures across large acreage. Easy to apply, animal-safe, made fresh weekly on our family farm." url="https://natureswaysoil.com/pasture-boost" type="website" />
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
 
         <div className="text-center space-y-4">

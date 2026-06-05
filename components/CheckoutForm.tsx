@@ -66,7 +66,7 @@ export default function CheckoutForm({ intentId, name, email, address, onSuccess
             country: address.country || 'US',
           },
         },
-        return_url: `${window.location.origin}/shop?checkout=success&pi=${intentId}`,
+        return_url: `${window.location.origin}/thank-you?payment_intent=${intentId}`,
       },
     });
 
