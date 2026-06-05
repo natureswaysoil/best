@@ -52,6 +52,11 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "video",
+    "cloud",
+    "cloud-functions",
+    "google-cloud-sdk",
+    "scripts/gen-sitemap.js"
   ]
 }

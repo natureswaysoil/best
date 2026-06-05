@@ -118,9 +118,9 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
           })}}
         />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.metaDescription || post.excerpt} />
-        <meta name="twitter:image" content={post.featuredImage?.startsWith?.("http") ? post.featuredImage : `https://natureswaysoil.com/images/blog/${post.slug}.jpg`} />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={article.seoDescription || article.excerpt} />
+        <meta name="twitter:image" content={article.featuredImage?.startsWith?.("http") ? article.featuredImage : `https://natureswaysoil.com/images/blog/${article.slug}.jpg`} />
         <meta name="twitter:site" content="@NaturesWaySoil" />
 
       </Head>
