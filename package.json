@@ -60,7 +60,8 @@
     "test:e2e": "node scripts/test-e2e-integration.mjs",
     "test:e2e:dry": "node scripts/test-e2e-integration.mjs --dry-run",
     "test:all": "node scripts/test-all.mjs",
-    "optimize:images": "node scripts/optimize-images.mjs"
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "prebuild": "node scripts/gen-sitemap.js"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.2.0",
