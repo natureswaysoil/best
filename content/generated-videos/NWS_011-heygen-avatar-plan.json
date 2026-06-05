@@ -1,0 +1,15 @@
+{
+  "productId": "NWS_011",
+  "productName": "Liquid Humic & Fulvic Acid with Kelp",
+  "category": "Soil Amendment",
+  "avatarId": "Abigail_expressive_2024112501",
+  "voiceId": "ybOJaAgPlBdcGBEpCJzA",
+  "background": {
+    "type": "color",
+    "value": "#3b2f24"
+  },
+  "script": "Hi, I'm here from Nature's Way Soil. This is Liquid Humic & Fulvic Acid with Kelp. Plants need more than fertilizer. Humic and fulvic support nutrient movement. Kelp supports root vigor. For lawns, trees, gardens, and containers. Use during active growth. Build naturally stronger soil. Feed the soil first. natureswaysoil.com/soil-boost",
+  "output": "public/videos/NWS_011-heygen-avatar.mp4",
+  "heygenVideoId": "df441396007746d6a2f72aac8b52c076",
+  "generatedAt": "2026-05-10T21:27:13.543Z"
+}

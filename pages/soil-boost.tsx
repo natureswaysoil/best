@@ -1,9 +1,11 @@
 import Layout from '../components/Layout';
+import SEO from '../components/SEO';
 import Link from 'next/link';
 
 export default function SoilBoostPage() {
   return (
     <Layout>
+      <SEO title="Soil Boost — Organic Soil Amendment | Nature's Way Soil" description="Restore tired soil with humic, kelp, and microbial amendments. Improve structure, water retention, and fertility. Organic, pet- and kid-safe." url="https://natureswaysoil.com/soil-boost" type="website" />
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
         <div className="text-center space-y-4">
           <p className="text-green-700 font-semibold uppercase tracking-wide">First purchase offer</p>

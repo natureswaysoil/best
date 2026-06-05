@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import SEO from '../components/SEO';
 import Layout from '../components/Layout';
 import EmailCapture from '../components/EmailCapture';
 
 export default function LawnRepairPage() {
   return (
     <Layout>
+      <SEO title="Organic Lawn Repair & Recovery | Nature's Way Soil" description="Repair thin, patchy, or stressed lawns with organic liquid fertilizer and living soil biology. Pet- and kid-safe, made fresh weekly on our family farm." url="https://natureswaysoil.com/lawn-repair" type="website" />
       <div className="max-w-5xl mx-auto px-4 py-12 space-y-10">
 
         <div className="text-center space-y-4">

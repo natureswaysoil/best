@@ -1,0 +1,76 @@
+{
+  "productId": "NWS_014",
+  "productName": "Dog Urine Neutralizer & Lawn Repair",
+  "category": "Pet Care",
+  "avatarAlias": "garden_expert_01",
+  "funnelUrl": "/lawn-repair",
+  "checkoutUrl": "/checkout?productId=NWS_014&coupon=SAVE15",
+  "cta": "Save 15 percent on your first order.\nnatureswaysoil.com/lawn-repair",
+  "output": "public/videos/NWS_014.mp4",
+  "poster": "public/videos/NWS_014.jpg",
+  "metadata": {
+    "width": 1080,
+    "height": 1920,
+    "duration": "1220.100000"
+  },
+  "productImages": [
+    "public/images/products/NWS_014/dog 32 front.jpg",
+    "public/images/products/NWS_014/dog 32 front.webp",
+    "public/images/products/NWS_014/main.jpg",
+    "public/images/products/NWS_014/main.webp",
+    "public/images/products/NWS_014/thumb.jpg",
+    "public/images/products/NWS_014/thumb.webp",
+    "public/videos/NWS_014.jpg"
+  ],
+  "sceneAudit": [
+    {
+      "scene": 1,
+      "type": "pexels-broll",
+      "query": "dog walking on green backyard lawn",
+      "text": "Your dog is not the problem."
+    },
+    {
+      "scene": 2,
+      "type": "pexels-broll",
+      "query": "yellow patch grass lawn close up",
+      "text": "Urine salts can stress the soil."
+    },
+    {
+      "scene": 3,
+      "type": "product-card",
+      "source": "public/images/products/NWS_014/dog 32 front.jpg",
+      "text": "Treat the soil - not just the color."
+    },
+    {
+      "scene": 4,
+      "type": "pexels-broll",
+      "query": "spraying lawn garden hose",
+      "text": "Spray affected spots evenly."
+    },
+    {
+      "scene": 5,
+      "type": "pexels-broll",
+      "query": "watering green grass lawn",
+      "text": "Water in to support recovery."
+    },
+    {
+      "scene": 6,
+      "type": "pexels-broll",
+      "query": "dog kennel outdoor turf lawn",
+      "text": "Made for yards, runs, patios, and kennels."
+    },
+    {
+      "scene": 7,
+      "type": "product-card",
+      "source": "public/images/products/NWS_014/dog 32 front.jpg",
+      "text": "Pet-safe. Not a dye."
+    },
+    {
+      "scene": 8,
+      "type": "end-card",
+      "source": "public/images/products/NWS_014/dog 32 front.jpg",
+      "text": "Shop direct and save."
+    }
+  ],
+  "generatedAt": "2026-05-11T21:43:06.136Z"
+}
