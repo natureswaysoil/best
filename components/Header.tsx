@@ -12,12 +12,15 @@ export default function Header({ transparent = false }: HeaderProps) {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
+    { name: 'Solutions', href: '/solutions' },
     { name: 'Lawn Recovery', href: '/homeowners-landscapers-government' },
     { name: 'Government', href: '/government' },
     { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
   ];
+
+  const highlightedLinks = new Set(['Government', 'Lawn Recovery', 'Solutions']);
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -54,13 +57,13 @@ export default function Header({ transparent = false }: HeaderProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-5">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={`font-medium transition-colors duration-200 ${
-                  item.name === 'Government' || item.name === 'Lawn Recovery'
+                  highlightedLinks.has(item.name)
                     ? transparent
                       ? 'rounded-full border border-white/40 px-3 py-1.5 text-white hover:bg-white/10'
                       : 'rounded-full bg-nature-green-50 px-3 py-1.5 text-nature-green-700 hover:bg-nature-green-100'
@@ -109,7 +112,7 @@ export default function Header({ transparent = false }: HeaderProps) {
                   href={item.href}
                   onClick={() => setIsMenuOpen(false)}
                   className={`font-medium py-2 transition-colors duration-200 ${
-                    item.name === 'Government' || item.name === 'Lawn Recovery'
+                    highlightedLinks.has(item.name)
                       ? transparent
                         ? 'rounded-lg border border-white/30 px-3 text-white hover:bg-white/10'
                         : 'rounded-lg bg-nature-green-50 px-3 text-nature-green-700 hover:bg-nature-green-100'
