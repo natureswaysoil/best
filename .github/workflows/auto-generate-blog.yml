@@ -86,7 +86,7 @@ jobs:
       - name: Commit and push changes
         if: steps.verify-changed-files.outputs.changes == 'true'
         run: |
-          git add data/blog.ts auto-blog-generation.log
+          git add data/blog.ts
           git commit -m "auto: generate blog content - $(date '+%Y-%m-%d')"
           git push
 
