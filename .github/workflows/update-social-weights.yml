@@ -43,11 +43,16 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Load Stripe secret
+        env:
+          STRIPE_SECRET_KEY_GITHUB: ${{ secrets.STRIPE_SECRET_KEY }}
         run: |
           if gcloud secrets describe STRIPE_SECRET_KEY >/dev/null 2>&1; then
             echo "STRIPE_SECRET_KEY=$(gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY)" >> "$GITHUB_ENV"
+          elif [ -n "$STRIPE_SECRET_KEY_GITHUB" ]; then
+            echo "Using STRIPE_SECRET_KEY from GitHub secrets fallback"
+            echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY_GITHUB" >> "$GITHUB_ENV"
           else
-            echo "STRIPE_SECRET_KEY not found in Google Secret Manager"
+            echo "STRIPE_SECRET_KEY not found in Google Secret Manager or GitHub secrets"
             exit 1
           fi
 
