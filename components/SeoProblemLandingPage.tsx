@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { ArrowRight, CheckCircle, HelpCircle, Leaf, Mail, ShieldCheck } from 'lucide-react';
 import Layout from './Layout';
 import SEO from './SEO';
+import { trackProductCtaClick } from '../lib/ga4';
+import { buildTrackedPath, UTM_MEDIUM } from '../lib/utm';
 
 export interface SeoProductCard {
   name: string;
@@ -49,6 +51,14 @@ export default function SeoProblemLandingPage({
   audienceNote,
 }: SeoProblemLandingPageProps) {
   const pageUrl = `https://natureswaysoil.com/${slug}`;
+  const primaryTrackedHref = primaryHref.startsWith('/')
+    ? buildTrackedPath(primaryHref, {
+      source: 'seo_problem_page',
+      medium: UTM_MEDIUM.BLOG,
+      campaign: `southeast_${slug}`,
+      content: 'hero_primary',
+    })
+    : primaryHref;
 
   const faqSchema = {
     '@context': 'https://schema.org',
@@ -84,7 +94,13 @@ export default function SeoProblemLandingPage({
               <p className="mb-8 text-xl leading-relaxed text-gray-700">{description}</p>
               <div className="flex flex-col gap-4 sm:flex-row">
                 <Link
-                  href={primaryHref}
+                  href={primaryTrackedHref}
+                  onClick={() => trackProductCtaClick({
+                    cta_label: primaryCta,
+                    page_path: `/${slug}`,
+                    destination: primaryHref,
+                    campaign_id: `southeast_${slug}`,
+                  })}
                   className="inline-flex items-center justify-center rounded-lg bg-nature-green-600 px-6 py-4 font-bold text-white transition-colors hover:bg-nature-green-700"
                 >
                   {primaryCta}
@@ -164,17 +180,37 @@ export default function SeoProblemLandingPage({
               <p className="text-lg text-gray-600">Each recommendation links visitors to a product page, a funnel page, or a quote request path.</p>
             </div>
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <div key={product.name} className="flex flex-col rounded-3xl border border-gray-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-lg">
-                  <h3 className="mb-3 text-2xl font-bold text-gray-900">{product.name}</h3>
-                  <p className="mb-4 text-sm font-semibold text-nature-green-700">Best for: {product.bestFor}</p>
-                  <p className="mb-6 flex-1 leading-relaxed text-gray-600">{product.description}</p>
-                  <Link href={product.href} className="inline-flex items-center font-bold text-nature-green-700 hover:text-nature-green-800">
-                    View next step
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </div>
-              ))}
+              {products.map((product) => {
+                const trackedHref = product.href.startsWith('/')
+                  ? buildTrackedPath(product.href, {
+                    source: 'seo_problem_page',
+                    medium: UTM_MEDIUM.BLOG,
+                    campaign: `southeast_${slug}`,
+                    content: 'product_recommendation',
+                  })
+                  : product.href;
+
+                return (
+                  <div key={product.name} className="flex flex-col rounded-3xl border border-gray-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-lg">
+                    <h3 className="mb-3 text-2xl font-bold text-gray-900">{product.name}</h3>
+                    <p className="mb-4 text-sm font-semibold text-nature-green-700">Best for: {product.bestFor}</p>
+                    <p className="mb-6 flex-1 leading-relaxed text-gray-600">{product.description}</p>
+                    <Link
+                      href={trackedHref}
+                      onClick={() => trackProductCtaClick({
+                        cta_label: 'View next step',
+                        page_path: `/${slug}`,
+                        destination: product.href,
+                        campaign_id: `southeast_${slug}`,
+                      })}
+                      className="inline-flex items-center font-bold text-nature-green-700 hover:text-nature-green-800"
+                    >
+                      View next step
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
