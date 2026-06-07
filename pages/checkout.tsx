@@ -7,6 +7,7 @@ import FreeShippingProgress from '../components/FreeShippingProgress';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { getProductById } from '../data/products';
+import { trackCheckoutStart } from '../lib/ga4';
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -196,6 +197,17 @@ export default function CheckoutPage() {
 
     setServerError(null);
     setIsPreparing(true);
+    trackCheckoutStart({
+      value: computedSubtotal,
+      coupon: couponApplied ? couponCode : undefined,
+      items: [{
+        item_id: selection.productId,
+        item_name: selection.productName,
+        item_variant: selection.sizeName,
+        price: selection.price,
+        quantity,
+      }],
+    });
 
     const customer = {
       name: name.trim(),

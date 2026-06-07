@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { X, Gift, ArrowRight } from 'lucide-react';
+import { trackLeadCapture } from '../lib/ga4';
 
 interface ExitIntentPopupProps {
   onClose?: () => void;
 }
 
 export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
+  const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const [hasShown, setHasShown] = useState(false);
   const [email, setEmail] = useState('');
   const [couponClaimed, setCouponClaimed] = useState(false);
+  const [couponCode, setCouponCode] = useState('SAVE15');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if popup has already been shown this session
@@ -63,17 +69,60 @@ export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
     onClose?.();
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      // Here you would typically send the email to your backend
-      console.log('Email submitted:', email);
+    if (!email) {
+      return;
+    }
+
+    setError(null);
+    setIsSubmitting(true);
+
+    const searchParams = typeof window === 'undefined'
+      ? new URLSearchParams()
+      : new URLSearchParams(window.location.search);
+
+    const nextCouponCode = generateCouponCode();
+
+    try {
+      const response = await fetch('/api/lead-capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          source: 'exit_intent_popup',
+          pagePath: router.asPath,
+          couponCode: nextCouponCode,
+          utmSource: searchParams.get('utm_source') || undefined,
+          utmMedium: searchParams.get('utm_medium') || undefined,
+          utmCampaign: searchParams.get('utm_campaign') || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        setError('Unable to claim your code right now. Please try again.');
+        return;
+      }
+
+      trackLeadCapture({
+        source: 'exit_intent_popup',
+        page_path: router.asPath,
+        coupon_code: nextCouponCode,
+        utm_source: searchParams.get('utm_source') || undefined,
+        utm_medium: searchParams.get('utm_medium') || undefined,
+        utm_campaign: searchParams.get('utm_campaign') || undefined,
+      });
+
+      setCouponCode(nextCouponCode);
       setCouponClaimed(true);
-      
-      // Auto-close after showing success message
       setTimeout(() => {
         setIsVisible(false);
       }, 3000);
+    } catch (submitError) {
+      console.warn('Exit intent lead submit failed', submitError);
+      setError('Unable to claim your code right now. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -142,12 +191,14 @@ export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
                 
                 <button
                   type="submit"
-                  className="w-full btn-primary flex items-center justify-center space-x-2"
+                  disabled={isSubmitting}
+                  className="w-full btn-primary flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span>Claim My 15% Discount</span>
+                  <span>{isSubmitting ? 'Claiming…' : 'Claim My 15% Discount'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
+              {error && <p className="mt-3 text-center text-sm text-red-600">{error}</p>}
 
               <div className="mt-4 flex items-center justify-center space-x-4 text-sm text-gray-500">
                 <div className="flex items-center space-x-1">
@@ -177,7 +228,7 @@ export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
             <div className="bg-nature-green-50 border-2 border-dashed border-nature-green-300 rounded-xl p-4 mb-4">
               <p className="text-sm text-nature-green-700 mb-2">Your discount code:</p>
               <p className="text-2xl font-mono font-bold text-nature-green-800 tracking-wider">
-                {generateCouponCode()}
+                {couponCode}
               </p>
             </div>
             
