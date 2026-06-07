@@ -14,9 +14,9 @@
   "performance": {
     "NWS_014": {
       "clicks": 100,
-      "orders": 5,
-      "revenue": 299,
-      "score": 44.95
+      "orders": 0,
+      "revenue": 0,
+      "score": 10
     },
     "NWS_011": {
       "clicks": 0,
@@ -50,5 +50,7 @@
     "winnerBoost": 2,
     "loserPenalty": 1
   },
-  "updatedAt": "2026-05-02T20:43:06.838Z"
+  "updatedAt": "2026-06-07T10:51:53.011Z",
+  "source": "stripe_payment_intents",
+  "lookbackDays": 14
 }
