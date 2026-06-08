@@ -67,7 +67,7 @@ export default function DogUrineNeutralizerPage() {
               </div>
               <DirectCheckoutButton product={checkoutProduct}>Buy {selectedSize.name} with Stripe + Link</DirectCheckoutButton>
             </div>
-            <img src="https://m.media-amazon.com/images/I/713iTO1P5OL._AC_SL1500_.jpg" alt={product.name} className="w-full rounded-2xl shadow-xl bg-white" />
+            <img src="/images/products/NWS_014/NWS_014.jpg" alt={product.name} className="w-full rounded-2xl shadow-xl bg-white" />
           </div>
         </section>
 
