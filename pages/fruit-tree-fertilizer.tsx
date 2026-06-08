@@ -33,7 +33,7 @@ export default function FruitTreeFertilizerPage() {
         <link rel="canonical" href="https://natureswaysoil.com/fruit-tree-fertilizer" />
       </Head>
 
-      <main className="bg-stone-50 text-gray-900">
+      <div className="bg-stone-50 text-gray-900">
         <section className="bg-gradient-to-br from-nature-green-900 via-nature-green-800 to-green-700 py-16 text-white">
           <div className="max-w-6xl mx-auto px-4 grid lg:grid-cols-2 gap-10 items-center">
             <div>
@@ -76,7 +76,7 @@ export default function FruitTreeFertilizerPage() {
             </ul>
           </div>
         </section>
-      </main>
+      </div>
     </Layout>
   );
 }
