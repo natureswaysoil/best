@@ -7,8 +7,8 @@ export default function LiquidBiocharProductPage() {
       eyebrow="Activated biochar with humic, fulvic and kelp"
       title="Liquid Biochar Soil Conditioner for Gardens, Lawns, Trees, Containers & Raised Beds"
       description="A product-focused landing page for Nature's Way Soil Liquid Biochar with Humates, a concentrated soil conditioner built around 5-micron biochar, humic acid, fulvic acid, kelp, and soil biology support."
-      primaryCta="Request Liquid Biochar"
-      primaryHref="mailto:natureswaysoil@gmail.com?subject=Liquid%20Biochar%20Product%20Request"
+      primaryCta="View Liquid Biochar Product"
+      primaryHref="/product/liquid-biochar-soil-conditioner"
       secondaryCta="View Biochar Restoration Page"
       secondaryHref="/liquid-biochar-soil-restoration"
       problems={[
@@ -28,7 +28,7 @@ export default function LiquidBiocharProductPage() {
       products={[
         {
           name: "Nature's Way Soil Liquid Biochar Soil Conditioner",
-          href: 'mailto:natureswaysoil@gmail.com?subject=Liquid%20Biochar%20Product%20Request',
+          href: '/product/liquid-biochar-soil-conditioner',
           bestFor: 'gardens, lawns, raised beds, trees, containers, greenhouses, and transplant support',
           description: 'A premium liquid soil-building blend made with activated biochar, humic acid, fulvic acid, kelp, molasses, and aloe for root-zone support.',
         },
