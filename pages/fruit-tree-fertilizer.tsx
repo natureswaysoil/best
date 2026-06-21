@@ -7,8 +7,8 @@ export default function FruitTreeFertilizerPage() {
       eyebrow="Orchard nutrition and root-zone support"
       title="Fruit Tree Fertilizer with Liquid Biochar for Apples, Peaches, Pears & Citrus"
       description="A 32 oz concentrate landing page for backyard orchard owners who want stronger roots, better bloom support, fruit set support, and nutrient retention around apple, peach, pear, citrus, fig, plum, mango, and other fruit trees."
-      primaryCta="Request Fruit Tree Product"
-      primaryHref="mailto:natureswaysoil@gmail.com?subject=Fruit%20Tree%20Fertilizer%20Request"
+      primaryCta="View Fruit Tree Product"
+      primaryHref="/product/fruit-tree-fertilizer"
       secondaryCta="Shop All Products"
       secondaryHref="/shop"
       problems={[
@@ -28,7 +28,7 @@ export default function FruitTreeFertilizerPage() {
       products={[
         {
           name: "Nature's Way Soil Fruit Tree Fertilizer with Liquid Biochar",
-          href: 'mailto:natureswaysoil@gmail.com?subject=Fruit%20Tree%20Fertilizer%20Request',
+          href: '/product/fruit-tree-fertilizer',
           bestFor: 'apple, peach, pear, citrus, fig, plum, mango, berry, and backyard orchard feeding',
           description: '32 oz concentrate positioned for blooms, fruit set, roots, nutrient retention, and seasonal orchard support. Makes up to 64 gallons when diluted as directed.',
         },
