@@ -33,7 +33,7 @@ const dogProducts = {
   bundle: {
     productId: 'NWS_014',
     productName: 'Dog Urine Neutralizer & Lawn Revitalizer Bundle',
-    sizeName: 'Lawn Recovery Bundle',
+    sizeName: '2 x 1 Gallon Lawn Recovery Bundle',
     quantity: 1,
     price: 99.99,
     sku: 'NWS-DOG-LAWN-BUNDLE',
@@ -297,7 +297,7 @@ export default function DogUrineLawnRepair() {
               {[
                 { title: '32 oz Concentrate', copy: 'Best for small yards and first-time use.', product: dogProducts.small, button: 'Order 32 oz' },
                 { title: '1 Gallon', copy: 'Best for repeat dog spots and larger lawns.', product: dogProducts.gallon, button: 'Order 1 Gallon', badge: 'Most Popular' },
-                { title: 'Lawn Recovery Bundle', copy: 'Best value with a direct-order bundle.', product: dogProducts.bundle, button: 'Get the Bundle', badge: 'Best Value' },
+                { title: 'Lawn Recovery Bundle — 2 Gallons', copy: 'Includes two 1-gallon bottles of Dog Urine Neutralizer & Lawn Revitalizer plus the free Yellow Spot Lawn Recovery Guide.', product: dogProducts.bundle, button: 'Get the Bundle', badge: 'Best Value' },
               ].map((offer) => (
                 <div key={offer.title} className={`relative rounded-2xl bg-white p-8 shadow-sm border ${offer.badge === 'Most Popular' ? 'border-nature-green-600 ring-2 ring-nature-green-600' : 'border-gray-100'}`}>
                   {offer.badge && <span className="absolute -top-4 left-6 rounded-full bg-nature-green-600 px-4 py-2 text-xs font-black uppercase tracking-wide text-white">{offer.badge}</span>}
