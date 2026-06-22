@@ -9,7 +9,10 @@
     "NWS_011": 3,
     "NWS_013": 3,
     "NWS_021": 8,
-    "NWS_018": 3
+    "NWS_018": 3,
+    "NWS_026": 3,
+    "NWS_027": 3,
+    "NWS_028": 3
   },
   "performance": {
     "NWS_014": {
@@ -41,6 +44,24 @@
       "orders": 0,
       "revenue": 0,
       "score": 0
+    },
+    "NWS_026": {
+      "clicks": 0,
+      "orders": 0,
+      "revenue": 0,
+      "score": 0
+    },
+    "NWS_027": {
+      "clicks": 0,
+      "orders": 0,
+      "revenue": 0,
+      "score": 0
+    },
+    "NWS_028": {
+      "clicks": 0,
+      "orders": 0,
+      "revenue": 0,
+      "score": 0
     }
   },
   "rules": {
@@ -50,7 +71,7 @@
     "winnerBoost": 2,
     "loserPenalty": 1
   },
-  "updatedAt": "2026-06-21T11:09:50.125Z",
+  "updatedAt": "2026-06-22T12:06:59.548Z",
   "source": "stripe_payment_intents",
   "lookbackDays": 14
 }
