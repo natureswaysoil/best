@@ -36,8 +36,8 @@
     "NWS_021": {
       "clicks": 0,
       "orders": 1,
-      "revenue": 599.94,
-      "score": 33.997
+      "revenue": 99.99,
+      "score": 8.999500000000001
     },
     "NWS_018": {
       "clicks": 0,
@@ -71,7 +71,7 @@
     "winnerBoost": 2,
     "loserPenalty": 1
   },
-  "updatedAt": "2026-06-23T11:10:34.748Z",
+  "updatedAt": "2026-06-24T11:08:27.888Z",
   "source": "stripe_payment_intents",
   "lookbackDays": 14
 }
