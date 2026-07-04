@@ -516,23 +516,23 @@ export const allProducts: ProductData[] = [
     id: 'NWS_023',
     name: "Nature's Way Soil Living Soil Revitalizer",
     price: 24.99,
-    image: '/images/products/NWS_013/main.jpg',
-    description: 'Premium living soil amendment built with worm castings, activated biochar, compost, natural nutrients, and beneficial soil biology to help restore tired garden beds, raised beds, containers, and potted plants.',
+    image: '/images/products/NWS_023/main.jpg',
+    description: 'Living Soil Revitalizer combines premium worm castings with activated biochar, plus kelp, humic and fulvic acids, and BM-1 beneficial biology to revive tired soil, support root growth, and help hold moisture and nutrients in gardens, raised beds, and potted plants.',
     category: 'Soil Amendment',
-    tags: ['living-soil', 'soil-revitalizer', 'worm-castings', 'biochar', 'compost', 'raised-beds', 'garden', 'containers', 'microbes'],
+    tags: ['living-soil', 'soil-revitalizer', 'worm-castings', 'biochar', 'kelp', 'humic-fulvic', 'bm-1', 'compost', 'raised-beds', 'garden', 'containers', 'microbes'],
     features: [
-      'Worm castings help add gentle nutrition and beneficial soil biology',
-      'Activated biochar supports nutrient holding, moisture retention, and microbial habitat',
-      'Compost base helps improve texture, organic matter, and soil structure',
-      'Designed to refresh tired soil in gardens, raised beds, and containers',
-      'Supports healthier roots, better nutrient cycling, and stronger plant performance',
+      'Worm Castings + Activated Biochar as the core soil-building base',
+      'With Kelp, Humic & Fulvic Acids to feed soil biology and nutrient uptake',
+      'BM-1 Beneficial Biology inoculant supports a living, active root zone',
+      'Revives tired soil in gardens, raised beds, and containers',
+      'Supports root growth for stronger, healthier plants',
+      'Helps hold moisture & nutrients right where roots need them',
       'Easy topdress or mix-in application for vegetables, flowers, herbs, and houseplants',
-      'Small-batch soil amendment from Nature\'s Way Soil',
-      'Natural soil-building alternative to synthetic quick-fix fertilizers'
+      'Small-batch soil amendment from Nature\'s Way Soil, 4 lb (1.81 kg) bag'
     ],
     images: [
-      '/images/products/NWS_013/main.jpg',
-      '/images/products/NWS_013/thumb.jpg'
+      '/images/products/NWS_023/main.jpg',
+      '/images/products/NWS_023/thumb.jpg'
     ],
     inStock: true,
     sizes: [
