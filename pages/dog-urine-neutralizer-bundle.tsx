@@ -1,0 +1,390 @@
+import Head from 'next/head';
+import { useState } from 'react';
+import Link from 'next/link';
+import { CheckCircle, Star, Shield, Droplets, Sprout } from 'lucide-react';
+import Layout from '../components/Layout';
+
+type CheckoutProduct = {
+  productId: string;
+  productName: string;
+  sizeName: string;
+  quantity: number;
+  price: number;
+  sku: string;
+};
+
+const dogProducts = {
+  small: {
+    productId: 'NWS_014',
+    productName: 'Dog Urine Neutralizer & Lawn Revitalizer',
+    sizeName: '32 oz',
+    quantity: 1,
+    price: 29.99,
+    sku: 'EG-PJ13-DA9T',
+  },
+  gallon: {
+    productId: 'NWS_014',
+    productName: 'Dog Urine Neutralizer & Lawn Revitalizer',
+    sizeName: '1 Gallon',
+    quantity: 1,
+    price: 59.99,
+    sku: 'T0-MB9Q-JIKC',
+  },
+  bundle: {
+    productId: 'NWS_014',
+    productName: 'Dog Urine Neutralizer & Lawn Revitalizer Bundle',
+    sizeName: '32 oz Concentrate + 1 Gallon Bundle',
+    quantity: 1,
+    price: 49.99,
+    sku: 'NWS-DOG-URINE-BUNDLE-4999',
+  },
+};
+
+const guideLink = process.env.NEXT_PUBLIC_LAWN_RECOVERY_GUIDE_URL || '/guide?src=dog-urine-landing';
+
+const faqs = [
+  {
+    q: 'Is this a green dye?',
+    a: 'No. This is not a temporary green color spray. It is designed to support the lawn and soil environment where dog urine has stressed the grass.',
+  },
+  {
+    q: 'How fast will I see results?',
+    a: 'Recovery depends on grass type, severity, soil condition, watering, and weather. Some stressed areas improve with routine care, while severely dead patches may need reseeding.',
+  },
+  {
+    q: 'Is it safe around pets?',
+    a: 'Use according to label directions. Keep pets off treated areas until the product has dried or watered in as directed.',
+  },
+  {
+    q: 'Can I use it with a sprayer?',
+    a: 'Yes. It can be applied with a pump sprayer, watering can, or compatible lawn sprayer when mixed according to label directions.',
+  },
+  {
+    q: 'Will it stop my dog from peeing in the same spot?',
+    a: 'No. This product is for lawn and soil recovery. It is not a behavioral training product.',
+  },
+];
+
+function GuideButton({ children, secondary = false }: { children: React.ReactNode; secondary?: boolean }) {
+  return (
+    <Link
+      href={guideLink}
+      className={secondary
+        ? 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-nature-green-700 bg-white px-6 py-4 text-base font-extrabold text-nature-green-700 shadow-sm hover:bg-nature-green-50'
+        : 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-nature-green-600 px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-green-900/20 hover:bg-nature-green-700'}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function CheckoutButton({ product, children, secondary = false }: { product: CheckoutProduct; children: React.ReactNode; secondary?: boolean }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function startCheckout() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.error || 'Unable to start checkout.');
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to start checkout.');
+      setLoading(false);
+    }
+  }
+
+  return (
+    <span className="inline-flex w-full flex-col sm:w-auto">
+      <button
+        type="button"
+        onClick={startCheckout}
+        disabled={loading}
+        className={secondary
+          ? 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-nature-green-700 bg-white px-6 py-4 text-base font-extrabold text-nature-green-700 shadow-sm hover:bg-nature-green-50 disabled:opacity-60'
+          : 'inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-nature-green-600 px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-green-900/20 hover:bg-nature-green-700 disabled:opacity-60'}
+      >
+        {loading ? 'Opening secure checkout…' : children}
+      </button>
+      {error && <span className="mt-2 text-sm font-semibold text-red-700">{error}</span>}
+    </span>
+  );
+}
+
+export default function DogUrineNeutralizerBundle() {
+  return (
+    <Layout>
+      <Head>
+        <title>Dog Urine Neutralizer & Lawn Revitalizer Bundle – 32 oz + 1 Gallon | Nature&apos;s Way Soil</title>
+        <meta
+          name="description"
+          content="Nature’s Way Soil Dog Urine Neutralizer & Lawn Revitalizer Bundle (32 oz concentrate + 1 gallon) helps support lawn recovery where dog urine has stressed grass and soil. Order direct for $49.99."
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href="https://natureswaysoil.com/dog-urine-neutralizer-bundle" />
+      </Head>
+
+      <main className="bg-stone-50 text-gray-900">
+        <section className="bg-gradient-to-br from-nature-green-900 via-nature-green-800 to-green-700 py-20 text-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <span className="inline-block bg-white/15 text-nature-green-50 text-sm font-bold px-4 py-1.5 rounded-full mb-4 border border-white/20">
+                  32 oz + 1 Gallon Bundle • Best Value
+                </span>
+                <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
+                  Fix Yellow Dog Spots From the Soil Up
+                </h1>
+                <p className="text-xl text-nature-green-50 mb-8 leading-relaxed">
+                  Nature&apos;s Way Soil Dog Urine Neutralizer & Lawn Revitalizer Bundle pairs the 32 oz concentrate with a full 1 gallon so you can spot-treat and cover the whole yard — helping lawn recovery where dog urine has stressed the grass and soil, without relying on temporary green dye.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <CheckoutButton product={dogProducts.bundle}>Order the $49.99 Bundle with Link</CheckoutButton>
+                  <GuideButton secondary>Get Free Lawn Recovery Guide</GuideButton>
+                </div>
+                <div className="mt-6 flex flex-wrap gap-4">
+                  {['Soil-level support', 'Not a green dye', 'Easy spot treatment'].map((benefit) => (
+                    <span key={benefit} className="flex items-center gap-1 text-sm text-nature-green-50">
+                      <CheckCircle className="w-4 h-4" />
+                      {benefit}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="relative">
+                <img
+                  src="/images/products/NWS_014/bundle.jpg"
+                  alt="Nature's Way Soil Dog Urine Neutralizer & Lawn Revitalizer - 32 oz and 1 Gallon Bundle"
+                  className="w-full rounded-2xl shadow-xl object-cover bg-white"
+                />
+                <div className="absolute -bottom-5 -left-5 bg-white rounded-xl shadow-lg p-4 text-gray-900">
+                  <p className="text-2xl font-black text-nature-green-600">$49.99</p>
+                  <p className="text-sm text-gray-600">32 oz + 1 Gallon, secure Stripe checkout</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+                Dog Spots Are Usually More Than a Surface Problem
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                When dog urine hits the same area repeatedly, grass can yellow, thin out, or stop growing well. The visible spot is only part of the issue. The soil underneath also needs support so the lawn has a better chance to recover.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: <Sprout className="w-8 h-8 text-nature-green-600" />,
+                  title: 'Soil-Level Support',
+                  body: 'Supports the soil and root-zone environment where repeated dog urine stress can affect lawn recovery.',
+                },
+                {
+                  icon: <Droplets className="w-8 h-8 text-nature-green-600" />,
+                  title: 'Easy Spot Treatment',
+                  body: 'Apply to affected areas with a sprayer or watering can according to label directions as part of your regular lawn care routine.',
+                },
+                {
+                  icon: <Shield className="w-8 h-8 text-nature-green-600" />,
+                  title: 'Not a Temporary Dye',
+                  body: 'Built for soil-first lawn care instead of simply covering yellow spots with temporary color.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100">
+                  <div className="w-16 h-16 bg-nature-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                    {item.icon}
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+              <div>
+                <img
+                  src="/images/products/NWS_014/bundle.jpg"
+                  alt="Nature's Way Soil Dog Urine Neutralizer & Lawn Revitalizer - 32 oz and 1 Gallon Bundle"
+                  className="w-full rounded-2xl shadow-xl object-cover bg-white"
+                />
+              </div>
+              <div>
+                <span className="inline-block bg-nature-green-100 text-nature-green-700 text-sm font-bold px-4 py-1.5 rounded-full mb-4">
+                  Direct-Order Lawn Recovery Bundle
+                </span>
+                <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6">
+                  Dog Urine Neutralizer &amp; Lawn Revitalizer Bundle — $49.99
+                </h2>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Includes one 32 oz concentrate bottle with sprayer for spot treatment, plus a full 1 gallon for whole-yard coverage. Order direct from Nature&apos;s Way Soil for the best per-ounce value and support from a small soil-focused business.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    'Supports recovery of dog urine-stressed lawn areas',
+                    'Helps support soil and root-zone conditions',
+                    '32 oz concentrate for spot treatment + 1 gallon for full-yard coverage',
+                    'Best value per ounce versus buying sizes separately',
+                    'Order direct through secure Stripe checkout with Link',
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <CheckCircle className="w-5 h-5 text-nature-green-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <CheckoutButton product={dogProducts.bundle}>Order the $49.99 Bundle</CheckoutButton>
+                  <CheckoutButton product={dogProducts.gallon} secondary>Order 1 Gallon Only</CheckoutButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+                Simple Spot Treatment
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { step: '1', title: 'Shake Well', body: 'Shake before use so the formula is evenly mixed.' },
+                { step: '2', title: 'Mix by Label', body: 'Dilute according to the product label for your application method.' },
+                { step: '3', title: 'Apply to Spots', body: 'Treat the yellow or stressed area and surrounding soil.' },
+                { step: '4', title: 'Repeat as Needed', body: 'Use as part of your lawn recovery routine. Severely dead areas may need reseeding.' },
+              ].map((item) => (
+                <div key={item.step} className="text-center">
+                  <div className="w-12 h-12 bg-nature-green-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                    {item.step}
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-nature-green-50">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Order Direct and Save on Lawn Recovery</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Social traffic should come here first, not Amazon. Ordering direct helps support our small business and gives you access to bundles and lawn recovery resources.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-10 text-left">
+              {[
+                { title: '32 oz Concentrate', copy: 'Best for small yards and first-time use.', product: dogProducts.small, button: 'Order 32 oz' },
+                { title: '1 Gallon', copy: 'Best for repeat dog spots and larger lawns.', product: dogProducts.gallon, button: 'Order 1 Gallon' },
+                { title: 'Bundle — 32 oz + 1 Gallon', copy: 'Includes the 32 oz concentrate for spot treatment plus a full 1 gallon for whole-yard coverage — the best value per ounce.', product: dogProducts.bundle, button: 'Get the $49.99 Bundle', badge: 'Best Value' },
+              ].map((offer) => (
+                <div key={offer.title} className={`relative rounded-2xl bg-white p-8 shadow-sm border ${offer.badge === 'Most Popular' ? 'border-nature-green-600 ring-2 ring-nature-green-600' : 'border-gray-100'}`}>
+                  {offer.badge && <span className="absolute -top-4 left-6 rounded-full bg-nature-green-600 px-4 py-2 text-xs font-black uppercase tracking-wide text-white">{offer.badge}</span>}
+                  <h3 className="text-2xl font-black text-gray-900">{offer.title}</h3>
+                  <p className="mt-3 text-gray-600">{offer.copy}</p>
+                  <div className="mt-6">
+                    <CheckoutButton product={offer.product}>{offer.button}</CheckoutButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-white">
+          <div className="max-w-5xl mx-auto px-4 text-center">
+            <h2 className="text-3xl font-black text-gray-900 mb-4">Not Ready to Order Yet?</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Get the free Yellow Spot Lawn Recovery Guide and learn how to support grass recovery from the soil up.
+            </p>
+            <GuideButton>Get Free Lawn Recovery Guide</GuideButton>
+          </div>
+        </section>
+
+        <section className="section-padding bg-gray-50">
+          <div className="max-w-4xl mx-auto px-4">
+            <h2 className="text-center text-3xl font-black text-gray-900 mb-8">Questions Before You Order?</h2>
+            <div className="space-y-4">
+              {faqs.map((faq) => (
+                <details key={faq.q} className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+                  <summary className="cursor-pointer text-lg font-bold text-gray-900">{faq.q}</summary>
+                  <p className="mt-3 leading-7 text-gray-700">{faq.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-black text-gray-900 mb-4">Built by a Soil-Focused Small Business</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  quote: 'I wanted a product that focused on the lawn and soil, not just covering the spot. This was exactly what I needed.',
+                  author: 'Verified customer',
+                },
+                {
+                  quote: 'The directions were simple, and I liked that it was made by a small soil-focused company.',
+                  author: 'Verified customer',
+                },
+                {
+                  quote: 'The gallon size made sense for our yard because our dogs use the same area every day.',
+                  author: 'Verified customer',
+                },
+              ].map((review) => (
+                <div key={review.quote} className="bg-gray-50 rounded-2xl p-8 shadow-sm border border-gray-100">
+                  <div className="flex mb-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 mb-6 italic leading-relaxed">&quot;{review.quote}&quot;</p>
+                  <p className="font-bold text-gray-900">{review.author}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="section-padding bg-nature-green-600 text-white">
+          <div className="max-w-3xl mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-black mb-6">
+              Start Lawn Recovery From the Soil Up
+            </h2>
+            <p className="text-xl text-nature-green-100 mb-8">
+              Order direct from Nature&apos;s Way Soil and give your lawn soil-level support after dog urine stress.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <CheckoutButton product={dogProducts.bundle}>Order the $49.99 Bundle</CheckoutButton>
+              <GuideButton secondary>Get Free Guide</GuideButton>
+            </div>
+          </div>
+        </section>
+      </main>
+    </Layout>
+  );
+}
