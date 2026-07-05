@@ -41,6 +41,11 @@ function normalizeReturnPath(path: unknown, fallback: string): string {
   return path;
 }
 
+function toMetadataValue(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  return String(value).slice(0, 500);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -75,6 +80,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid price provided' });
     }
 
+    const subtotalCents = unitAmount * sanitizedQuantity;
+    const shippingCents = shippingCost > 0 ? Math.round(shippingCost * 100) : 0;
     const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const safeSuccessPath = normalizeReturnPath(successPath, '/shop?session_id={CHECKOUT_SESSION_ID}');
     const safeCancelPath = normalizeReturnPath(cancelPath, `/product/${productId}`);
@@ -82,7 +89,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ? `${origin}${safeSuccessPath}`
       : `${origin}${safeSuccessPath}${safeSuccessPath.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`;
 
-    const lineItems = [
+    const orderMetadata = {
+      productId: toMetadataValue(productId),
+      productName: toMetadataValue(productName),
+      product_name: toMetadataValue(productName),
+      sizeName: toMetadataValue(sizeName),
+      size_name: toMetadataValue(sizeName),
+      sku: toMetadataValue(sku),
+      quantity: toMetadataValue(sanitizedQuantity),
+      unit_amount_cents: toMetadataValue(unitAmount),
+      subtotal_cents: toMetadataValue(subtotalCents),
+      shipping_cents: toMetadataValue(shippingCents),
+      source: 'natureswaysoil.com',
+    };
+
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       {
         price_data: {
           currency: 'usd',
@@ -90,9 +111,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           product_data: {
             name: sizeName ? `${productName} – ${sizeName}` : productName,
             metadata: {
-              productId,
-              sizeName: sizeName || '',
-              sku: sku || '',
+              productId: orderMetadata.productId,
+              sizeName: orderMetadata.sizeName,
+              sku: orderMetadata.sku,
             },
           },
         },
@@ -100,12 +121,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     ];
 
-    // Add shipping as a separate line item if there's a cost
+    // Add shipping as a separate line item if there's a cost.
     if (shippingCost > 0 && shippingMethodId) {
       lineItems.push({
         price_data: {
           currency: 'usd',
-          unit_amount: Math.round(shippingCost * 100),
+          unit_amount: shippingCents,
           product_data: {
             name: `Shipping (${shippingMethodId})`,
             metadata: {
@@ -126,11 +147,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       customer_creation: 'if_required',
       line_items: lineItems,
       allow_promotion_codes: true,
-      metadata: {
-        productId,
-        sizeName: sizeName || '',
-        sku: sku || '',
-        shippingMethod: shippingMethodId || '',
+      shipping_address_collection: {
+        allowed_countries: ['US'],
+      },
+      phone_number_collection: {
+        enabled: true,
+      },
+      metadata: orderMetadata,
+      payment_intent_data: {
+        metadata: orderMetadata,
       },
     };
 
