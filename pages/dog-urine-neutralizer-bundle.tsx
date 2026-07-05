@@ -1,17 +1,20 @@
 import Head from 'next/head';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
 import { CheckCircle, Droplets, Leaf, ShieldCheck, Sprout } from 'lucide-react';
 import Layout from '../components/Layout';
+import DirectCheckoutButton from '../components/DirectCheckoutButton';
 
 const product = {
-  id: 'NWS_014_BUNDLE',
+  productId: 'NWS_014_BUNDLE',
   sku: 'NWS-DUN-32OZ-1GAL-BUNDLE',
+  productName: "Nature's Way Soil® Dog Urine Neutralizer & Lawn Revitalizer Bundle",
   name: "Nature's Way Soil® Dog Urine Neutralizer & Lawn Revitalizer Bundle",
   subtitle: '32 Ounce Hose-End Sprayer + 1 Gallon Refill',
+  quantity: 1,
   price: 49.99,
   originalPrice: 59.99,
   image: '/images/products/NWS_014/main.jpg',
+  sizeName: '32 oz Hose-End Sprayer + 1 Gallon Refill',
   size: 'Bundle with 32 oz hose-end sprayer and 1 gallon refill',
   category: 'Pet Lawn Care',
 };
@@ -47,24 +50,6 @@ const directions = [
 const searchKeywords = 'dog urine neutralizer, dog urine lawn repair, pet spot lawn treatment, dog pee grass repair, hose end dog urine neutralizer, lawn revitalizer, pet safe lawn treatment, dog urine odor neutralizer, dog spot repair, Nature’s Way Soil dog urine neutralizer';
 
 export default function DogUrineNeutralizerBundlePage() {
-  const router = useRouter();
-
-  const handleBuyNow = async () => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('nws-checkout-selection', JSON.stringify({
-        productId: product.id,
-        productName: product.name,
-        productImage: product.image,
-        sizeName: product.size,
-        quantity: 1,
-        price: product.price,
-        sku: product.sku,
-      }));
-    }
-
-    await router.push('/checkout');
-  };
-
   return (
     <Layout>
       <Head>
@@ -127,13 +112,7 @@ export default function DogUrineNeutralizerBundlePage() {
                   <p className="text-xl text-gray-500 line-through">${product.originalPrice.toFixed(2)}</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={handleBuyNow}
-                className="btn-primary text-base px-8 py-4 rounded-xl shadow-lg"
-              >
-                Buy Bundle Now
-              </button>
+              <DirectCheckoutButton product={product}>Buy Bundle Now</DirectCheckoutButton>
             </div>
           </div>
         </section>
@@ -203,9 +182,7 @@ export default function DogUrineNeutralizerBundlePage() {
             <p className="text-lg text-gray-700 max-w-3xl mx-auto mb-6">
               Bundle includes one 32 oz hose-end sprayer bottle and one 1 gallon refill of Nature&apos;s Way Soil Dog Urine Neutralizer &amp; Lawn Revitalizer.
             </p>
-            <button type="button" onClick={handleBuyNow} className="btn-primary text-base px-8 py-4 rounded-xl">
-              Add Bundle to Checkout - $49.99
-            </button>
+            <DirectCheckoutButton product={product}>Add Bundle to Checkout - $49.99</DirectCheckoutButton>
           </div>
         </section>
       </main>
