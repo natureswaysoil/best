@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint app components config data lib pages --ext .js,.ts,.tsx",
     "type-check": "tsc --noEmit",
+    "print:orders": "node scripts/print-new-orders.mjs",
     "videos": "node scripts/create-quality-seed-videos.mjs --all",
     "video:diagnose": "node scripts/diagnose-product-video.mjs",
     "video:dog": "PRODUCT_ID=NWS_014 node scripts/create-quality-seed-videos.mjs",
