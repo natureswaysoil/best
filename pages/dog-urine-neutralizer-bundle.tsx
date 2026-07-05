@@ -11,7 +11,7 @@ const product = {
   subtitle: '32 Ounce Hose-End Sprayer + 1 Gallon Refill',
   price: 49.99,
   originalPrice: 59.99,
-  image: '/images/products/NWS_014/bundle.svg',
+  image: '/images/products/NWS_014/main.jpg',
   size: 'Bundle with 32 oz hose-end sprayer and 1 gallon refill',
   category: 'Pet Lawn Care',
 };
