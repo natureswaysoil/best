@@ -41,6 +41,13 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Product landing page aliases
+      { source: '/products/lawn-soil-recovery-system', destination: '/product/lawn-soil-recovery-system', permanent: true },
+      { source: '/products/lawn-and-soil-recovery-system', destination: '/product/lawn-soil-recovery-system', permanent: true },
+      { source: '/products/hay-pasture-lawn-recovery-system', destination: '/product/lawn-soil-recovery-system', permanent: true },
+      { source: '/products/soil-recovery-system', destination: '/product/lawn-soil-recovery-system', permanent: true },
+      { source: '/products/soil-recovery-systems', destination: '/soil-recovery-systems', permanent: true },
+
       // Old product slugs
       { source: '/products/nws-128-tom', destination: '/shop', permanent: true },
       { source: '/products/nws-128-worm', destination: '/shop', permanent: true },
