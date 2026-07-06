@@ -27,6 +27,17 @@ interface ProductPageProps {
   product: Product;
 }
 
+const productImageOverrides: Record<string, { image: string; images: string[] }> = {
+  NWS_022: {
+    image: '/images/products/NWS_024/lawn-recovery-25gal-box.svg',
+    images: [
+      '/images/products/NWS_024/lawn-recovery-25gal-box.svg',
+      '/images/products/NWS_024/main.svg',
+      '/images/products/NWS_024/lawn-recovery-32oz.svg',
+    ],
+  },
+};
+
 export default function ProductPage({ product }: ProductPageProps) {
   return (
     <>
@@ -84,6 +95,8 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     };
   }
 
+  const imageOverride = productImageOverrides[productData.id];
+
   // Convert to Product format for ProductDetail component
   // Only include optional fields if they have actual values (not undefined)
   // Prefer a locally generated video in public/videos/{id}.mp4 if present
@@ -104,12 +117,12 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     ...(productData.originalPrice !== undefined && { originalPrice: productData.originalPrice }),
     description: productData.description,
     features: productData.features,
-  images: productData.images,
-  image: productData.image,
+    images: imageOverride?.images ?? productData.images,
+    image: imageOverride?.image ?? productData.image,
     // If a local video exists, prefer that path (served from /videos/). Otherwise use any configured product.video.
-  ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
-  ...(hasLocalWebm && { videoWebm: localWebmPath }),
-  ...(hasLocalPoster && { videoPoster: localPosterPath }),
+    ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
+    ...(hasLocalWebm && { videoWebm: localWebmPath }),
+    ...(hasLocalPoster && { videoPoster: localPosterPath }),
     inStock: productData.inStock,
     category: productData.category,
     ...(productData.sizes && productData.sizes.length > 0 && { sizes: productData.sizes }),
