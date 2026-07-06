@@ -6,11 +6,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
 });
 
+function normalizeSecret(value: unknown): string {
+  return String(value || '').trim();
+}
+
 function verifySecret(req: NextApiRequest): boolean {
-  const configuredSecret = process.env.PRINT_QUEUE_SECRET || process.env.PRINT_SLIP_TOKEN;
-  if (!configuredSecret) return false;
-  const secret = Array.isArray(req.query.secret) ? req.query.secret[0] : req.query.secret;
-  return secret === configuredSecret;
+  const allowedSecrets = [
+    process.env.PRINT_QUEUE_SECRET,
+    process.env.PRINT_SLIP_TOKEN,
+  ].map(normalizeSecret).filter(Boolean);
+
+  const secret = normalizeSecret(Array.isArray(req.query.secret) ? req.query.secret[0] : req.query.secret);
+  return Boolean(secret && allowedSecrets.includes(secret));
 }
 
 function csv(value: unknown): string {
