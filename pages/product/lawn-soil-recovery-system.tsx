@@ -94,6 +94,7 @@ export default function LawnSoilRecoverySystemPage() {
                 alt="Nature's Way Soil Lawn and Soil Recovery System 1 gallon concentrate"
                 fill
                 priority
+                unoptimized
                 className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
@@ -153,7 +154,14 @@ export default function LawnSoilRecoverySystemPage() {
                   <span className="rounded-full bg-green-50 text-nature-green-700 text-xs font-bold px-3 py-1 border border-green-100">{variant.coverage}</span>
                 </div>
                 <div className="relative h-64 bg-white rounded-2xl overflow-hidden mb-5">
-                  <Image src={variant.image} alt={`${variant.productName} ${variant.sizeName}`} fill className="object-contain" sizes="(max-width: 768px) 100vw, 33vw" />
+                  <Image
+                    src={variant.image}
+                    alt={`${variant.productName} ${variant.sizeName}`}
+                    fill
+                    unoptimized
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
                 </div>
                 <p className="text-3xl font-black text-gray-950 mb-4">${variant.price.toFixed(2)}</p>
                 <DirectCheckoutButton product={{ ...variant, quantity: 1 }} fullWidth>
