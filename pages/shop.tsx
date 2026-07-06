@@ -22,6 +22,10 @@ interface ShopProps {
   categories: string[];
 }
 
+const productImageOverrides: Record<string, string> = {
+  NWS_022: '/images/products/NWS_024/lawn-recovery-25gal-box.svg',
+};
+
 export default function Shop({ products, categories }: ShopProps) {
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -251,7 +255,7 @@ export const getStaticProps: GetStaticProps<ShopProps> = async () => {
     name: p.name,
     price: p.sizes && p.sizes.length > 0 ? p.sizes[0].price : p.price,
     ...(p.originalPrice && { originalPrice: p.originalPrice }),
-    image: p.image,
+    image: productImageOverrides[p.id] ?? p.image,
     description: p.description,
     category: p.category,
     tags: p.tags
