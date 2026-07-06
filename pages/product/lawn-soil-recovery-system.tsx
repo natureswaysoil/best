@@ -1,8 +1,9 @@
 import Head from 'next/head';
-import Image from 'next/image';
 import { CheckCircle, Leaf, Droplets, Sprout, ShieldCheck, Truck, Star } from 'lucide-react';
 import Layout from '../../components/Layout';
 import DirectCheckoutButton from '../../components/DirectCheckoutButton';
+
+const imageVersion = '20260705';
 
 const variants = [
   {
@@ -11,7 +12,7 @@ const variants = [
     productName: "Nature's Way Soil Lawn & Soil Recovery System",
     sizeName: '32 oz Concentrate',
     price: 29.99,
-    image: '/images/products/NWS_024/lawn-recovery-32oz.svg',
+    image: `/images/products/NWS_024/lawn-recovery-32oz.svg?v=${imageVersion}`,
     coverage: 'Makes up to 32 gallons',
     badge: 'Starter Size',
   },
@@ -21,7 +22,7 @@ const variants = [
     productName: "Nature's Way Soil Lawn & Soil Recovery System",
     sizeName: '1 Gallon Concentrate',
     price: 49.99,
-    image: '/images/products/NWS_024/main.svg',
+    image: `/images/products/NWS_024/main.svg?v=${imageVersion}`,
     coverage: 'Makes up to 128 gallons',
     badge: 'Best Seller',
   },
@@ -31,7 +32,7 @@ const variants = [
     productName: "Nature's Way Soil Lawn & Soil Recovery System",
     sizeName: '2.5 Gallon Concentrate',
     price: 99.99,
-    image: '/images/products/NWS_024/lawn-recovery-25gal-box.svg',
+    image: `/images/products/NWS_024/lawn-recovery-25gal-box.svg?v=${imageVersion}`,
     coverage: 'Makes up to 320 gallons',
     badge: 'Best Value',
   },
@@ -40,11 +41,10 @@ const variants = [
 const featuredProduct = variants[1];
 
 const bullets = [
-  'Fix Yellow Grass Support – concentrated liquid soil conditioner made for stressed, thin, yellow, heat-stressed, or tired lawns.',
-  'Liquid Humic & Fulvic Acid with Kelp – supports nutrient availability, root-zone activity, and better soil performance over time.',
-  'Improve Root Growth – designed to support stronger root development so grass can respond better to watering and regular lawn care.',
-  'Boost Lawn Health Naturally – helps condition the soil instead of relying on a quick cosmetic green dye.',
-  'For Lawns, Gardens & Landscapes – use on turf, garden beds, trees, shrubs, pasture edges, and ornamental landscapes.',
+  'Supports yellow, weak, heat-stressed, or tired lawns from the soil up.',
+  'Humic acid, fulvic acid, and kelp support nutrient availability and root-zone performance.',
+  'Helps improve root growth, soil conditioning, and moisture movement.',
+  'Made for lawns, gardens, landscapes, trees, shrubs, pasture edges, and ornamental areas.',
 ];
 
 const benefits = [
@@ -80,7 +80,7 @@ export default function LawnSoilRecoverySystemPage() {
         <title>Lawn & Soil Recovery System | Humic, Fulvic & Kelp | Nature&apos;s Way Soil</title>
         <meta
           name="description"
-          content="Nature's Way Soil Lawn & Soil Recovery System is a concentrated humic, fulvic, and kelp soil conditioner for yellow grass, stressed lawns, root growth, and soil health. Direct Stripe checkout available."
+          content="Nature's Way Soil Lawn & Soil Recovery System is a concentrated humic, fulvic, and kelp soil conditioner for yellow grass, stressed lawns, root growth, and soil health."
         />
         <meta name="keywords" content={searchKeywords} />
       </Head>
@@ -88,15 +88,12 @@ export default function LawnSoilRecoverySystemPage() {
       <main className="bg-gradient-to-b from-white via-green-50/40 to-white">
         <section className="max-w-7xl mx-auto px-4 py-10 lg:py-16 grid lg:grid-cols-2 gap-10 items-center">
           <div className="bg-white rounded-3xl shadow-xl border border-green-100 p-4">
-            <div className="relative aspect-square bg-white rounded-2xl overflow-hidden">
-              <Image
+            <div className="aspect-square bg-white rounded-2xl overflow-hidden flex items-center justify-center">
+              <img
                 src={featuredProduct.image}
                 alt="Nature's Way Soil Lawn and Soil Recovery System 1 gallon concentrate"
-                fill
-                priority
-                unoptimized
-                className="object-contain"
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="w-full h-full object-contain"
+                loading="eager"
               />
             </div>
           </div>
@@ -153,14 +150,12 @@ export default function LawnSoilRecoverySystemPage() {
                   </div>
                   <span className="rounded-full bg-green-50 text-nature-green-700 text-xs font-bold px-3 py-1 border border-green-100">{variant.coverage}</span>
                 </div>
-                <div className="relative h-64 bg-white rounded-2xl overflow-hidden mb-5">
-                  <Image
+                <div className="h-64 bg-white rounded-2xl overflow-hidden mb-5 flex items-center justify-center">
+                  <img
                     src={variant.image}
                     alt={`${variant.productName} ${variant.sizeName}`}
-                    fill
-                    unoptimized
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="w-full h-full object-contain"
+                    loading="lazy"
                   />
                 </div>
                 <p className="text-3xl font-black text-gray-950 mb-4">${variant.price.toFixed(2)}</p>
@@ -174,22 +169,24 @@ export default function LawnSoilRecoverySystemPage() {
 
         <section className="max-w-7xl mx-auto px-4 py-10 grid lg:grid-cols-2 gap-8">
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-            <h2 className="text-2xl font-extrabold text-gray-950 mb-5">Why This Page Converts Better</h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Customers do not just want another fertilizer. They want their yellow lawn to recover, roots to grow better, and soil to hold nutrients and moisture more effectively. This page focuses on the visible problem first, then explains how the humic, fulvic, and kelp blend supports the soil underneath.
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              Use this page for Google ads, social media posts, Amazon comparison traffic, QR codes, and direct customer links because the customer can choose a size and go straight to Stripe checkout.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
             <h2 className="text-2xl font-extrabold text-gray-950 mb-5">Formula Highlights</h2>
             <div className="space-y-4 text-gray-700">
               <p><strong>Liquid Humic Acid</strong> – supports soil structure, nutrient holding, and root-zone activity.</p>
               <p><strong>Fulvic Acid</strong> – helps with nutrient availability and movement.</p>
               <p><strong>Kelp Extract</strong> – supports root vigor, plant health, and stress recovery.</p>
               <p><strong>Concentrated Soil Conditioner</strong> – made to dilute into finished spray or drench solution.</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+            <h2 className="text-2xl font-extrabold text-gray-950 mb-5">What It Helps With</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {benefits.map((item) => (
+                <div key={item} className="flex gap-2 items-start">
+                  <ShieldCheck className="w-5 h-5 text-nature-green-700 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-700">{item}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -210,15 +207,10 @@ export default function LawnSoilRecoverySystemPage() {
                 </div>
               </div>
               <div className="bg-white/10 rounded-2xl p-6 border border-white/10">
-                <h3 className="text-xl font-bold mb-4">Key Product Benefits</h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {benefits.map((item) => (
-                    <div key={item} className="flex gap-2 items-start">
-                      <ShieldCheck className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-gray-100">{item}</p>
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-xl font-bold mb-4">Best For</h3>
+                <p className="text-gray-100 leading-relaxed">
+                  Use it on lawns, garden beds, trees, shrubs, pasture edges, ornamental landscapes, and other soil areas that need root-zone support and soil conditioning.
+                </p>
               </div>
             </div>
           </div>
