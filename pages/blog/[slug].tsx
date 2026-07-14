@@ -70,7 +70,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
   return (
     <Layout>
       <Head>
-        <title>{article.seoTitle || article.title} - Nature&apos;s Way Soil Blog</title>
+        <title>{`${article.seoTitle || article.title} - Nature's Way Soil Blog`}</title>
         <meta 
           name="description" 
           content={article.seoDescription || article.excerpt}

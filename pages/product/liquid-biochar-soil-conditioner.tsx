@@ -35,7 +35,7 @@ export default function LiquidBiocharSoilConditionerProductPage() {
   return (
     <>
       <Head>
-        <title>{product.name} - Nature&apos;s Way Soil</title>
+        <title>{`${product.name} - Nature's Way Soil`}</title>
         <meta name="description" content={product.description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>

@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint app components config data lib pages --ext .js,.ts,.tsx",
     "type-check": "tsc --noEmit",
