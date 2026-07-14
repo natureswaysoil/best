@@ -138,9 +138,59 @@ export const HonestValue = ({ product }: { product: ProductInfo }) => {
   );
 };
 
+// Per-SKU overrides for products whose category-based guidance doesn't fit
+// (e.g. broadcast/drench pasture products lumped into the general 'Fertilizer'
+// category, which otherwise defaults to container/houseplant copy below).
+const productGuidanceOverrides: Record<string, { whenToUse: string[]; bestFor: string[]; seasonalTips: string[] }> = {
+  NWS_022: {
+    whenToUse: [
+      'Pastures and hay fields showing thin stands, slow green-up, or poor regrowth after cutting/grazing',
+      'Compacted or heat-stressed turf, food plots, and large lawn areas',
+      'Before or after drought stress, to help soil hold moisture and recover faster',
+      'Establishing new seedings or overseeded areas that need root-zone support'
+    ],
+    bestFor: [
+      'Hay fields and horse/livestock pastures needing sustained soil-carbon and biology support',
+      'Large-acreage turf and food plots where broadcast spraying is more practical than spot treatment',
+      'Compacted or depleted soils that need long-term structure rebuilding, not just a quick green-up',
+      'Operations rotating between cutting, grazing, or heavy traffic that stresses root zones'
+    ],
+    seasonalTips: [
+      'Spring: Apply as pastures/hay fields green up to support early root development and biology establishment',
+      'Summer: Apply during cooler parts of the day (early morning/evening) ahead of heat and drought stress; water in or apply before rain/irrigation when possible',
+      'Fall: Use to support root reserves and soil biology heading into dormancy - especially valuable after a hard grazing or cutting season',
+      'Winter: Not typically applied during dormancy; resume with spring green-up'
+    ]
+  },
+  NWS_021: {
+    whenToUse: [
+      'Hay fields, pastures, and lawns that need a natural nitrogen boost for greener, thicker growth',
+      'Horse and livestock pastures where synthetic fertilizers with grazing restrictions aren\'t an option',
+      'Organic farms and residential lawns wanting steady microbial feeding instead of a quick synthetic spike',
+      'Regular seasonal feeding to keep grass color and density consistent through the growing season'
+    ],
+    bestFor: [
+      'Horse and livestock pastures needing a truly grazing-safe fertilizer (dries in about 2 hours)',
+      'Hay fields and large lawns fed by broadcast spraying rather than granular spreading',
+      'Organic operations that want microbial nitrogen instead of synthetic fertilizer salts',
+      'Building soil structure and beneficial microbe populations alongside routine feeding'
+    ],
+    seasonalTips: [
+      'Spring: Apply as growth resumes to support early green-up and thicker turf',
+      'Summer: Apply during cooler morning or evening hours; irrigate or apply ahead of rain within 24 hours to move nutrients into the root zone',
+      'Fall: Feed to support root and microbial health heading into dormancy',
+      'Winter: Hold off during dormancy; resume applications with spring regrowth'
+    ]
+  }
+};
+
 // Best used for - practical guidance, not sales fluff
 export const PracticalGuidance = ({ product }: { product: ProductInfo }) => {
-  const getGuidance = (category: string) => {
+  const getGuidance = (item: ProductInfo) => {
+    const override = productGuidanceOverrides[item.id];
+    if (override) return override;
+
+    const category = item.category;
     const baseGuidance = {
       whenToUse: [] as string[],
       bestFor: [] as string[],
@@ -203,7 +253,7 @@ export const PracticalGuidance = ({ product }: { product: ProductInfo }) => {
     return baseGuidance;
   };
 
-  const guidance = getGuidance(product.category);
+  const guidance = getGuidance(product);
 
   return (
     <div className="space-y-4">
