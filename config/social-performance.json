@@ -71,7 +71,7 @@
     "winnerBoost": 2,
     "loserPenalty": 1
   },
-  "updatedAt": "2026-07-18T10:33:31.042Z",
+  "updatedAt": "2026-07-19T10:34:24.095Z",
   "source": "stripe_payment_intents",
   "lookbackDays": 14
 }
