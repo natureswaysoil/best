@@ -63,57 +63,24 @@ function addressText(address?: Stripe.Address | null): string {
   ].filter(Boolean).join(', ');
 }
 
-async function saveOrderToSupabase(session: Stripe.Checkout.Session, lineItem?: Stripe.LineItem) {
-  try {
-    const supabase = getServiceSupabase();
-    const metadata = session.metadata || {};
-    const customerEmail = session.customer_details?.email || session.customer_email || '';
-    const customerName = session.customer_details?.name || session.shipping_details?.name || 'Customer';
-    const shippingAddress = session.shipping_details?.address || session.customer_details?.address || null;
-    const piId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
-
-    const { data: customer } = await supabase
-      .from('customers')
-      .upsert({ name: customerName, email: customerEmail || `stripe-${session.id}@example.local` }, { onConflict: 'email' })
-      .select('id')
-      .single();
-
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .upsert({
-        customer_id: customer?.id || null,
-        status: 'paid',
-        pi_id: piId,
-        subtotal: (session.amount_subtotal || 0) / 100,
-        tax: (session.total_details?.amount_tax || 0) / 100,
-        shipping: (session.total_details?.amount_shipping || 0) / 100,
-        total: (session.amount_total || 0) / 100,
-        email: customerEmail,
-        name: customerName,
-        billing: session.customer_details || null,
-        shipping_address: shippingAddress || null,
-      }, { onConflict: 'pi_id' })
-      .select('id')
-      .single();
-
-    if (orderError) {
-      console.error('Failed to save Stripe order:', orderError);
-      return;
-    }
-
-    if (order?.id && lineItem) {
-      await supabase.from('order_items').insert({
-        order_id: order.id,
-        sku: metadata.sku || '',
-        qty: lineItem.quantity || Number(metadata.quantity || 1),
-        unit_price: (lineItem.amount_subtotal || Number(metadata.subtotal_cents || 0)) / 100,
-      });
-    }
-  } catch (error) {
-    console.error('Supabase order save skipped or failed:', error);
-  }
+function flattenAddress(name: string, address?: Stripe.Address | null, phone?: string | null) {
+  return {
+    shipping_state: address?.state || null,
+    shipping_county: null,
+    shipping_zip: address?.postal_code || null,
+    shipping_city: address?.city || null,
+    shipping_address1: address?.line1 || null,
+    shipping_address2: address?.line2 || null,
+    shipping_phone: phone || null,
+  };
 }
 
+/**
+ * Handles orders placed through Stripe *Checkout Sessions*.
+ * Kept for forward-compatibility; the site currently does NOT use Checkout
+ * Sessions (it uses the PaymentIntent flow below), so in practice this event
+ * will not fire today. Left in place in case Checkout is reintroduced.
+ */
 async function processCheckoutSessionCompleted(sessionId: string) {
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
     expand: ['line_items.data.price.product'],
@@ -121,7 +88,7 @@ async function processCheckoutSessionCompleted(sessionId: string) {
 
   const lineItem = session.line_items?.data?.[0];
   const metadata = session.metadata || {};
-  const productName = metadata.productName || metadata.product_name || lineItem?.description || 'Nature’s Way Soil Product';
+  const productName = metadata.productName || metadata.product_name || lineItem?.description || 'Nature\u2019s Way Soil Product';
   const sizeName = metadata.sizeName || metadata.size_name || '';
   const quantity = lineItem?.quantity || Number(metadata.quantity || 1);
   const sku = metadata.sku || '';
@@ -131,25 +98,203 @@ async function processCheckoutSessionCompleted(sessionId: string) {
   const printableUrl = `${siteUrl}/api/packing-slip/${session.id}${printSlipToken ? `?token=${encodeURIComponent(printSlipToken)}` : ''}`;
   const stripePaymentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
 
-  await saveOrderToSupabase(session, lineItem);
+  try {
+    const supabase = getServiceSupabase();
+    const customerRow = await supabase
+      .from('customers')
+      .upsert({ name: customerName, email: customerEmail || `stripe-${session.id}@example.local` }, { onConflict: 'email' })
+      .select('id')
+      .single();
+
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .upsert({
+        customer_id: customerRow.data?.id || null,
+        status: 'paid',
+        pi_id: stripePaymentId,
+        subtotal: (session.amount_subtotal || 0) / 100,
+        tax: (session.total_details?.amount_tax || 0) / 100,
+        total: (session.amount_total || 0) / 100,
+        email: customerEmail,
+        name: customerName,
+        ...flattenAddress(customerName, shippingAddress, session.customer_details?.phone),
+      }, { onConflict: 'pi_id' })
+      .select('id')
+      .single();
+
+    if (orderError) console.error('Failed to save Stripe order:', orderError);
+    if (order?.id && lineItem) {
+      await supabase.from('order_items').insert({
+        order_id: order.id,
+        sku,
+        qty: lineItem.quantity || Number(metadata.quantity || 1),
+        price: (lineItem.amount_subtotal || Number(metadata.subtotal_cents || 0)) / 100,
+      });
+    }
+  } catch (error) {
+    console.error('Supabase order save skipped or failed:', error);
+  }
+
+  await sendOrderEmails({
+    orderId: session.id,
+    stripePaymentId,
+    customerEmail,
+    customerName,
+    productName,
+    sizeName,
+    sku,
+    quantity,
+    shippingAddress,
+    amountTotal: session.amount_total,
+    amountSubtotal: session.amount_subtotal,
+    amountTax: session.total_details?.amount_tax,
+    amountShipping: session.total_details?.amount_shipping,
+    lineItemAmount: lineItem?.amount_subtotal ?? Number(metadata.subtotal_cents || session.amount_subtotal || 0),
+    printableUrl,
+  });
+}
+
+/**
+ * Handles orders placed through the site's actual checkout flow:
+ * pages/api/create-payment-intent.ts creates a raw Stripe PaymentIntent
+ * (no Checkout Session), so this is the event that really fires for every
+ * live order. This is the primary path.
+ */
+async function processPaymentIntentSucceeded(paymentIntentId: string) {
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  const metadata = paymentIntent.metadata || {};
+
+  const productName = metadata.product_name || 'Nature\u2019s Way Soil Product';
+  const sizeName = metadata.size_name || '';
+  const sku = metadata.sku || '';
+  const quantity = Number(metadata.quantity || 1);
+  const customerEmail = paymentIntent.receipt_email || '';
+  const customerName = paymentIntent.shipping?.name || 'Customer';
+  const shippingAddress = paymentIntent.shipping?.address || null;
+  const printableUrl = `${siteUrl}/api/packing-slip/${paymentIntent.id}${printSlipToken ? `?token=${encodeURIComponent(printSlipToken)}` : ''}`;
+
+  const subtotalCents = Number(metadata.subtotal_cents || 0);
+  const shippingCents = Number(metadata.shipping_cents || 0);
+  const taxCents = Number(metadata.tax_cents || 0);
+
+  // Idempotency guard: Stripe can and will retry webhook delivery, and this
+  // event can also race with the client calling /api/confirm-payment. Only
+  // send emails once per order, gated on the Supabase order row's status.
+  let alreadyProcessed = false;
+  let orderId: string | null = null;
+  try {
+    const supabase = getServiceSupabase();
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id, status')
+      .eq('pi_id', paymentIntent.id)
+      .maybeSingle();
+
+    alreadyProcessed = existingOrder?.status === 'paid';
+    orderId = existingOrder?.id || null;
+
+    // orders.customer_id is NOT NULL with no usable default under the
+    // service-role key (default is auth.uid(), which is null here) -
+    // a customer row must exist first.
+    const { data: customerRow, error: customerError } = await supabase
+      .from('customers')
+      .upsert(
+        { name: customerName, email: customerEmail || `stripe-${paymentIntent.id}@example.local` },
+        { onConflict: 'email' }
+      )
+      .select('id')
+      .single();
+
+    if (customerError) console.error('Failed to upsert customer for PaymentIntent order:', customerError);
+
+    const { data: upserted, error: orderError } = await supabase
+      .from('orders')
+      .upsert({
+        id: orderId || undefined,
+        customer_id: customerRow?.id,
+        status: 'paid',
+        pi_id: paymentIntent.id,
+        subtotal: subtotalCents / 100,
+        tax: taxCents / 100,
+        total: (paymentIntent.amount || 0) / 100,
+        email: customerEmail,
+        name: customerName,
+        ...flattenAddress(customerName, shippingAddress, paymentIntent.shipping?.phone),
+      }, { onConflict: 'pi_id' })
+      .select('id')
+      .single();
+
+    if (orderError) console.error('Failed to upsert PaymentIntent order:', orderError);
+    orderId = upserted?.id || orderId;
+  } catch (error) {
+    console.error('Supabase order upsert skipped or failed:', error);
+  }
+
+  if (alreadyProcessed) {
+    console.log(`[stripe-webhook] Order ${paymentIntent.id} already processed, skipping duplicate emails.`);
+    return;
+  }
+
+  await sendOrderEmails({
+    orderId: paymentIntent.id,
+    stripePaymentId: paymentIntent.id,
+    customerEmail,
+    customerName,
+    productName,
+    sizeName,
+    sku,
+    quantity,
+    shippingAddress,
+    amountTotal: paymentIntent.amount,
+    amountSubtotal: subtotalCents,
+    amountTax: taxCents,
+    amountShipping: shippingCents,
+    lineItemAmount: subtotalCents,
+    printableUrl,
+  });
+}
+
+interface OrderEmailArgs {
+  orderId: string;
+  stripePaymentId: string;
+  customerEmail: string;
+  customerName: string;
+  productName: string;
+  sizeName: string;
+  sku: string;
+  quantity: number;
+  shippingAddress: Stripe.Address | null;
+  amountTotal: number | null | undefined;
+  amountSubtotal: number | null | undefined;
+  amountTax: number | null | undefined;
+  amountShipping: number | null | undefined;
+  lineItemAmount: number;
+  printableUrl: string;
+}
+
+async function sendOrderEmails(args: OrderEmailArgs) {
+  const {
+    orderId, stripePaymentId, customerEmail, customerName, productName, sizeName, sku,
+    quantity, shippingAddress, amountTotal, amountSubtotal, amountTax, amountShipping,
+    lineItemAmount, printableUrl,
+  } = args;
 
   if (process.env.RESEND_API_KEY) {
     const resendClient = new Resend(process.env.RESEND_API_KEY);
     await resendClient.emails.send({
       from: "Nature's Way Soil <no-reply@natureswaysoil.com>",
       to: INTERNAL_EMAIL_RECIPIENTS,
-      subject: `🛒 New Website Order — ${money(session.amount_total)} — ${customerName}`,
+      subject: `\ud83d\uded2 New Website Order \u2014 ${money(amountTotal)} \u2014 ${customerName}`,
       html: `
         <h2 style="color:#2d5016;">New Website Order</h2>
         <table style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;border-collapse:collapse;">
           <tr><td style="padding:4px 12px 4px 0;"><strong>Customer:</strong></td><td>${safe(customerName)}</td></tr>
           <tr><td style="padding:4px 12px 4px 0;"><strong>Email:</strong></td><td>${safe(customerEmail)}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0;"><strong>Product:</strong></td><td>${safe(productName)}${sizeName ? ' — ' + safe(sizeName) : ''}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;"><strong>Product:</strong></td><td>${safe(productName)}${sizeName ? ' \u2014 ' + safe(sizeName) : ''}</td></tr>
           <tr><td style="padding:4px 12px 4px 0;"><strong>SKU:</strong></td><td>${safe(sku)}</td></tr>
           <tr><td style="padding:4px 12px 4px 0;"><strong>Qty:</strong></td><td>${safe(quantity)}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0;"><strong>Total:</strong></td><td><strong>${money(session.amount_total)}</strong></td></tr>
-          <tr><td style="padding:4px 12px 4px 0;"><strong>Stripe Session:</strong></td><td>${session.id}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0;"><strong>Payment:</strong></td><td>${stripePaymentId}</td></tr>
+          <tr><td style="padding:4px 12px 4px 0;"><strong>Total:</strong></td><td><strong>${money(amountTotal)}</strong></td></tr>
+          <tr><td style="padding:4px 12px 4px 0;"><strong>Stripe Payment:</strong></td><td>${stripePaymentId}</td></tr>
           <tr><td style="padding:4px 12px 4px 0;vertical-align:top;"><strong>Ship to:</strong></td><td>${addressHtml(shippingAddress)}</td></tr>
         </table>
         <p style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -165,19 +310,19 @@ async function processCheckoutSessionCompleted(sessionId: string) {
 
   if (customerEmail) {
     await sendOrderConfirmation(customerEmail, {
-      orderId: session.id,
+      orderId,
       name: customerName,
       items: [{
         title: productName,
         size: sizeName || undefined,
         qty: quantity,
-        price: (lineItem?.amount_subtotal || Number(metadata.subtotal_cents || session.amount_subtotal || 0)) / 100,
+        price: lineItemAmount / 100,
         sku,
       }],
-      subtotal: (session.amount_subtotal || 0) / 100,
-      tax: (session.total_details?.amount_tax || 0) / 100,
-      shipping: (session.total_details?.amount_shipping || 0) / 100,
-      total: (session.amount_total || 0) / 100,
+      subtotal: (amountSubtotal || 0) / 100,
+      tax: (amountTax || 0) / 100,
+      shipping: (amountShipping || 0) / 100,
+      total: (amountTotal || 0) / 100,
       shippingAddress: shippingAddress ? {
         address1: shippingAddress.line1 || undefined,
         address2: shippingAddress.line2 || undefined,
@@ -186,6 +331,8 @@ async function processCheckoutSessionCompleted(sessionId: string) {
         zip: shippingAddress.postal_code || undefined,
       } : undefined,
     });
+  } else {
+    console.warn(`[stripe-webhook] No customer email on order ${orderId}; confirmation email not sent.`);
   }
 }
 
@@ -214,6 +361,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       await processCheckoutSessionCompleted(session.id);
+    } else if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      await processPaymentIntentSucceeded(paymentIntent.id);
     }
   } catch (err) {
     console.error('Webhook processing error:', err);

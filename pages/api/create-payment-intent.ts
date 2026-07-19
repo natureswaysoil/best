@@ -227,6 +227,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       currency: 'usd',
       automatic_payment_methods: { enabled: true },
       receipt_email: customer?.email,
+      shipping: {
+        name: customer?.name || 'Customer',
+        phone: address.phone || customer?.phone || undefined,
+        address: {
+          line1: address.line1,
+          line2: address.line2 || undefined,
+          city: address.city,
+          state: address.state,
+          postal_code: address.postal_code,
+          country: address.country || 'US',
+        },
+      },
       metadata: {
         product_id: productId,
         product_name: productName,
@@ -247,12 +259,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Save order to Supabase
     try {
       const supabase = getServiceSupabase();
-      
+
+      // orders.customer_id is NOT NULL (default auth.uid(), which is always
+      // null for service-role/server calls) - must upsert a customer row
+      // and supply a real id, or every insert below fails silently.
+      const customerEmailForRow = customer?.email || `guest-${paymentIntent.id}@natureswaysoil.local`;
+      const { data: customerRow, error: customerError } = await supabase
+        .from('customers')
+        .upsert({ name: customer?.name || 'Customer', email: customerEmailForRow }, { onConflict: 'email' })
+        .select('id')
+        .single();
+
+      if (customerError) {
+        console.warn('Failed to upsert customer to Supabase:', customerError);
+      }
+
       const orderData = {
+        customer_id: customerRow?.id,
         pi_id: paymentIntent.id,
         status: 'pending',
         total: Number((totalCents / 100).toFixed(2)),
         tax: Number((taxCents / 100).toFixed(2)),
+        email: customer?.email || null,
+        name: customer?.name || null,
         shipping_state: address.state,
         shipping_county: null, // You can add county field to your form if needed
         shipping_zip: address.postal_code,
@@ -262,29 +291,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         shipping_phone: address.phone || customer?.phone || null,
       };
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert(orderData)
-        .select('id')
-        .single();
+      if (!orderData.customer_id) {
+        console.warn('Skipping order insert: no customer_id available (customer upsert failed).');
+      } else {
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert(orderData)
+          .select('id')
+          .single();
 
-      if (orderError) {
-        console.warn('Failed to save order to Supabase:', orderError);
-      } else if (order?.id) {
-        // Save order item
-        const orderItemData = {
-          order_id: order.id,
-          sku: sku || `${productId}-${sizeName || 'default'}`,
-          qty: sanitizedQuantity,
-          price: Number((unitAmount / 100).toFixed(2)),
-        };
+        if (orderError) {
+          console.warn('Failed to save order to Supabase:', orderError);
+        } else if (order?.id) {
+          // Save order item
+          const orderItemData = {
+            order_id: order.id,
+            sku: sku || `${productId}-${sizeName || 'default'}`,
+            qty: sanitizedQuantity,
+            price: Number((unitAmount / 100).toFixed(2)),
+          };
 
-        const { error: itemError } = await supabase
-          .from('order_items')
-          .insert(orderItemData);
+          const { error: itemError } = await supabase
+            .from('order_items')
+            .insert(orderItemData);
 
-        if (itemError) {
-          console.warn('Failed to save order item to Supabase:', itemError);
+          if (itemError) {
+            console.warn('Failed to save order item to Supabase:', itemError);
+          }
         }
       }
     } catch (supabaseError) {
