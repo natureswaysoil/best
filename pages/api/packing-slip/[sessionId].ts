@@ -35,6 +35,96 @@ function addressLines(address?: Stripe.Address | null): string[] {
   ].filter(Boolean);
 }
 
+interface SlipData {
+  id: string;
+  paymentId: string;
+  paymentStatus: string;
+  shippingName: string;
+  shippingAddress: Stripe.Address | null;
+  customerEmail: string;
+  customerPhone: string;
+  rows: Array<{ qty: number | string; sku: string; description: string; size: string; amountCents: number | null | undefined }>;
+  subtotalCents: number | null | undefined;
+  shippingCents: number | null | undefined;
+  taxCents: number | null | undefined;
+  totalCents: number | null | undefined;
+}
+
+// The site's real checkout flow creates a raw Stripe PaymentIntent (pi_...),
+// not a Checkout Session (cs_...) - see pages/api/create-payment-intent.ts.
+// This handler supports both so old/new links and any future Checkout usage
+// keep working.
+async function loadFromPaymentIntent(id: string): Promise<SlipData> {
+  const paymentIntent = await stripe.paymentIntents.retrieve(id);
+  const metadata = paymentIntent.metadata || {};
+  const shippingAddress = paymentIntent.shipping?.address || null;
+
+  return {
+    id: paymentIntent.id,
+    paymentId: paymentIntent.id,
+    paymentStatus: paymentIntent.status,
+    shippingName: paymentIntent.shipping?.name || 'Customer',
+    shippingAddress,
+    customerEmail: paymentIntent.receipt_email || '',
+    customerPhone: paymentIntent.shipping?.phone || '',
+    rows: [{
+      qty: metadata.quantity || 1,
+      sku: metadata.sku || '',
+      description: metadata.product_name || 'Nature’s Way Soil Product',
+      size: metadata.size_name || '',
+      amountCents: Number(metadata.subtotal_cents || paymentIntent.amount || 0),
+    }],
+    subtotalCents: Number(metadata.subtotal_cents || 0),
+    shippingCents: Number(metadata.shipping_cents || 0),
+    taxCents: Number(metadata.tax_cents || 0),
+    totalCents: paymentIntent.amount,
+  };
+}
+
+async function loadFromCheckoutSession(id: string): Promise<SlipData> {
+  const session = await stripe.checkout.sessions.retrieve(id, {
+    expand: ['line_items.data.price.product'],
+  });
+  const metadata = session.metadata || {};
+  const lineItems = session.line_items?.data || [];
+  const shippingAddress = session.shipping_details?.address || session.customer_details?.address || null;
+  const paymentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
+
+  const rows = lineItems.length > 0
+    ? lineItems.map((item) => {
+        const isShipping = item.description?.toLowerCase().includes('shipping');
+        return {
+          qty: item.quantity || 1,
+          sku: isShipping ? 'shipping' : (metadata.sku || ''),
+          description: item.description || metadata.productName || metadata.product_name || 'Nature’s Way Soil Product',
+          size: isShipping ? '' : (metadata.sizeName || metadata.size_name || ''),
+          amountCents: item.amount_subtotal,
+        };
+      })
+    : [{
+        qty: metadata.quantity || 1,
+        sku: metadata.sku || '',
+        description: metadata.productName || metadata.product_name || 'Nature’s Way Soil Product',
+        size: metadata.sizeName || metadata.size_name || '',
+        amountCents: session.amount_subtotal,
+      }];
+
+  return {
+    id: session.id,
+    paymentId,
+    paymentStatus: session.payment_status,
+    shippingName: session.shipping_details?.name || session.customer_details?.name || 'Customer',
+    shippingAddress,
+    customerEmail: session.customer_details?.email || session.customer_email || '',
+    customerPhone: session.customer_details?.phone || '',
+    rows,
+    subtotalCents: session.amount_subtotal,
+    shippingCents: session.total_details?.amount_shipping,
+    taxCents: session.total_details?.amount_tax,
+    totalCents: session.amount_total,
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -45,48 +135,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).send('Unauthorized');
   }
 
-  const sessionId = Array.isArray(req.query.sessionId) ? req.query.sessionId[0] : req.query.sessionId;
-  if (!sessionId || !sessionId.startsWith('cs_')) {
-    return res.status(400).send('Missing or invalid Stripe Checkout Session ID');
+  const rawId = Array.isArray(req.query.sessionId) ? req.query.sessionId[0] : req.query.sessionId;
+  if (!rawId || (!rawId.startsWith('cs_') && !rawId.startsWith('pi_'))) {
+    return res.status(400).send('Missing or invalid Stripe order ID (expected a cs_... or pi_... ID)');
   }
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items.data.price.product'],
-    });
+    const data = rawId.startsWith('pi_')
+      ? await loadFromPaymentIntent(rawId)
+      : await loadFromCheckoutSession(rawId);
 
-    const metadata = session.metadata || {};
-    const lineItems = session.line_items?.data || [];
-    const shippingAddress = session.shipping_details?.address || session.customer_details?.address || null;
-    const shippingName = session.shipping_details?.name || session.customer_details?.name || 'Customer';
-    const customerEmail = session.customer_details?.email || session.customer_email || '';
-    const customerPhone = session.customer_details?.phone || '';
     const today = new Date().toLocaleDateString('en-US');
-    const paymentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
     const autoPrint = req.query.auto === '1';
 
-    const rows = lineItems.length > 0 ? lineItems.map((item) => {
-      const isShipping = item.description?.toLowerCase().includes('shipping');
-      return `
-        <tr>
-          <td>${escapeHtml(item.quantity || 1)}</td>
-          <td>${escapeHtml(isShipping ? 'shipping' : metadata.sku || '')}</td>
-          <td>${escapeHtml(item.description || metadata.productName || metadata.product_name || 'Nature’s Way Soil Product')}</td>
-          <td>${escapeHtml(isShipping ? '' : metadata.sizeName || metadata.size_name || '')}</td>
-          <td class="right">${money(item.amount_subtotal)}</td>
-        </tr>
-      `;
-    }).join('') : `
+    const rowsHtml = data.rows.map((item) => `
       <tr>
-        <td>${escapeHtml(metadata.quantity || 1)}</td>
-        <td>${escapeHtml(metadata.sku || '')}</td>
-        <td>${escapeHtml(metadata.productName || metadata.product_name || 'Nature’s Way Soil Product')}</td>
-        <td>${escapeHtml(metadata.sizeName || metadata.size_name || '')}</td>
-        <td class="right">${money(session.amount_subtotal)}</td>
+        <td>${escapeHtml(item.qty)}</td>
+        <td>${escapeHtml(item.sku)}</td>
+        <td>${escapeHtml(item.description)}</td>
+        <td>${escapeHtml(item.size)}</td>
+        <td class="right">${money(item.amountCents)}</td>
       </tr>
-    `;
+    `).join('');
 
-    const addressBlock = addressLines(shippingAddress)
+    const addressBlock = addressLines(data.shippingAddress)
       .map((line) => `<div>${escapeHtml(line)}</div>`)
       .join('') || '<div>See Stripe order details</div>';
 
@@ -95,7 +167,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 <head>
   <meta charset="utf-8" />
   <meta name="robots" content="noindex" />
-  <title>Packing Slip ${escapeHtml(session.id)}</title>
+  <title>Packing Slip ${escapeHtml(data.id)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; color: #111827; margin: 0; padding: 24px; background: #f3f4f6; }
@@ -137,19 +209,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       </div>
       <div class="muted" style="text-align:right;line-height:1.6;">
         <div><strong>Date:</strong> ${escapeHtml(today)}</div>
-        <div><strong>Stripe Session:</strong> ${escapeHtml(session.id)}</div>
-        <div><strong>Payment:</strong> ${escapeHtml(paymentId)}</div>
-        <div><strong>Status:</strong> ${escapeHtml(session.payment_status)}</div>
+        <div><strong>Order ID:</strong> ${escapeHtml(data.id)}</div>
+        <div><strong>Payment:</strong> ${escapeHtml(data.paymentId)}</div>
+        <div><strong>Status:</strong> ${escapeHtml(data.paymentStatus)}</div>
       </div>
     </header>
 
     <section class="grid">
       <div class="box">
         <h2>Ship To</h2>
-        <strong>${escapeHtml(shippingName)}</strong>
+        <strong>${escapeHtml(data.shippingName)}</strong>
         ${addressBlock}
-        ${customerPhone ? `<div style="margin-top:8px;">Phone: ${escapeHtml(customerPhone)}</div>` : ''}
-        ${customerEmail ? `<div>Email: ${escapeHtml(customerEmail)}</div>` : ''}
+        ${data.customerPhone ? `<div style="margin-top:8px;">Phone: ${escapeHtml(data.customerPhone)}</div>` : ''}
+        ${data.customerEmail ? `<div>Email: ${escapeHtml(data.customerEmail)}</div>` : ''}
       </div>
       <div class="box">
         <h2>Seller</h2>
@@ -164,14 +236,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       <thead>
         <tr><th>Qty</th><th>SKU</th><th>Product</th><th>Size</th><th class="right">Line Total</th></tr>
       </thead>
-      <tbody>${rows}</tbody>
+      <tbody>${rowsHtml}</tbody>
     </table>
 
     <section class="totals">
-      <div><span>Subtotal</span><span>${money(session.amount_subtotal)}</span></div>
-      <div><span>Shipping</span><span>${money(session.total_details?.amount_shipping)}</span></div>
-      <div><span>Tax</span><span>${money(session.total_details?.amount_tax)}</span></div>
-      <div class="total"><span>Total Paid</span><span>${money(session.amount_total)}</span></div>
+      <div><span>Subtotal</span><span>${money(data.subtotalCents)}</span></div>
+      <div><span>Shipping</span><span>${money(data.shippingCents)}</span></div>
+      <div><span>Tax</span><span>${money(data.taxCents)}</span></div>
+      <div class="total"><span>Total Paid</span><span>${money(data.totalCents)}</span></div>
     </section>
 
     <section class="checklist">

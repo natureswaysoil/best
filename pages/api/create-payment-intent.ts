@@ -227,6 +227,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       currency: 'usd',
       automatic_payment_methods: { enabled: true },
       receipt_email: customer?.email,
+      shipping: {
+        name: customer?.name || 'Customer',
+        phone: address.phone || customer?.phone || undefined,
+        address: {
+          line1: address.line1,
+          line2: address.line2 || undefined,
+          city: address.city,
+          state: address.state,
+          postal_code: address.postal_code,
+          country: address.country || 'US',
+        },
+      },
       metadata: {
         product_id: productId,
         product_name: productName,
@@ -253,6 +265,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: 'pending',
         total: Number((totalCents / 100).toFixed(2)),
         tax: Number((taxCents / 100).toFixed(2)),
+        email: customer?.email || null,
+        name: customer?.name || null,
         shipping_state: address.state,
         shipping_county: null, // You can add county field to your form if needed
         shipping_zip: address.postal_code,
