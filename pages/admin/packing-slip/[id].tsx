@@ -122,9 +122,15 @@ const th: React.CSSProperties = { padding: 10, borderBottom: '1px solid #d1d5db'
 const td: React.CSSProperties = { padding: 10, borderBottom: '1px solid #e5e7eb', verticalAlign: 'top' };
 
 export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const configuredSecret = process.env.PRINT_QUEUE_SECRET || process.env.PRINT_SLIP_TOKEN;
+  const providedSecret = Array.isArray(ctx.query.secret) ? ctx.query.secret[0] : ctx.query.secret;
+
+  if (!configuredSecret || providedSecret !== configuredSecret) {
+    return { notFound: true };
+  }
+
   const id = ctx.params?.id as string;
   const supabase = getServiceSupabase();
-
   const { data: order } = await supabase
     .from('orders')
     .select('*')
