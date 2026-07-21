@@ -123,7 +123,14 @@ export default function AdminOrders({ orders, error }: Props) {
 const th: React.CSSProperties = { textAlign: 'left', padding: 12, borderBottom: '1px solid #e5e7eb', color: '#374151' };
 const td: React.CSSProperties = { padding: 12, borderBottom: '1px solid #e5e7eb', verticalAlign: 'top' };
 
-export const getServerSideProps: GetServerSideProps<Props> = async () => {
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  const configuredSecret = process.env.PRINT_QUEUE_SECRET || process.env.PRINT_SLIP_TOKEN;
+  const providedSecret = Array.isArray(ctx.query.secret) ? ctx.query.secret[0] : ctx.query.secret;
+
+  if (!configuredSecret || providedSecret !== configuredSecret) {
+    return { notFound: true };
+  }
+
   try {
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
@@ -133,14 +140,15 @@ export const getServerSideProps: GetServerSideProps<Props> = async () => {
       .limit(100);
 
     if (error) {
-      return { props: { orders: [], error: error.message } };
+      return { props: { orders: [], secret: providedSecret as string, error: error.message } };
     }
 
-    return { props: { orders: (data || []) as OrderRow[] } };
+    return { props: { orders: (data || []) as OrderRow[], secret: providedSecret as string } };
   } catch (error) {
     return {
       props: {
         orders: [],
+        secret: providedSecret as string,
         error: error instanceof Error ? error.message : 'Unable to load orders.',
       },
     };
