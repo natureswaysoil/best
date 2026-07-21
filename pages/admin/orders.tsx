@@ -84,7 +84,10 @@ export default function AdminOrders({ orders, secret, error }: Props) {
                 <td style={td}>{money(order.total)}</td>
                 <td style={td}>
                   {order.pi_id ? (
-                    <Link href={`/admin/packing-slip/${order.pi_id}`} style={{ color: '#14532d', fontWeight: 700 }}>
+                    <Link
+                      href={{ pathname: '/admin/packing-slip/[id]', query: { id: order.pi_id, secret } }}
+                      style={{ color: '#14532d', fontWeight: 700 }}
+                    >
                       Print Slip
                     </Link>
                   ) : (
