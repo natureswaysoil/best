@@ -83,7 +83,7 @@ export default function PackingSlip({ order, items }: Props) {
             <th style={th}>Product Name</th>
             <th style={th}>SKU</th>
             <th style={{ ...th, textAlign: 'center' }}>Qty</th>
-            <th style={{ ...th, textAlign: 'right' }}>Price</th>
+            <th style={{ ...th, textAlign: 'right' }}>Line Total</th>
           </tr>
         </thead>
         <tbody>
@@ -93,7 +93,7 @@ export default function PackingSlip({ order, items }: Props) {
                 <td style={td}><strong>{itemDisplayName(item)}</strong></td>
                 <td style={td}>{item.sku}</td>
                 <td style={{ ...td, textAlign: 'center', fontWeight: 700 }}>{item.qty}</td>
-                <td style={{ ...td, textAlign: 'right' }}>{money(item.price)}</td>
+                <td style={{ ...td, textAlign: 'right' }}>{money(Number((item as any).unit_price ?? item.price) * item.qty)}</td>
               </tr>
             ))
           ) : (
