@@ -18,6 +18,7 @@ type OrderRow = {
 
 type Props = {
   orders: OrderRow[];
+  secret: string;
   error?: string;
 };
 
@@ -26,11 +27,13 @@ const money = (value: number | null) =>
     ? value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
     : '—';
 
-export default function AdminOrders({ orders, error }: Props) {
+export default function AdminOrders({ orders, secret, error }: Props) {
   const handleShipOrder = (piId: string | null) => {
     if (!piId) return;
 
-    window.open(`/admin/packing-slip/${piId}`, '_blank', 'noopener,noreferrer');
+    const qs = secret ? `?secret=${encodeURIComponent(secret)}` : '';
+
+    window.open(`/admin/packing-slip/${piId}${qs}`, '_blank', 'noopener,noreferrer');
     window.open(`https://ss.shipstation.com/#/orders/all?quickSearch=${encodeURIComponent(piId)}`, '_blank', 'noopener,noreferrer');
   };
 
