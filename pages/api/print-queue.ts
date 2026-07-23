@@ -32,12 +32,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const token = process.env.PRINT_SLIP_TOKEN || process.env.PRINT_QUEUE_SECRET || '';
 
   try {
-    const sessions = await stripe.checkout.sessions.list({
+    const [sessions, paymentIntents] = await Promise.all([stripe.checkout.sessions.list({
       limit,
       expand: ['data.line_items'],
-    });
+    }), stripe.paymentIntents.list({ limit })]);
 
-    const orders = sessions.data
+    const sessionOrders = sessions.data
       .filter((session) => session.payment_status === 'paid')
       .map((session) => {
         const metadata = session.metadata || {};
@@ -57,6 +57,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           printableUrl,
         };
       });
+
+    const sessionPaymentIds = new Set(sessionOrders.map((order) => order.paymentIntentId).filter(Boolean));
+    const paymentOrders = paymentIntents.data
+      .filter((pi) => pi.status === 'succeeded' && !sessionPaymentIds.has(pi.id))
+      .map((pi) => {
+        const metadata = pi.metadata || {};
+        const printableUrl = `${siteUrl}/api/packing-slip/payment/${pi.id}?token=${encodeURIComponent(token)}&auto=1`;
+        return {
+          sessionId: pi.id,
+          paymentIntentId: pi.id,
+          created: pi.created,
+          customerName: pi.shipping?.name || null,
+          customerEmail: pi.receipt_email || null,
+          productName: metadata.product_name || pi.description || 'Nature’s Way Soil Product',
+          sizeName: metadata.size_name || '',
+          sku: metadata.sku || '',
+          quantity: Number(metadata.quantity || 1),
+          amountTotal: (pi.amount_received || pi.amount || 0) / 100,
+          printableUrl,
+        };
+      });
+
+    const orders = [...sessionOrders, ...paymentOrders]
+      .sort((a, b) => b.created - a.created)
+      .slice(0, limit);
 
     return res.status(200).json({ orders });
   } catch (error) {
