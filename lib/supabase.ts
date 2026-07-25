@@ -1,24 +1,31 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const requireEnvironmentVariable = (name: string) => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is not configured`);
+  }
+  return value;
+};
 
-if (!supabaseUrl) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_URL is not configured');
-}
-
-if (!supabaseAnonKey) {
-  throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Create the public client only when a request or browser feature needs it.
+ *
+ * Next.js imports page modules while collecting build metadata. Throwing at
+ * module scope makes unrelated pages fail to build when optional Supabase
+ * variables are not present in that build environment.
+ */
+export const getSupabase = () =>
+  createClient(
+    requireEnvironmentVariable('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnvironmentVariable('NEXT_PUBLIC_SUPABASE_ANON_KEY')
+  );
 
 export const getServiceSupabase = () => {
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseServiceKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
-  }
+  const supabaseUrl = requireEnvironmentVariable('NEXT_PUBLIC_SUPABASE_URL');
+  const supabaseServiceKey = requireEnvironmentVariable(
+    'SUPABASE_SERVICE_ROLE_KEY'
+  );
 
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { persistSession: false },
