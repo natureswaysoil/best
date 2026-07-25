@@ -52,11 +52,23 @@ async function readExistingArticles() {
   }
 }
 
-function callOpenAI(prompt, systemPrompt) {
+const OPENAI_MAX_ATTEMPTS = Number(process.env.OPENAI_MAX_ATTEMPTS || 5);
+const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 120000);
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isRetryableStatus(status) {
+  return status === 408 || status === 409 || status === 429 || status >= 500;
+}
+
+function callOpenAIOnce(prompt, systemPrompt) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify({
       model: 'gpt-4o-mini',
       max_tokens: 2600,
+      response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
@@ -75,17 +87,71 @@ function callOpenAI(prompt, systemPrompt) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
+        const requestId = res.headers['x-request-id'] || res.headers['request-id'] || '';
+        const retryAfter = Number(res.headers['retry-after'] || 0);
         try {
           const parsed = JSON.parse(data);
-          if (parsed.error) return reject(new Error(parsed.error.message));
-          resolve(parsed.choices[0].message.content);
-        } catch (e) { reject(e); }
+          if (res.statusCode < 200 || res.statusCode >= 300 || parsed.error) {
+            const error = new Error(parsed.error?.message || `OpenAI returned HTTP ${res.statusCode}`);
+            error.status = res.statusCode;
+            error.requestId = requestId;
+            error.retryAfterMs = retryAfter > 0 ? retryAfter * 1000 : 0;
+            return reject(error);
+          }
+          const content = parsed.choices?.[0]?.message?.content;
+          if (!content) {
+            const error = new Error('OpenAI response did not contain message content');
+            error.status = res.statusCode;
+            error.requestId = requestId;
+            return reject(error);
+          }
+          resolve(content);
+        } catch (cause) {
+          const error = new Error(`Could not parse OpenAI response: ${cause.message}`);
+          error.status = res.statusCode;
+          error.requestId = requestId;
+          reject(error);
+        }
       });
     });
-    req.on('error', reject);
+    req.setTimeout(OPENAI_TIMEOUT_MS, () => {
+      req.destroy(new Error(`OpenAI request timed out after ${OPENAI_TIMEOUT_MS}ms`));
+    });
+    req.on('error', error => {
+      error.networkError = true;
+      reject(error);
+    });
     req.write(body);
     req.end();
   });
+}
+
+async function callOpenAI(prompt, systemPrompt) {
+  let lastError;
+  for (let attempt = 1; attempt <= OPENAI_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await callOpenAIOnce(prompt, systemPrompt);
+    } catch (error) {
+      lastError = error;
+      const retryable = error.networkError || isRetryableStatus(Number(error.status || 0));
+      const requestId = error.requestId ? ` request_id=${error.requestId}` : '';
+      if (!retryable || attempt === OPENAI_MAX_ATTEMPTS) {
+        throw new Error(
+          `OpenAI request failed after ${attempt} attempt(s): ${error.message}.${requestId}`
+        );
+      }
+
+      const exponentialDelay = Math.min(30000, 2000 * (2 ** (attempt - 1)));
+      const jitter = Math.floor(Math.random() * 750);
+      const delayMs = Math.max(error.retryAfterMs || 0, exponentialDelay + jitter);
+      await logActivity(
+        `OpenAI transient error on attempt ${attempt}/${OPENAI_MAX_ATTEMPTS}: ` +
+        `${error.message}.${requestId} Retrying in ${Math.ceil(delayMs / 1000)}s`
+      );
+      await sleep(delayMs);
+    }
+  }
+  throw lastError;
 }
 
 async function generateUniqueTopic(existingTitles) {
