@@ -51,7 +51,7 @@ function hydrateSecret(name) {
 function hydrateSecrets() {
   OPENAI_API_KEY = OPENAI_API_KEY || hydrateSecret('OPENAI_API_KEY');
   if (OPENAI_API_KEY) console.log('Loaded OPENAI_API_KEY for voiceover.');
-  else console.log('OPENAI_API_KEY not found. Adding low-volume background audio only.');
+  else throw new Error('OPENAI_API_KEY is required; refusing to produce a silent or tone-only production video.');
 }
 function readJson(file, fallback = {}) {
   try { return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback; }
@@ -73,9 +73,8 @@ function narrationFromPlan(plan) {
   const productName = clean(plan.productName || plan.productId || 'Nature\'s Way Soil product');
   const cta = clean((plan.cta || '').replace(/\n/g, ' '));
   const words = [
-    productName,
-    ...sceneTexts,
-    cta || 'Visit NaturesWaySoil.com to shop direct and save.'
+    ...sceneTexts.slice(0, 4),
+    cta || `Shop ${productName} at NaturesWaySoil.com.`
   ].join('. ');
   return words.replace(/\.\./g, '.').slice(0, 900);
 }
@@ -158,7 +157,7 @@ async function processProduct(productId) {
   const narration = narrationFromPlan(plan);
   const hasVoice = await createVoiceover(narration, voiceFile);
   if (hasVoice) console.log(`Voiceover created for ${productId}.`);
-  else console.log(`Using background audio fallback for ${productId}.`);
+  else throw new Error(`Voiceover generation failed for ${productId}; refusing to publish tone-only audio.`);
 
   addAudio(videoFile, finalFile, hasVoice ? voiceFile : null);
   if (replaceOriginal) {

@@ -88,6 +88,13 @@ async function main() {
         SOCIAL_VARIATION_HOOK: `v${variation}`,
         VIDEO_VARIATION_INDEX: String(variation)
       });
+      run('node', ['scripts/add-audio-to-seed-videos.mjs'], {
+        PRODUCT_IDS: product.id,
+        REPLACE_ORIGINAL_AUDIO: '1'
+      });
+      run('node', ['scripts/validate-social-video.mjs'], {
+        VIDEO_FILE: path.join(VIDEOS_DIR, `${product.id}.mp4`)
+      });
 
       const sourceMp4 = path.join(VIDEOS_DIR, `${product.id}.mp4`);
       const sourceJpg = path.join(VIDEOS_DIR, `${product.id}.jpg`);
