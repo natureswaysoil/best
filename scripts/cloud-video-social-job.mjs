@@ -30,6 +30,7 @@ const SECRET_PROJECT_ID =
 const DEFAULT_SITE_URL = 'https://www.natureswaysoil.com';
 const SECRET_NAMES = [
   'PEXELS_API_KEY',
+  'OPENAI_API_KEY',
   'NEXT_PUBLIC_SITE_URL',
   'VIDEO_OUTPUT_BUCKET',
   'VIDEO_OUTPUT_PREFIX',
@@ -128,7 +129,7 @@ function uploadOutputsToCloudStorage() {
   }
 
   run('gcloud', ['storage', 'cp', '--recursive', ...files, destination]);
-  run('gcloud', ['storage', 'objects', 'update', `${destination}*`, '--cache-control=public, max-age=31536000, immutable']);
+  run('gcloud', ['storage', 'objects', 'update', `${destination}*`, '--cache-control=public, max-age=300, must-revalidate']);
 
   if (process.env.MAKE_GCS_VIDEOS_PUBLIC === '1') {
     run('gcloud', ['storage', 'objects', 'update', `${destination}*`, '--add-acl-grant=entity=AllUsers,role=READER']);

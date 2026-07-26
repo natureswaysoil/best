@@ -44,6 +44,8 @@ const FFMPEG_PRESET = process.env.FFMPEG_PRESET || 'medium';
 const VIDEO_CRF = String(process.env.VIDEO_CRF || '18');
 const PEXELS_MIN_HEIGHT = Number(process.env.PEXELS_MIN_HEIGHT || 1080);
 const PEXELS_PER_PAGE = Number(process.env.PEXELS_PER_PAGE || 20);
+const MIN_VIDEO_SECONDS = Number(process.env.MIN_VIDEO_SECONDS || 18);
+const MAX_VIDEO_SECONDS = Number(process.env.MAX_VIDEO_SECONDS || 30);
 
 const FALLBACK_SCENES = [
   { text: 'Start with the soil.', query: 'healthy garden soil close up', seconds: 4, broll: ['soil', 'garden'] },
@@ -150,10 +152,43 @@ function productSeeds() {
     .map((product) => ({
       ...product,
       productName: product.name || product.productName || product.id,
-      scenes: Array.isArray(product.scenes) && product.scenes.length ? product.scenes : FALLBACK_SCENES,
+      cta: product.cta || 'Shop now at NaturesWaySoil.com',
+      scenes: Array.isArray(product.scenes) && product.scenes.length ? product.scenes : productScenes(product),
       keywords: Array.isArray(product.keywords) ? product.keywords : []
     }))
     .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+}
+function productScenes(product) {
+  const queries = Array.isArray(product.brollQueries) ? product.brollQueries.filter(Boolean) : [];
+  if (queries.length < 4) return FALLBACK_SCENES;
+  const isDogLawn = /\b(dog|urine|pet)\b/i.test(`${product.name || ''} ${product.category || ''}`);
+  const copy = isDogLawn
+    ? [
+        'Dog urine spots start below the grass.',
+        'Treat the affected soil - not just the color.',
+        'Enzymes and humic acid support lawn recovery.',
+        'Pet-safe when used as directed.'
+      ]
+    : [
+        `Made for ${clean(product.category || 'healthier soil')}.`,
+        'Support stronger roots at the soil level.',
+        clean(product.description || 'Condition soil for healthier growth.').split(/[.!?]/)[0],
+        'Simple to add to your regular care routine.'
+      ];
+  return [
+    ...copy.map((text, index) => ({
+      text,
+      query: queries[index],
+      seconds: 4,
+      broll: String(queries[index]).split(/\s+/).slice(0, 4)
+    })),
+    {
+      text: 'Shop now at NaturesWaySoil.com',
+      product: true,
+      endCard: true,
+      seconds: 4
+    }
+  ];
 }
 function validateSeed(product) {
   const brollScenes = product.scenes.filter((scene) => !scene.product && !scene.endCard && scene.query);
@@ -278,8 +313,9 @@ function motionScene(text, out, seconds, productName) {
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
 }
 function productScene(image, text, out, seconds, product, endCard = false) {
-  if (!image || !probeMedia(image)) return motionScene(endCard ? product.cta : text, out, seconds, product.productName);
-  const tf = textFile(endCard ? product.cta : text, endCard ? 28 : 26);
+  const displayText = endCard ? (product.cta || text || 'Shop now at NaturesWaySoil.com') : text;
+  if (!image || !probeMedia(image)) return motionScene(displayText, out, seconds, product.productName);
+  const tf = textFile(displayText, endCard ? 28 : 26);
   const pf = textFile(product.productName, 24);
   const frames = Math.max(1, seconds * FPS);
   const productWidth = endCard ? 760 : 820;
@@ -289,7 +325,7 @@ function productScene(image, text, out, seconds, product, endCard = false) {
   const filter = [
     `[0:v]format=yuv420p,drawbox=x=0:y=0:w=iw:h=ih:color=0x244f31@1:t=fill[base]`,
     `[base]drawbox=x=70:y=250:w=940:h=1150:color=white@0.10:t=fill[panel]`,
-    `[1:v]scale=${productWidth}:-2:force_original_aspect_ratio=decrease,format=rgba,zoompan=z='min(zoom+0.0009,1.045)':d=${frames}:s=${productWidth}x${Math.round(productWidth * 1.18)}:fps=${FPS}[prod]`,
+    `[1:v]scale=${productWidth}:-2:force_original_aspect_ratio=decrease,format=rgba,zoompan=z='min(zoom+0.0009,1.045)':d=1:s=${productWidth}x${Math.round(productWidth * 1.18)}:fps=${FPS}[prod]`,
     `[panel][prod]overlay=x=(W-w)/2:y=${productY}:format=auto[withprod]`,
     `[withprod]${brand(100)}[branded]`,
     `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:box=1:boxcolor=black@0.22:boxborderw=14:x=72:y=${titleY}:line_spacing=10[name]`,
@@ -302,7 +338,7 @@ function imageScene(image, text, out, seconds, product) {
   const tf = textFile(text, 25);
   const frames = Math.max(1, seconds * FPS);
   const filter = [
-    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0007,1.035)':d=${frames}:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`,
+    `[0:v]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},zoompan=z='min(zoom+0.0007,1.035)':d=1:s=${W}x${H}:fps=${FPS},format=yuv420p[bg]`,
     `[bg]drawbox=x=0:y=0:w=iw:h=ih:color=black@0.10:t=fill[shade]`,
     `[shade]${brand(110)}[branded]`,
     `[branded]${caption(tf, 'h-520', 64)}[vout]`
@@ -368,6 +404,10 @@ async function build(product) {
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-ss', '00:00:01', '-i', mp4, '-frames:v', '1', '-q:v', '2', jpg]);
   const probe = capture('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height,duration', '-of', 'json', mp4]);
   const metadata = probe ? JSON.parse(probe).streams?.[0] || {} : {};
+  const actualDuration = Number(metadata.duration || 0);
+  if (actualDuration < MIN_VIDEO_SECONDS || actualDuration > MAX_VIDEO_SECONDS) {
+    throw new Error(`${product.id} failed duration QA: ${actualDuration.toFixed(2)}s (required ${MIN_VIDEO_SECONDS}-${MAX_VIDEO_SECONDS}s).`);
+  }
   const plan = {
     productId: product.id,
     productName: product.productName,
