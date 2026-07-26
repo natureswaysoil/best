@@ -11,6 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createHmac } from 'crypto';
 import { buildForcedSocialContent } from './social-caption-overrides.mjs';
+import { createTwitterOAuth2UserClient, hasTwitterOAuth2User } from './twitter-oauth2.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
@@ -46,12 +47,12 @@ function requestedPlatforms(env = process.env) {
 function configuredPlatforms(env = process.env) {
   const configured = [];
   if (env.INSTAGRAM_ACCESS_TOKEN && env.INSTAGRAM_IG_ID) configured.push('instagram');
-  if (
+  if (hasTwitterOAuth2User(env) || (
     env.TWITTER_API_KEY &&
     env.TWITTER_API_SECRET &&
     env.TWITTER_ACCESS_TOKEN &&
     (env.TWITTER_ACCESS_TOKEN_SECRET || env.TWITTER_ACCESS_SECRET)
-  ) configured.push('twitter');
+  )) configured.push('twitter');
   if (env.YT_CLIENT_ID && env.YT_CLIENT_SECRET && env.YT_REFRESH_TOKEN) configured.push('youtube');
   if (env.FACEBOOK_PAGE_ID && (env.FACEBOOK_PAGE_ACCESS_TOKEN || env.FACEBOOK_ACCESS_TOKEN)) configured.push('facebook');
   if (env.PINTEREST_ACCESS_TOKEN && env.PINTEREST_BOARD_ID) configured.push('pinterest');
@@ -454,11 +455,16 @@ class SocialMediaAutoPoster {
 
   async postToTwitter(product) {
     try {
-      const TWITTER_API_KEY = process.env.TWITTER_API_KEY;
-      const TWITTER_ACCESS_TOKEN = process.env.TWITTER_ACCESS_TOKEN;
+      const useOAuth2 = hasTwitterOAuth2User(process.env);
+      const hasOAuth1 = Boolean(
+        process.env.TWITTER_API_KEY &&
+        process.env.TWITTER_API_SECRET &&
+        process.env.TWITTER_ACCESS_TOKEN &&
+        (process.env.TWITTER_ACCESS_TOKEN_SECRET || process.env.TWITTER_ACCESS_SECRET)
+      );
 
-      if (!TWITTER_API_KEY || !TWITTER_ACCESS_TOKEN) {
-        throw new Error('Twitter OAuth credentials not configured (need TWITTER_API_KEY + TWITTER_ACCESS_TOKEN)');
+      if (!useOAuth2 && !hasOAuth1) {
+        throw new Error('Twitter user credentials not configured (OAuth 2 refresh token preferred)');
       }
 
       if (this.postedContent.twitter[product.id]) {
@@ -468,10 +474,16 @@ class SocialMediaAutoPoster {
 
       const content = this.generateSocialContent(product, 'twitter');
       let tweetData;
+      let oauth2Client = null;
+      if (useOAuth2) {
+        const refreshed = await createTwitterOAuth2UserClient();
+        oauth2Client = refreshed.client;
+        this.log(`Twitter OAuth 2.0 user authorization refreshed (token rotated: ${refreshed.rotated})`);
+      }
 
       if (this.hasLocalVideo(product) && process.env.TWITTER_FORCE_LINK_ONLY !== '1') {
         try {
-          const mediaId = await this.uploadVideoToTwitter(product);
+          const mediaId = await this.uploadVideoToTwitter(product, oauth2Client);
           tweetData = {
             text: content.text,
             media: { media_ids: [mediaId] }
@@ -489,26 +501,27 @@ class SocialMediaAutoPoster {
         tweetData = { text: `${content.text}${videoText}` };
       }
 
-      const url = 'https://api.twitter.com/2/tweets';
-
-      // Build OAuth 1.0a header (required for write operations)
-      const authHeader = await this.buildOAuth1Header('POST', url, {});
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(tweetData)
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Twitter posting failed: ${response.status} - ${error}`);
+      let result;
+      if (oauth2Client) {
+        const posted = await oauth2Client.v2.tweet(tweetData);
+        result = posted;
+      } else {
+        const url = 'https://api.twitter.com/2/tweets';
+        const authHeader = await this.buildOAuth1Header('POST', url, {});
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(tweetData)
+        });
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(`Twitter posting failed: ${response.status} - ${error}`);
+        }
+        result = await response.json();
       }
-
-      const result = await response.json();
 
       this.postedContent.twitter[product.id] = {
         tweetId: result.data.id,
@@ -530,7 +543,7 @@ class SocialMediaAutoPoster {
     }
   }
 
-  async uploadVideoToTwitter(product) {
+  async uploadVideoToTwitter(product, oauth2Client = null) {
     const videoPath = this.getVideoPath(product);
     if (!this.hasLocalVideo(product)) {
       throw new Error(`No video file found at ${videoPath}`);
@@ -539,6 +552,13 @@ class SocialMediaAutoPoster {
     const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
     const videoBuffer = fs.readFileSync(videoPath);
     const totalBytes = videoBuffer.length;
+    if (oauth2Client) {
+      this.log(`Twitter API v2 media upload for ${product.id} (${(totalBytes / 1024 / 1024).toFixed(1)}MB)`);
+      return oauth2Client.v2.uploadMedia(videoBuffer, {
+        media_type: 'video/mp4',
+        media_category: 'tweet_video'
+      });
+    }
     const chunkSize = 5 * 1024 * 1024; // 5MB per chunk
 
     this.log(`Twitter upload init for ${product.id} (${(totalBytes / 1024 / 1024).toFixed(1)}MB)`);
