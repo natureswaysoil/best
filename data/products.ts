@@ -104,17 +104,17 @@ export const allProducts: ProductData[] = [
     name: 'Organic Tomato Liquid Fertilizer',
     price: 29.99,
     image: '/images/products/NWS_003/main.jpg',
-    description: 'Made fresh weekly concentrate with Vitamin B-1 and Aloe Vera for faster root establishment, healthier transplants, and stops blossom end rot.',
+    description: 'Made-fresh-weekly concentrate with Vitamin B-1 and aloe vera to support root establishment, healthy transplants, flowering, and fruit development.',
     category: 'Fertilizer',
-    tags: ['tomato', 'organic', 'b1-vitamin', 'aloe-vera', 'vegetables', 'blossom-end-rot'],
+    tags: ['tomato', 'b1-vitamin', 'aloe-vera', 'vegetables', 'root-development', 'fruit-development'],
     features: [
-      'Balanced nutrition for maximum tomato yields',
-      'Vitamin B-1 for faster root establishment',
-      'Aloe vera for healthier transplants',
-      'Prevents blossom end rot',
+      'Balanced nutrition for tomatoes and other fruiting vegetables',
+      'Vitamin B-1 to support root establishment',
+      'Aloe vera to support healthy transplants',
+      'Supports consistent calcium uptake when used with proper watering',
       'Made fresh weekly with live microbes',
       'Easily absorbed essential nutrients',
-      'Perfect for organic tomato growing',
+      'Designed for tomato-growing programs',
       'Works on all fruiting vegetables'
     ],
     images: [
@@ -132,7 +132,7 @@ export const allProducts: ProductData[] = [
       'Shake well before mixing to distribute nutrients evenly.',
       'Dilute 2 ounces in 1 gallon of water and drench around tomato roots at planting.',
       'Apply every 10 days during flowering and fruit set; foliar spray at 1 ounce per gallon.',
-      'Stop applications two weeks before harvest and rinse sprayers after use.'
+      'Maintain even soil moisture during fruit development and rinse sprayers after use.'
     ]
   },
   {
@@ -174,22 +174,22 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_006',
-    asin: 'B0F97893PD',
-    name: 'Liquid Kelp Fertilizer - Organic Seaweed Extract',
+    asin: 'B0F8R45FJ2',
+    name: 'Liquid Kelp Fertilizer - Cold-Processed Seaweed Plant Food',
     price: 34.99,
   image: '/images/products/NWS_006/main.jpg',
-    description: 'Premium liquid kelp fertilizer made fresh weekly with organic seaweed extract, Vitamin B-1, and aloe vera. Promotes stronger roots and prevents blossom end rot.',
+    description: 'Cold-processed liquid kelp concentrate for lawns, gardens, flowers, and vegetables. Supplies naturally occurring seaweed compounds and trace minerals that support roots, plant vigor, and recovery from environmental stress.',
     category: 'Fertilizer',
-    tags: ['kelp', 'seaweed', 'organic', 'b1-vitamin', 'aloe-vera', 'root-development', 'transplant'],
+    tags: ['kelp', 'seaweed', 'root-development', 'plant-vigor', 'lawn', 'garden', 'transplant'],
     features: [
-      'Rich in natural plant hormones and trace minerals',
-      'Promotes stronger root systems',
-      'Enhances transplant success rate',
-      'Prevents blossom end rot in tomatoes',
-      'Contains Vitamin B-1 and aloe vera',
-      'Made fresh weekly for maximum potency',
-      'Safe for all plants including edibles',
-      'Excellent for stress recovery'
+      'Provides naturally occurring seaweed compounds and trace minerals',
+      'Supports strong root development and plant vigor',
+      'Useful during transplant establishment',
+      'Cold-processed to preserve kelp compounds',
+      'Suitable for lawns, gardens, flowers, and vegetables',
+      'Concentrated formula for economical application',
+      'Works as a soil drench or foliar spray',
+      'Supports recovery from heat, drought, and transplant stress'
     ],
     images: [
       '/images/products/NWS_006/main.jpg',
@@ -200,15 +200,15 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_006.jpg',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 19.99, sku: 'XX-XBWB-DF03' },
+      { name: '32 oz', price: 29.99, sku: 'XX-XBWB-DF03' },
       { name: '1 Gallon', price: 34.99, sku: '8K-DBU9-JA4K' },
       { name: '2.5 Gallon', price: 64.99, sku: '3L-41WW-8JVG' }
     ],
     usage: [
-      'Shake well before each application to revive settled kelp solids.',
+      'Shake well before each application to redistribute settled kelp solids.',
       'Mix 1-2 ounces with 1 gallon of water for soil drenches or foliar sprays.',
       'Apply weekly during active growth or every two weeks for maintenance feedings.',
-      'Use after transplant, drought, or heat stress to speed recovery and root growth.'
+      'Use after transplant, drought, or heat stress to support recovery and root growth.'
     ]
   },
   {
