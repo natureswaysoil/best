@@ -46,8 +46,8 @@ function sanitizeText(text) { return String(text || '').replace(/%/g, ' percent'
 const PRODUCT_SEEDS = {
   NWS_014: {
     productName: 'Dog Urine Neutralizer & Lawn Repair',
-    funnelUrl: '/lawn-repair',
-    cta: 'Save 15 percent on your first order.\nnatureswaysoil.com/lawn-repair',
+    funnelUrl: '/dog-urine-lawn-repair',
+    cta: 'Shop 32 oz or the bundle.\nnatureswaysoil.com/dog-urine-lawn-repair',
     scenes: [
       { text: 'Your dog is not the problem.', query: 'dog walking on green lawn', seconds: 3 },
       { text: 'Urine salts stress the soil.', query: 'yellow patch grass lawn', seconds: 4 },
@@ -55,7 +55,7 @@ const PRODUCT_SEEDS = {
       { text: 'Spray affected spots.', query: 'spraying lawn garden', seconds: 4 },
       { text: 'Water in and support recovery.', query: 'watering grass lawn', seconds: 4 },
       { text: 'Pet-safe. Not a dye.', product: true, seconds: 4 },
-      { text: 'Save 15 percent on your first order.\nnatureswaysoil.com/lawn-repair', product: true, seconds: 3 }
+      { text: 'Shop 32 oz or the bundle.\nnatureswaysoil.com/dog-urine-lawn-repair', product: true, seconds: 3 }
     ]
   },
   NWS_011: {
