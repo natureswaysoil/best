@@ -23,6 +23,7 @@ const PROJECT = path.resolve(__dirname, '..');
 const TOP_PRODUCTS_FILE = path.join(PROJECT, 'config', 'top-products.json');
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const VARIATIONS_PER_PRODUCT = Number(process.env.VIDEO_VARIATIONS_PER_PRODUCT || 5);
+const PRODUCT_LIMIT = Math.max(1, Number(process.env.SEED_PRODUCT_LIMIT || 5));
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -46,10 +47,16 @@ function copyIfExists(from, to) {
 
 function products() {
   const topProducts = readJson(TOP_PRODUCTS_FILE).topProducts || [];
-  return topProducts
+  const requestedProductId = process.env.PRODUCT_ID || process.env.VIDEO_PRODUCT_ID;
+  const ordered = topProducts
     .slice()
-    .sort((a, b) => (a.priority || 999) - (b.priority || 999))
-    .slice(0, 5);
+    .sort((a, b) => (a.priority || 999) - (b.priority || 999));
+
+  if (requestedProductId) {
+    return ordered.filter((product) => product.id === requestedProductId);
+  }
+
+  return ordered.slice(0, PRODUCT_LIMIT);
 }
 
 function cleanOldRotationFiles(productId) {
@@ -64,7 +71,9 @@ function cleanOldRotationFiles(productId) {
 async function main() {
   fs.mkdirSync(VIDEOS_DIR, { recursive: true });
   const selected = products();
-  if (selected.length !== 5) throw new Error(`Expected 5 top products, found ${selected.length}`);
+  if (!selected.length) {
+    throw new Error(`No matching top product found for ${process.env.PRODUCT_ID || process.env.VIDEO_PRODUCT_ID || 'configured selection'}`);
+  }
 
   console.log(`[Video Rotation] Building ${VARIATIONS_PER_PRODUCT} video file(s) for each of ${selected.length} products.`);
 

@@ -21,7 +21,12 @@ const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const PLANS_DIR = path.join(PROJECT, 'content', 'generated-videos');
-const SECRET_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || process.env.PROJECT_ID;
+const SECRET_PROJECT_ID =
+  process.env.SECRET_PROJECT_ID ||
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  process.env.GCLOUD_PROJECT ||
+  process.env.GCP_PROJECT ||
+  process.env.PROJECT_ID;
 const DEFAULT_SITE_URL = 'https://www.natureswaysoil.com';
 const SECRET_NAMES = [
   'PEXELS_API_KEY',
@@ -148,7 +153,7 @@ function main() {
   console.log('[Cloud Video Job] Starting Nature\'s Way Soil video + social pipeline.');
   hydrateSecrets();
   setWebsiteVideoEnvironment();
-  console.log('[Cloud Video Job] Generating five video rotations for each top-five product...');
+  console.log('[Cloud Video Job] Generating configured product video rotation(s)...');
   run('node', ['scripts/create-five-product-video-rotation.mjs']);
   uploadOutputsToCloudStorage();
   runSocialPoster();
