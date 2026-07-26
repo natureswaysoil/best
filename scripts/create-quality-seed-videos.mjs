@@ -316,11 +316,12 @@ function productScene(image, text, out, seconds, product, endCard = false) {
   const displayText = endCard ? (product.cta || text || 'Shop now at NaturesWaySoil.com') : text;
   if (!image || !probeMedia(image)) return motionScene(displayText, out, seconds, product.productName);
   const tf = textFile(displayText, endCard ? 28 : 26);
-  const pf = textFile(product.productName, 24);
+  const cardName = endCard ? clean(product.productName).split(/\s+-\s+/)[0] : product.productName;
+  const pf = textFile(cardName, endCard ? 28 : 24);
   const frames = Math.max(1, seconds * FPS);
   const productWidth = endCard ? 760 : 820;
   const productY = endCard ? 285 : 330;
-  const titleY = endCard ? 1080 : 1185;
+  const titleY = endCard ? 1215 : 1185;
   const captionY = endCard ? 'h-530' : 'h-430';
   const filter = [
     `[0:v]format=yuv420p,drawbox=x=0:y=0:w=iw:h=ih:color=0x244f31@1:t=fill[base]`,

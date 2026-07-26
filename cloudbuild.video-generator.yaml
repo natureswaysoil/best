@@ -3,7 +3,7 @@ steps:
     args:
       - build
       - -f
-      - cloud/video-generator/Dockerfile
+      - Dockerfile.social-automation
       - -t
       - gcr.io/$PROJECT_ID/nws-video-generator:latest
       - .

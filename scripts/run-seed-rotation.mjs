@@ -130,8 +130,12 @@ try {
   await hydrateSecrets();
   console.log('[Seed Rotation Entry] Build/upload phase...');
   run(['scripts/cloud-video-social-job.mjs'], { ...process.env, SKIP_SOCIAL_POSTING: '1' });
-  console.log('[Seed Rotation Entry] Rotation post phase...');
-  run(['scripts/social-seed-rotation-runner.mjs'], process.env);
+  if (process.env.SKIP_ROTATION_POSTING === '1') {
+    console.log('[Seed Rotation Entry] SKIP_ROTATION_POSTING=1. Skipping rotation post phase.');
+  } else {
+    console.log('[Seed Rotation Entry] Rotation post phase...');
+    run(['scripts/social-seed-rotation-runner.mjs'], process.env);
+  }
   console.log('[Seed Rotation Entry] Complete.');
 } catch (error) {
   console.error(`[Seed Rotation Entry] Failed: ${error.message}`);
