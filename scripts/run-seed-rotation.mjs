@@ -7,7 +7,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
-const SECRET_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || process.env.PROJECT_ID;
+const SECRET_PROJECT_ID =
+  process.env.SECRET_PROJECT_ID ||
+  process.env.GOOGLE_CLOUD_PROJECT ||
+  process.env.GCLOUD_PROJECT ||
+  process.env.GCP_PROJECT ||
+  process.env.PROJECT_ID;
 const SECRET_NAMES = [
   'PEXELS_API_KEY',
   'NEXT_PUBLIC_SITE_URL',
@@ -53,6 +58,47 @@ function capture(command, args) {
   return result.status === 0 ? result.stdout.trim() : '';
 }
 
+async function metadataAccessToken() {
+  try {
+    const response = await fetch(
+      'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token',
+      { headers: { 'Metadata-Flavor': 'Google' }, signal: AbortSignal.timeout(5000) }
+    );
+    if (!response.ok) return '';
+    const payload = await response.json();
+    return payload.access_token || '';
+  } catch {
+    return '';
+  }
+}
+
+async function accessSecret(secretName, accessToken) {
+  if (accessToken && SECRET_PROJECT_ID) {
+    try {
+      const resource = `projects/${SECRET_PROJECT_ID}/secrets/${secretName}/versions/latest`;
+      const response = await fetch(
+        `https://secretmanager.googleapis.com/v1/${resource}:access`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(10000)
+        }
+      );
+      if (response.ok) {
+        const payload = await response.json();
+        return Buffer.from(payload.payload?.data || '', 'base64').toString('utf8').trim();
+      }
+    } catch {
+      // Local development can still use the gcloud CLI fallback below.
+    }
+  }
+
+  return capture('gcloud', [
+    'secrets', 'versions', 'access', 'latest',
+    '--secret', secretName,
+    '--project', SECRET_PROJECT_ID
+  ]);
+}
+
 function secretNames() {
   const extra = String(process.env.GOOGLE_SECRET_NAMES || '')
     .split(',')
@@ -61,16 +107,17 @@ function secretNames() {
   return [...new Set([...SECRET_NAMES, ...extra])];
 }
 
-function hydrateSecrets() {
+async function hydrateSecrets() {
   if (!SECRET_PROJECT_ID) {
     console.log('[Seed Rotation Entry] No Google Cloud project id found. Using existing env only.');
     return;
   }
 
+  const accessToken = await metadataAccessToken();
   let loaded = 0;
   for (const name of secretNames()) {
     if (process.env[name]) continue;
-    const value = capture('gcloud', ['secrets', 'versions', 'access', 'latest', '--secret', name, '--project', SECRET_PROJECT_ID]);
+    const value = await accessSecret(name, accessToken);
     if (value) {
       process.env[name] = value;
       loaded += 1;
@@ -80,7 +127,7 @@ function hydrateSecrets() {
 }
 
 try {
-  hydrateSecrets();
+  await hydrateSecrets();
   console.log('[Seed Rotation Entry] Build/upload phase...');
   run(['scripts/cloud-video-social-job.mjs'], { ...process.env, SKIP_SOCIAL_POSTING: '1' });
   console.log('[Seed Rotation Entry] Rotation post phase...');

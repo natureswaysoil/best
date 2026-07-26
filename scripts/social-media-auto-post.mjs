@@ -34,6 +34,34 @@ const PRODUCTS_FILE = path.join(PROJECT, 'data', 'products.ts');
 const SHEET_PRODUCTS_FILE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
 const POSTED_SOCIAL_FILE = path.join(PROJECT, 'social-posted-content.json');
 const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.natureswaysoil.com';
+const ALL_PLATFORMS = ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'];
+
+function requestedPlatforms(env = process.env) {
+  return String(env.ENABLE_PLATFORMS || '')
+    .split(',')
+    .map((platform) => platform.trim().toLowerCase())
+    .filter((platform) => ALL_PLATFORMS.includes(platform));
+}
+
+function configuredPlatforms(env = process.env) {
+  const configured = [];
+  if (env.INSTAGRAM_ACCESS_TOKEN && env.INSTAGRAM_IG_ID) configured.push('instagram');
+  if (
+    env.TWITTER_API_KEY &&
+    env.TWITTER_API_SECRET &&
+    env.TWITTER_ACCESS_TOKEN &&
+    (env.TWITTER_ACCESS_TOKEN_SECRET || env.TWITTER_ACCESS_SECRET)
+  ) configured.push('twitter');
+  if (env.YT_CLIENT_ID && env.YT_CLIENT_SECRET && env.YT_REFRESH_TOKEN) configured.push('youtube');
+  if (env.FACEBOOK_PAGE_ID && (env.FACEBOOK_PAGE_ACCESS_TOKEN || env.FACEBOOK_ACCESS_TOKEN)) configured.push('facebook');
+  if (env.PINTEREST_ACCESS_TOKEN && env.PINTEREST_BOARD_ID) configured.push('pinterest');
+
+  const requested = requestedPlatforms(env);
+
+  return requested.length
+    ? configured.filter((platform) => requested.includes(platform))
+    : configured;
+}
 
 class SocialMediaAutoPoster {
   constructor() {
@@ -89,13 +117,7 @@ class SocialMediaAutoPoster {
   }
 
   getActivePlatforms() {
-    const active = [];
-    if (INSTAGRAM_ACCESS_TOKEN && INSTAGRAM_IG_ID) active.push('instagram');
-    if (process.env.TWITTER_API_KEY && process.env.TWITTER_ACCESS_TOKEN) active.push('twitter');
-    if (process.env.YT_CLIENT_ID && process.env.YT_CLIENT_SECRET && process.env.YT_REFRESH_TOKEN) active.push('youtube');
-    if (FACEBOOK_PAGE_ID && (FACEBOOK_PAGE_ACCESS_TOKEN || FACEBOOK_ACCESS_TOKEN)) active.push('facebook');
-    if (PINTEREST_ACCESS_TOKEN && PINTEREST_BOARD_ID) active.push('pinterest');
-    return active;
+    return configuredPlatforms(process.env);
   }
 
   log(message) {
@@ -1040,6 +1062,14 @@ class SocialMediaAutoPoster {
 
       const activePlatforms = this.getActivePlatforms();
       this.log(`Active platforms this run: ${activePlatforms.join(', ') || 'none configured'}`);
+      const requested = requestedPlatforms(process.env);
+      const missing = requested.filter((platform) => !activePlatforms.includes(platform));
+      if (missing.length) {
+        throw new Error(`Enabled platform credentials are incomplete: ${missing.join(', ')}`);
+      }
+      if (!activePlatforms.length) {
+        throw new Error('No social platforms are configured. Bind credentials to the job or set valid ENABLE_PLATFORMS values.');
+      }
 
       this.log(`Found ${products.length} products to process`);
 
@@ -1071,7 +1101,7 @@ class SocialMediaAutoPoster {
 
       try {
 
-          // Instagram posting
+        if (activePlatforms.includes('instagram')) {
           try {
             const igResult = await this.postToInstagram(product);
             if (igResult.postId && !igResult.postId.includes('placeholder')) {
@@ -1082,8 +1112,9 @@ class SocialMediaAutoPoster {
           } catch (error) {
             results.errors.instagram.push({ productId: product.id, error: error.message });
           }
+        }
 
-          // Twitter posting
+        if (activePlatforms.includes('twitter')) {
           try {
             const twitterResult = await this.postToTwitter(product);
             if (twitterResult.tweetId) {
@@ -1094,8 +1125,9 @@ class SocialMediaAutoPoster {
           } catch (error) {
             results.errors.twitter.push({ productId: product.id, error: error.message });
           }
+        }
 
-          // YouTube upload preparation
+        if (activePlatforms.includes('youtube')) {
           try {
             const ytResult = await this.uploadToYouTube(product);
             if (ytResult.videoId) {
@@ -1106,8 +1138,9 @@ class SocialMediaAutoPoster {
           } catch (error) {
             results.errors.youtube.push({ productId: product.id, error: error.message });
           }
+        }
 
-          // Facebook posting
+        if (activePlatforms.includes('facebook')) {
           try {
             const fbResult = await this.postToFacebook(product);
             if (fbResult.postId) {
@@ -1118,8 +1151,9 @@ class SocialMediaAutoPoster {
           } catch (error) {
             results.errors.facebook.push({ productId: product.id, error: error.message });
           }
+        }
 
-          // Pinterest posting
+        if (activePlatforms.includes('pinterest')) {
           try {
             const pinResult = await this.postToPinterest(product);
             if (pinResult.pinId) {
@@ -1130,6 +1164,7 @@ class SocialMediaAutoPoster {
           } catch (error) {
             results.errors.pinterest.push({ productId: product.id, error: error.message });
           }
+        }
 
       } catch (error) {
         this.log(`Error processing ${product.id}: ${error.message}`);
@@ -1184,6 +1219,20 @@ class SocialMediaAutoPoster {
         }
       });
 
+      const successCount = activePlatforms.reduce(
+        (total, platform) => total + results.success[platform].length,
+        0
+      );
+      const errorCount = activePlatforms.reduce(
+        (total, platform) => total + results.errors[platform].length,
+        0
+      );
+      if (successCount === 0 || errorCount > 0) {
+        throw new Error(
+          `Social posting incomplete: ${successCount} successful post(s), ${errorCount} error(s) across ${activePlatforms.join(', ')}`
+        );
+      }
+
       return results;
 
     } catch (error) {
@@ -1211,7 +1260,7 @@ async function main() {
 }
 
 // Export for use in other modules
-export { SocialMediaAutoPoster };
+export { ALL_PLATFORMS, SocialMediaAutoPoster, configuredPlatforms, requestedPlatforms };
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
