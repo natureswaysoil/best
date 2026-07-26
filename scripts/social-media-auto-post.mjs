@@ -39,7 +39,7 @@ const ALL_PLATFORMS = ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest
 
 function requestedPlatforms(env = process.env) {
   return String(env.ENABLE_PLATFORMS || '')
-    .split(',')
+    .split(/[,+|]/)
     .map((platform) => platform.trim().toLowerCase())
     .filter((platform) => ALL_PLATFORMS.includes(platform));
 }
