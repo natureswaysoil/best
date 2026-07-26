@@ -3,9 +3,9 @@
   "productName": "Dog Urine Neutralizer & Lawn Repair",
   "category": "Pet Care",
   "avatarAlias": "garden_expert_01",
-  "funnelUrl": "/lawn-repair",
+  "funnelUrl": "/dog-urine-lawn-repair",
   "checkoutUrl": "/checkout?productId=NWS_014&coupon=SAVE15",
-  "cta": "Save 15 percent on your first order.\nnatureswaysoil.com/lawn-repair",
+  "cta": "Shop 32 oz or the bundle.\nnatureswaysoil.com/dog-urine-lawn-repair",
   "output": "public/videos/NWS_014.mp4",
   "poster": "public/videos/NWS_014.jpg",
   "metadata": {
@@ -69,7 +69,7 @@
       "scene": 8,
       "type": "end-card",
       "source": "public/images/products/NWS_014/dog 32 front.jpg",
-      "text": "Shop direct and save."
+      "text": "Shop 32 oz or the bundle.\nnatureswaysoil.com/dog-urine-lawn-repair"
     }
   ],
   "generatedAt": "2026-05-11T21:43:06.136Z"
