@@ -38,7 +38,27 @@ function writeJson(file, data) {
 
 function loadTopProducts() {
   const config = readJson(CONFIG_FILE, { topProducts: [] });
-  return [...config.topProducts].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+  const products = [...config.topProducts]
+    .map((product) => ({
+      ...product,
+      funnelUrl: product.funnelUrl || product.websiteUrl || `/product/${product.id}`,
+      checkoutUrl: product.checkoutUrl || product.amazonUrl || `/checkout?productId=${product.id}`,
+    }))
+    .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+
+  const eligible = products.filter((product) =>
+    fs.existsSync(path.join(PROJECT, 'public', 'videos', `${product.id}.mp4`))
+  );
+  const skipped = products.filter((product) => !eligible.includes(product));
+  if (skipped.length) {
+    console.warn(
+      `Skipping products without canonical videos: ${skipped.map((product) => product.id).join(', ')}`
+    );
+  }
+  if (!eligible.length) {
+    throw new Error('No top products have a canonical public/videos/{PRODUCT_ID}.mp4 asset.');
+  }
+  return eligible;
 }
 
 function loadVariations() {
@@ -106,6 +126,7 @@ function postProduct(product, state, variationsConfig) {
     env: {
       ...process.env,
       PRODUCT_ID: product.id,
+      SOCIAL_PRODUCT_JSON: JSON.stringify(product),
       PRODUCT_FUNNEL_URL: product.funnelUrl,
       PRODUCT_CHECKOUT_URL: product.checkoutUrl,
       SOCIAL_TOP5_LOCK: '1',

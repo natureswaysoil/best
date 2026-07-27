@@ -146,6 +146,21 @@ class SocialMediaAutoPoster {
 
   loadProducts() {
     try {
+      const lockedProductId = process.env.PRODUCT_ID;
+      const suppliedProductJson = process.env.SOCIAL_PRODUCT_JSON;
+      if (suppliedProductJson) {
+        const suppliedProduct = JSON.parse(suppliedProductJson);
+        if (
+          suppliedProduct?.id &&
+          suppliedProduct?.name &&
+          (!lockedProductId || suppliedProduct.id === lockedProductId)
+        ) {
+          this.log(`Using controller-supplied product: ${suppliedProduct.id}`);
+          return [suppliedProduct];
+        }
+        throw new Error('SOCIAL_PRODUCT_JSON does not match the requested PRODUCT_ID');
+      }
+
       // Prefer Google Sheets cache when available so product selection follows sheet data.
       if (fs.existsSync(SHEET_PRODUCTS_FILE)) {
         const sheetData = JSON.parse(fs.readFileSync(SHEET_PRODUCTS_FILE, 'utf8'));
@@ -199,8 +214,6 @@ class SocialMediaAutoPoster {
       }
 
       const filteredProducts = products.filter(p => /^NWS_\d{3}$/.test(p.id));
-      const lockedProductId = process.env.PRODUCT_ID;
-
       if (lockedProductId) {
         const lockedProducts = filteredProducts.filter((p) => p.id === lockedProductId);
         if (lockedProducts.length > 0) {
@@ -208,6 +221,9 @@ class SocialMediaAutoPoster {
           return lockedProducts;
         }
         this.log(`PRODUCT_ID lock requested but not found: ${lockedProductId}`);
+        if (process.env.SOCIAL_TOP5_LOCK === '1') {
+          throw new Error(`Locked product ${lockedProductId} is not available in the posting catalog`);
+        }
       }
 
       return filteredProducts;

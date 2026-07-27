@@ -62,10 +62,27 @@ jobs:
       - name: Load social secrets
         run: |
           set -euo pipefail
+          SECRET_PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-natureswaysoil-video}"
+          ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n 1)"
+          echo "Loading social credentials as ${ACTIVE_ACCOUNT} from project ${SECRET_PROJECT_ID}"
+
           load_secret () {
-            if gcloud secrets describe "$1" >/dev/null 2>&1; then
-              echo "$2=$(gcloud secrets versions access latest --secret=$1)" >> "$GITHUB_ENV"
+            local value
+            if ! value="$(gcloud secrets versions access latest --secret="$1" --project="$SECRET_PROJECT_ID" 2>/tmp/social-secret-error)"; then
+              echo "::warning::Could not load $1: $(tr '\n' ' ' </tmp/social-secret-error)"
+              return 0
             fi
+            if [ -z "$value" ]; then
+              echo "::warning::Secret $1 is empty"
+              return 0
+            fi
+            echo "::add-mask::$value"
+            {
+              echo "$2<<SOCIAL_SECRET_EOF"
+              echo "$value"
+              echo "SOCIAL_SECRET_EOF"
+            } >> "$GITHUB_ENV"
+            echo "Loaded $2"
           }
           load_secret INSTAGRAM_ACCESS_TOKEN INSTAGRAM_ACCESS_TOKEN
           load_secret INSTAGRAM_IG_ID INSTAGRAM_IG_ID
@@ -73,12 +90,28 @@ jobs:
           load_secret FACEBOOK_ACCESS_TOKEN FACEBOOK_ACCESS_TOKEN
           load_secret FACEBOOK_PAGE_ACCESS_TOKEN FACEBOOK_PAGE_ACCESS_TOKEN
           load_secret TWITTER_API_KEY TWITTER_API_KEY
+          load_secret TWITTER_API_SECRET TWITTER_API_SECRET
           load_secret TWITTER_ACCESS_TOKEN TWITTER_ACCESS_TOKEN
+          load_secret TWITTER_ACCESS_SECRET TWITTER_ACCESS_SECRET
+          load_secret TWITTER_CLIENT_ID TWITTER_CLIENT_ID
+          load_secret TWITTER_CLIENT_SECRET TWITTER_CLIENT_SECRET
+          load_secret TWITTER_REFRESH_TOKEN TWITTER_REFRESH_TOKEN
           load_secret YT_CLIENT_ID YT_CLIENT_ID
           load_secret YT_CLIENT_SECRET YT_CLIENT_SECRET
           load_secret YT_REFRESH_TOKEN YT_REFRESH_TOKEN
           load_secret PINTEREST_ACCESS_TOKEN PINTEREST_ACCESS_TOKEN
           load_secret PINTEREST_BOARD_ID PINTEREST_BOARD_ID
+
+      - name: Validate social platform configuration
+        run: |
+          node --input-type=module <<'NODE'
+          import { configuredPlatforms } from './scripts/social-media-auto-post.mjs';
+          const platforms = configuredPlatforms(process.env);
+          if (!platforms.length) {
+            throw new Error('No complete social credential set was loaded from Secret Manager.');
+          }
+          console.log(`Configured social platforms: ${platforms.join(', ')}`);
+          NODE
 
       - name: Generate preview
         env:
@@ -97,5 +130,6 @@ jobs:
           PRODUCT_ID: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.product_id || '' }}
           POST_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.post_mode || 'auto' }}
           SOCIAL_FORCE_IMAGE_ONLY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.force_image_only || '0' }}
+          ENABLE_PLATFORMS: 'instagram,twitter,youtube,facebook,pinterest'
           NEXT_PUBLIC_SITE_URL: 'https://www.natureswaysoil.com'
         run: node scripts/social-media-top5-post.mjs
