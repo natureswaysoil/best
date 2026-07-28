@@ -251,8 +251,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const orderData = {
         pi_id: paymentIntent.id,
         status: 'pending',
+        subtotal: Number((subtotalAfterDiscountCents / 100).toFixed(2)),
         total: Number((totalCents / 100).toFixed(2)),
         tax: Number((taxCents / 100).toFixed(2)),
+        shipping: Number((shippingCents / 100).toFixed(2)),
+        email: customer?.email || null,
+        name: customer?.name || null,
         shipping_state: address.state,
         shipping_county: null, // You can add county field to your form if needed
         shipping_zip: address.postal_code,
@@ -269,14 +273,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .single();
 
       if (orderError) {
-        console.warn('Failed to save order to Supabase:', orderError);
+        console.error(
+          'CRITICAL: Failed to save order to Supabase (payment will still succeed):',
+          orderError,
+        );
       } else if (order?.id) {
         // Save order item
         const orderItemData = {
           order_id: order.id,
           sku: sku || `${productId}-${sizeName || 'default'}`,
           qty: sanitizedQuantity,
-          price: Number((unitAmount / 100).toFixed(2)),
+          unit_price: Number((unitAmount / 100).toFixed(2)),
         };
 
         const { error: itemError } = await supabase
@@ -284,11 +291,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .insert(orderItemData);
 
         if (itemError) {
-          console.warn('Failed to save order item to Supabase:', itemError);
+          console.error(
+            'CRITICAL: Failed to save order item to Supabase (payment will still succeed):',
+            itemError,
+          );
         }
       }
     } catch (supabaseError) {
-      console.warn('Supabase integration error:', supabaseError);
+      console.error(
+        'CRITICAL: Supabase integration error (payment will still succeed):',
+        supabaseError,
+      );
       // Don't fail the payment intent creation if Supabase is down
     }
 
