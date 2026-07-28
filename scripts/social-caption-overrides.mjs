@@ -4,8 +4,13 @@ export function buildForcedSocialContent({ product, platform, baseUrl }) {
   const angle = process.env.SOCIAL_VARIATION_ANGLE || '';
   const funnelUrl = process.env.PRODUCT_FUNNEL_URL || `/product/${product.id}`;
   const checkoutUrl = process.env.PRODUCT_CHECKOUT_URL || `/checkout?productId=${product.id}&coupon=SAVE15`;
-  const fullFunnelUrl = `${baseUrl}${funnelUrl}`;
-  const fullCheckoutUrl = `${baseUrl}${checkoutUrl}`;
+  const absoluteUrl = (value) => {
+    const candidate = String(value || '').trim();
+    if (/^https?:\/\//i.test(candidate)) return candidate;
+    return new URL(candidate || '/', `${String(baseUrl).replace(/\/+$/, '')}/`).toString();
+  };
+  const fullFunnelUrl = absoluteUrl(funnelUrl);
+  const fullCheckoutUrl = absoluteUrl(checkoutUrl);
 
   if (!hook && !caption) return null;
 
