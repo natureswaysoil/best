@@ -33,10 +33,28 @@ export function validateVideoForPublishing(videoPath, { ffprobe = 'ffprobe' } = 
     '-of', 'json',
     videoPath
   ], { encoding: 'utf8', timeout: 30_000 });
-  if (result.status !== 0) {
-    throw new Error(`Video QA could not inspect ${videoPath}: ${String(result.stderr || '').trim()}`);
+  if (result.error) {
+    throw new Error(
+      `Video QA could not start ${ffprobe} for ${videoPath}: ${result.error.message}`
+    );
   }
-  const probe = JSON.parse(result.stdout || '{}');
+  if (result.signal) {
+    throw new Error(
+      `Video QA inspection was terminated by ${result.signal} for ${videoPath}`
+    );
+  }
+  if (result.status !== 0) {
+    const details = String(result.stderr || result.stdout || `exit ${result.status}`).trim();
+    throw new Error(`Video QA could not inspect ${videoPath}: ${details}`);
+  }
+  let probe;
+  try {
+    probe = JSON.parse(result.stdout || '{}');
+  } catch (error) {
+    throw new Error(
+      `Video QA received invalid ffprobe output for ${videoPath}: ${error.message}`
+    );
+  }
   const assessment = assessVideoProbe({
     ...probe,
     fileSize: fs.statSync(videoPath).size
