@@ -10,16 +10,19 @@ on:
   push:
     paths:
       - .github/workflows/generate-one-video.yml
-      - scripts/create-one-test-video.mjs
       - scripts/create-quality-seed-videos.mjs
+      - scripts/add-audio-to-seed-videos.mjs
+      - scripts/lib/video-publish-qa.mjs
       - config/top-products.json
 
 jobs:
   generate-one-video:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     env:
       PRODUCT_ID: ${{ github.event.inputs.product_id || 'NWS_014' }}
-      PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -38,13 +41,73 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate one video
-        run: node scripts/create-one-test-video.mjs
+      - name: Check Google Cloud credentials
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$GCP_SERVICE_ACCOUNT_JSON" ]; then
+            echo "Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"
+            exit 1
+          fi
 
-      - name: Verify generated video
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Load required video-generation secrets
+        env:
+          REPOSITORY_PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          REPOSITORY_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          SECRET_PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-natureswaysoil-video}"
+
+          load_required_secret () {
+            local secret_name="$1"
+            local env_name="$2"
+            local repository_value="$3"
+            local value="$repository_value"
+
+            if [ -z "$value" ]; then
+              value="$(gcloud secrets versions access latest --secret="$secret_name" --project="$SECRET_PROJECT_ID")"
+            fi
+            if [ -z "$value" ]; then
+              echo "Required secret $secret_name is empty"
+              exit 1
+            fi
+
+            echo "::add-mask::$value"
+            {
+              echo "$env_name<<VIDEO_SECRET_EOF"
+              echo "$value"
+              echo "VIDEO_SECRET_EOF"
+            } >> "$GITHUB_ENV"
+          }
+
+          load_required_secret PEXELS_API_KEY PEXELS_API_KEY "$REPOSITORY_PEXELS_API_KEY"
+          load_required_secret OPENAI_API_KEY OPENAI_API_KEY "$REPOSITORY_OPENAI_API_KEY"
+
+      - name: Generate production-quality video
+        run: node scripts/create-quality-seed-videos.mjs
+
+      - name: Add narration and audio
+        env:
+          PRODUCT_IDS: ${{ env.PRODUCT_ID }}
+          REPLACE_ORIGINAL_AUDIO: '1'
+        run: node scripts/add-audio-to-seed-videos.mjs
+
+      - name: Enforce publishing quality
         run: |
           test -f public/videos/${PRODUCT_ID}.mp4
-          ffprobe -v error -show_entries stream=width,height,duration -of json public/videos/${PRODUCT_ID}.mp4
+          VIDEO_PATH="public/videos/${PRODUCT_ID}.mp4" node --input-type=module -e "
+            import { validateVideoForPublishing } from './scripts/lib/video-publish-qa.mjs';
+            const result = validateVideoForPublishing(process.env.VIDEO_PATH);
+            console.log(JSON.stringify(result, null, 2));
+          "
 
       - name: Upload generated video artifact
         uses: actions/upload-artifact@v4
