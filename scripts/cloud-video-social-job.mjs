@@ -31,6 +31,7 @@ const DEFAULT_SITE_URL = 'https://www.natureswaysoil.com';
 const SECRET_NAMES = [
   'PEXELS_API_KEY',
   'OPENAI_API_KEY',
+  'OPENAI_API_KEY',
   'NEXT_PUBLIC_SITE_URL',
   'VIDEO_OUTPUT_BUCKET',
   'VIDEO_OUTPUT_PREFIX',
@@ -159,6 +160,18 @@ function main() {
   setWebsiteVideoEnvironment();
   console.log('[Cloud Video Job] Generating configured product video rotation(s)...');
   run('node', ['scripts/create-five-product-video-rotation.mjs']);
+  const topProducts = JSON.parse(
+    fs.readFileSync(path.join(PROJECT, 'config', 'top-products.json'), 'utf8')
+  ).topProducts || [];
+  const productIds = topProducts.slice(0, 5).map((product) => product.id).filter(Boolean);
+  console.log('[Cloud Video Job] Adding narration/audio before publishing...');
+  run('node', ['scripts/add-audio-to-seed-videos.mjs'], {
+    env: {
+      ...process.env,
+      PRODUCT_IDS: productIds.join(','),
+      REPLACE_ORIGINAL_AUDIO: '1'
+    }
+  });
   uploadOutputsToCloudStorage();
   runSocialPoster();
   console.log('[Cloud Video Job] Done.');

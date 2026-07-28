@@ -359,7 +359,11 @@ function brollScene(input, text, out, seconds) {
 async function build(product) {
   validateSeed(product);
   const images = productImages(product);
-  if (!images.length) console.log(`No usable product images found for ${product.id}; using branded motion fallback for product cards.`);
+  if (!images.length) {
+    throw new Error(
+      `${product.id} has no usable product image. Refusing to generate a product video without showing the product.`
+    );
+  }
   const work = fs.mkdtempSync(path.join(os.tmpdir(), `nws_quality_${product.id}_`));
   const scenes = [];
   const audit = [];
@@ -397,6 +401,17 @@ async function build(product) {
     scenes.push(out);
   }
 
+  const realBrollCount = audit.filter((scene) =>
+    ['pexels-broll', 'local-broll', 'product-image-motion'].includes(scene.type)
+  ).length;
+  const fallbackCount = audit.filter((scene) => scene.type === 'branded-motion-fallback').length;
+  if (fallbackCount > 0 || realBrollCount < 4) {
+    throw new Error(
+      `${product.id} failed visual QA: ${realBrollCount} real b-roll scenes, ` +
+      `${fallbackCount} branded fallback scenes. Require at least 4 real scenes and zero fallbacks.`
+    );
+  }
+
   const concat = path.join(work, 'concat.txt');
   fs.writeFileSync(concat, scenes.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join('\n'));
   const mp4 = path.join(OUT_DIR, `${product.id}.mp4`);
@@ -405,6 +420,18 @@ async function build(product) {
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-ss', '00:00:01', '-i', mp4, '-frames:v', '1', '-q:v', '2', jpg]);
   const probe = capture('ffprobe', ['-v', 'error', '-show_entries', 'stream=width,height,duration', '-of', 'json', mp4]);
   const metadata = probe ? JSON.parse(probe).streams?.[0] || {} : {};
+  const outputBytes = fs.statSync(mp4).size;
+  if (
+    Number(metadata.width) !== W ||
+    Number(metadata.height) !== H ||
+    Number(metadata.duration || 0) < 20 ||
+    outputBytes < 750_000
+  ) {
+    throw new Error(
+      `${product.id} failed output QA: ${metadata.width || 0}x${metadata.height || 0}, ` +
+      `${Number(metadata.duration || 0).toFixed(1)}s, ${outputBytes} bytes.`
+    );
+  }
   const actualDuration = Number(metadata.duration || 0);
   if (actualDuration < MIN_VIDEO_SECONDS || actualDuration > MAX_VIDEO_SECONDS) {
     throw new Error(`${product.id} failed duration QA: ${actualDuration.toFixed(2)}s (required ${MIN_VIDEO_SECONDS}-${MAX_VIDEO_SECONDS}s).`);

@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import { createHmac } from 'crypto';
 import { buildForcedSocialContent } from './social-caption-overrides.mjs';
 import { createTwitterOAuth2UserClient, hasTwitterOAuth2User } from './twitter-oauth2.mjs';
+import { validateVideoForPublishing } from './lib/video-publish-qa.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
@@ -95,6 +96,16 @@ class SocialMediaAutoPoster {
     }
 
     return true;
+  }
+
+  assertPublishableVideo(product) {
+    const assessment = validateVideoForPublishing(this.getVideoPath(product));
+    this.log(
+      `Video QA passed for ${product.id}: ${assessment.width}x${assessment.height}, ` +
+      `${assessment.duration.toFixed(1)}s, audio=${assessment.hasAudio}, ` +
+      `${(assessment.fileSize / 1024 / 1024).toFixed(1)}MB`
+    );
+    return assessment;
   }
 
   warnRootLevelMp4Ignored() {
@@ -740,6 +751,7 @@ class SocialMediaAutoPoster {
         throw new Error(`No video file found at ${videoPath} — run HeyGen generation first`);
       }
 
+      this.assertPublishableVideo(product);
       this.log(`Uploading ${product.id} to YouTube...`);
 
       // Step 1: Get fresh access token
@@ -1128,6 +1140,7 @@ class SocialMediaAutoPoster {
       const product = unposted[0];
       this.log(`Selected product for this run: ${product.name} (${product.id})`);
       this.log(`SCHEDULE_TICK product_id=${product.id} run_at=${new Date().toISOString()} active_platforms=${activePlatforms.join(',') || 'none'}`);
+      this.assertPublishableVideo(product);
 
       const results = {
         success: { instagram: [], twitter: [], youtube: [], facebook: [], pinterest: [] },
