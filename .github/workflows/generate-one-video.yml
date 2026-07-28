@@ -13,6 +13,7 @@ on:
       - scripts/create-quality-seed-videos.mjs
       - scripts/add-audio-to-seed-videos.mjs
       - scripts/lib/video-publish-qa.mjs
+      - scripts/lib/video-text.mjs
       - config/top-products.json
 
 jobs:
