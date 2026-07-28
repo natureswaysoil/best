@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assessVideoProbe } from '../lib/video-publish-qa.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { assessVideoProbe, validateVideoForPublishing } from '../lib/video-publish-qa.mjs';
 import { buildForcedSocialContent } from '../social-caption-overrides.mjs';
 
 test('rejects the low-resolution fallback video that reached YouTube', () => {
@@ -29,6 +32,17 @@ test('accepts a production vertical video with audio', () => {
   });
 
   assert.equal(result.ok, true);
+});
+
+test('reports a missing ffprobe executable instead of an empty inspection error', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'video-qa-'));
+  const video = path.join(dir, 'video.mp4');
+  fs.writeFileSync(video, 'not-a-video');
+
+  assert.throws(
+    () => validateVideoForPublishing(video, { ffprobe: 'definitely-missing-ffprobe' }),
+    /could not start.*ENOENT/i,
+  );
 });
 
 test('does not prefix the website onto an absolute checkout URL', () => {
