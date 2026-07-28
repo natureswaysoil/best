@@ -25,6 +25,7 @@ import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import { spawnSync } from 'child_process';
+import { wrapVideoText } from './lib/video-text.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,18 +103,7 @@ function clean(text) {
     .trim();
 }
 function wrap(text, max = 26) {
-  return clean(text).split('\n').map((line) => {
-    const words = line.split(' ');
-    const lines = [];
-    let current = '';
-    for (const word of words) {
-      const next = current ? `${current} ${word}` : word;
-      if (next.length > max && current) { lines.push(current); current = word; }
-      else current = next;
-    }
-    if (current) lines.push(current);
-    return lines.slice(0, 4).join('\n');
-  }).join('\n');
+  return wrapVideoText(clean(text), max, 4);
 }
 function textFile(text, max = 26) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nws_video_text_'));
