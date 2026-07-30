@@ -1,0 +1,56 @@
+{
+  "productId": "NWS_021",
+  "productName": "Hay, Pasture & Lawn Fertilizer - 2.5 Gallon",
+  "category": "hay pasture lawn fertilizer livestock safe",
+  "avatarAlias": null,
+  "cta": "Shop now at NaturesWaySoil.com",
+  "output": "public/videos/NWS_021.mp4",
+  "poster": "public/videos/NWS_021.jpg",
+  "metadata": {
+    "width": 1080,
+    "height": 1920,
+    "duration": "20.000000"
+  },
+  "productImages": [
+    "public/images/products/NWS_021/main.jpg",
+    "public/images/products/NWS_021/main.webp",
+    "public/images/products/NWS_021/original.jpg",
+    "public/images/products/NWS_021/original.webp",
+    "public/images/products/NWS_021/thumb.jpg",
+    "public/images/products/NWS_021/thumb.webp",
+    "public/videos/NWS_021.jpg"
+  ],
+  "sceneAudit": [
+    {
+      "scene": 1,
+      "type": "pexels-broll",
+      "query": "green pasture field rolling hills",
+      "text": "Made for hay pasture lawn fertilizer livestock safe."
+    },
+    {
+      "scene": 2,
+      "type": "pexels-broll",
+      "query": "round hay bales field",
+      "text": "Support stronger roots at the soil level."
+    },
+    {
+      "scene": 3,
+      "type": "pexels-broll",
+      "query": "cattle grazing green pasture",
+      "text": "Organic liquid fertilizer with worm castings, kelp, humic acid, yucca, and beneficial microbes, upgraded with advanced filtration for clean, clog-free spraying"
+    },
+    {
+      "scene": 4,
+      "type": "pexels-broll",
+      "query": "boom sprayer tractor field",
+      "text": "Simple to add to your regular care routine."
+    },
+    {
+      "scene": 5,
+      "type": "end-card",
+      "source": "public/images/products/NWS_021/main.jpg",
+      "text": "Shop now at NaturesWaySoil.com"
+    }
+  ],
+  "generatedAt": "2026-07-30T18:42:45.398Z"
+}
