@@ -154,32 +154,71 @@ function postProduct(product, state, variationsConfig) {
   ].slice(-100);
 }
 
-const mode = (process.env.POST_MODE || 'auto').toLowerCase();
-const productId = process.env.PRODUCT_ID;
-const topProducts = loadTopProducts();
-const variationsConfig = loadVariations();
-const state = loadState();
+export function postAutoProductWithFallback(
+  products,
+  state,
+  variationsConfig,
+  performance,
+  {
+    post = postProduct,
+    pick = pickWeightedProduct,
+    log = console.log,
+    warn = console.warn,
+  } = {}
+) {
+  const remaining = [...products];
+  const failures = [];
 
-if (mode === 'single') {
-  const product = topProducts.find((item) => item.id === productId);
-  if (!product) throw new Error(`PRODUCT_ID ${productId} is not in config/top-products.json`);
-  postProduct(product, state, variationsConfig);
-  saveState(state);
-} else if (mode === 'top5') {
-  for (const product of topProducts) postProduct(product, state, variationsConfig);
-  saveState(state);
-} else if (mode === 'next') {
-  const nextIndex = ((state.lastIndex ?? -1) + 1) % topProducts.length;
-  const product = topProducts[nextIndex];
-  postProduct(product, state, variationsConfig);
-  state.lastIndex = nextIndex;
-  saveState(state);
-} else if (mode === 'auto') {
-  const performance = loadPerformance();
-  const product = pickWeightedProduct(topProducts, performance);
-  console.log(`🎯 Auto-selected weighted product: ${product.id}`);
-  postProduct(product, state, variationsConfig);
-  saveState(state);
-} else {
-  throw new Error(`Unsupported POST_MODE ${mode}. Use single, top5, next, or auto.`);
+  while (remaining.length) {
+    const product = pick(remaining, performance);
+    log(`🎯 Auto-selected weighted product: ${product.id}`);
+    try {
+      post(product, state, variationsConfig);
+      return product;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push({ productId: product.id, message });
+      warn(`Auto-post candidate failed (${product.id}): ${message}`);
+      const index = remaining.findIndex((item) => item.id === product.id);
+      if (index >= 0) remaining.splice(index, 1);
+      else remaining.shift();
+    }
+  }
+
+  const details = failures.map((failure) => `${failure.productId}: ${failure.message}`).join(' | ');
+  throw new Error(`Auto posting failed for all eligible products. ${details}`);
+}
+
+export function runTop5PostController() {
+  const mode = (process.env.POST_MODE || 'auto').toLowerCase();
+  const productId = process.env.PRODUCT_ID;
+  const topProducts = loadTopProducts();
+  const variationsConfig = loadVariations();
+  const state = loadState();
+
+  if (mode === 'single') {
+    const product = topProducts.find((item) => item.id === productId);
+    if (!product) throw new Error(`PRODUCT_ID ${productId} is not in config/top-products.json`);
+    postProduct(product, state, variationsConfig);
+    saveState(state);
+  } else if (mode === 'top5') {
+    for (const product of topProducts) postProduct(product, state, variationsConfig);
+    saveState(state);
+  } else if (mode === 'next') {
+    const nextIndex = ((state.lastIndex ?? -1) + 1) % topProducts.length;
+    const product = topProducts[nextIndex];
+    postProduct(product, state, variationsConfig);
+    state.lastIndex = nextIndex;
+    saveState(state);
+  } else if (mode === 'auto') {
+    const performance = loadPerformance();
+    postAutoProductWithFallback(topProducts, state, variationsConfig, performance);
+    saveState(state);
+  } else {
+    throw new Error(`Unsupported POST_MODE ${mode}. Use single, top5, next, or auto.`);
+  }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runTop5PostController();
 }
