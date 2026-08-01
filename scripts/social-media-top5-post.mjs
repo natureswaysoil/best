@@ -122,7 +122,7 @@ function postProduct(product, state, variationsConfig) {
 
   const result = spawnSync('node', ['scripts/social-media-auto-post.mjs'], {
     cwd: PROJECT,
-    stdio: 'inherit',
+    encoding: 'utf8',
     env: {
       ...process.env,
       PRODUCT_ID: product.id,
@@ -139,7 +139,30 @@ function postProduct(product, state, variationsConfig) {
     },
   });
 
-  if (result.status !== 0) throw new Error(`Posting failed for ${product.id}`);
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+
+  const combinedOutput = `${result.stdout || ''}\n${result.stderr || ''}`;
+  const partialSuccessMatch = combinedOutput.match(
+    /Social posting incomplete:\s*(\d+) successful post\(s\),\s*(\d+) error\(s\)/i
+  );
+  const successfulPosts = partialSuccessMatch ? Number(partialSuccessMatch[1]) : 0;
+  const failedPlatforms = partialSuccessMatch ? Number(partialSuccessMatch[2]) : 0;
+
+  if (result.error) {
+    throw new Error(`Could not launch social posting process for ${product.id}: ${result.error.message}`);
+  }
+
+  if (result.status !== 0 && successfulPosts === 0) {
+    throw new Error(`Posting failed for ${product.id}`);
+  }
+
+  if (result.status !== 0 && successfulPosts > 0) {
+    console.warn(
+      `Partial success for ${product.id}: ${successfulPosts} platform post(s) succeeded and ${failedPlatforms} failed. ` +
+      'The product will not be posted again during this run.'
+    );
+  }
 
   state.history = [
     ...(state.history || []),
@@ -150,6 +173,9 @@ function postProduct(product, state, variationsConfig) {
       hook: variation?.hook ?? null,
       postedAt: new Date().toISOString(),
       mode: process.env.POST_MODE || 'auto',
+      status: result.status === 0 ? 'success' : 'partial-success',
+      successfulPosts: result.status === 0 ? null : successfulPosts,
+      failedPlatforms: result.status === 0 ? null : failedPlatforms,
     },
   ].slice(-100);
 }
