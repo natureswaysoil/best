@@ -1276,9 +1276,14 @@ class SocialMediaAutoPoster {
         (total, platform) => total + results.errors[platform].length,
         0
       );
-      if (successCount === 0 || errorCount > 0) {
+      if (errorCount > 0) {
+        this.log(
+          `⚠️  Social posting completed with partial errors: ${successCount} successful post(s), ${errorCount} error(s) across ${activePlatforms.join(', ')}`
+        );
+      }
+      if (successCount === 0) {
         throw new Error(
-          `Social posting incomplete: ${successCount} successful post(s), ${errorCount} error(s) across ${activePlatforms.join(', ')}`
+          `Social posting failed: 0 successful posts, ${errorCount} error(s) across ${activePlatforms.join(', ')}`
         );
       }
 
