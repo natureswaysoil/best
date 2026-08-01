@@ -15,12 +15,6 @@ name: Manual Social Post
         description: 'Set to 1 to avoid video posts and use image fallback'
         required: false
         default: '0'
-  schedule:
-    - cron: '0 12 * * *'
-    - cron: '0 15 * * *'
-    - cron: '0 18 * * *'
-    - cron: '0 21 * * *'
-    - cron: '0 0 * * *'
 
 jobs:
   post:

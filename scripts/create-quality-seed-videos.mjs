@@ -47,6 +47,10 @@ const PEXELS_MIN_HEIGHT = Number(process.env.PEXELS_MIN_HEIGHT || 1080);
 const PEXELS_PER_PAGE = Number(process.env.PEXELS_PER_PAGE || 20);
 const MIN_VIDEO_SECONDS = Number(process.env.MIN_VIDEO_SECONDS || 18);
 const MAX_VIDEO_SECONDS = Number(process.env.MAX_VIDEO_SECONDS || 30);
+const FONT_FILE = process.env.VIDEO_FONT_FILE || (process.platform === 'win32'
+  ? 'C:/Windows/Fonts/arial.ttf'
+  : '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf');
+const FONT_OPTION = `fontfile='${ff(FONT_FILE)}':`;
 
 const FALLBACK_SCENES = [
   { text: 'Start with the soil.', query: 'healthy garden soil close up', seconds: 4, broll: ['soil', 'garden'] },
@@ -282,10 +286,10 @@ async function pexels(query, outFile) {
 }
 function brand(y = 110) {
   const brandFile = textFile("Nature's Way Soil", 28);
-  return `drawtext=textfile='${ff(brandFile)}':fontcolor=white:fontsize=44:box=1:boxcolor=black@0.26:boxborderw=16:x=72:y=${y}`;
+  return `drawtext=${FONT_OPTION}textfile='${ff(brandFile)}':fontcolor=white:fontsize=44:box=1:boxcolor=black@0.26:boxborderw=16:x=72:y=${y}`;
 }
 function caption(file, y = 'h-520', size = 64) {
-  return `drawtext=textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.54:boxborderw=30:x=72:y=${y}:line_spacing=16`;
+  return `drawtext=${FONT_OPTION}textfile='${ff(file)}':fontcolor=white:fontsize=${size}:box=1:boxcolor=black@0.54:boxborderw=30:x=72:y=${y}:line_spacing=16`;
 }
 function encodeArgs(out) {
   return ['-c:v', 'libx264', '-preset', FFMPEG_PRESET, '-crf', VIDEO_CRF, '-pix_fmt', 'yuv420p', '-r', String(FPS), out];
@@ -297,7 +301,7 @@ function motionScene(text, out, seconds, productName) {
     `[0:v]format=yuv420p,drawbox=x=0:y=0:w=iw:h=ih:color=0x244f31@1:t=fill[base]`,
     `[base]drawbox=x=80:y=320:w=920:h=1020:color=white@0.08:t=fill[panel]`,
     `[panel]${brand(110)}[branded]`,
-    `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:x=72:y=260:line_spacing=12[name]`,
+    `[branded]drawtext=${FONT_OPTION}textfile='${ff(pf)}':fontcolor=white:fontsize=42:x=72:y=260:line_spacing=12[name]`,
     `[name]${caption(tf, 'h-560', 66)}[vout]`
   ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
@@ -319,7 +323,7 @@ function productScene(image, text, out, seconds, product, endCard = false) {
     `[1:v]scale=${productWidth}:-2:force_original_aspect_ratio=decrease,format=rgba,zoompan=z='min(zoom+0.0009,1.045)':d=1:s=${productWidth}x${Math.round(productWidth * 1.18)}:fps=${FPS}[prod]`,
     `[panel][prod]overlay=x=(W-w)/2:y=${productY}:format=auto[withprod]`,
     `[withprod]${brand(100)}[branded]`,
-    `[branded]drawtext=textfile='${ff(pf)}':fontcolor=white:fontsize=42:box=1:boxcolor=black@0.22:boxborderw=14:x=72:y=${titleY}:line_spacing=10[name]`,
+    `[branded]drawtext=${FONT_OPTION}textfile='${ff(pf)}':fontcolor=white:fontsize=42:box=1:boxcolor=black@0.22:boxborderw=14:x=72:y=${titleY}:line_spacing=10[name]`,
     `[name]${caption(tf, captionY, endCard ? 58 : 62)}[vout]`
   ].join(';');
   run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', `color=c=0x244f31:s=${W}x${H}:d=${seconds}`, '-loop', '1', '-t', String(seconds), '-i', image, '-filter_complex', filter, '-map', '[vout]', ...encodeArgs(out)]);
