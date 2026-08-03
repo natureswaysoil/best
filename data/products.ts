@@ -30,18 +30,18 @@ export const allProducts: ProductData[] = [
     name: "Nature's Way Soil Liquid Lawn Soil Conditioner – Humic Acid & Kelp Liquid Aeration for Compacted Soil – Root Growth Booster for Grass & Lawns – 32 oz Concentrate",
     price: 29.99,
     image: '/images/products/NWS_001/main.jpg',
-    description: '100% Natural USDA Certified Biobased Product with B-1 Vitamin and Aloe Vera Juice to improve transplants. Made fresh weekly for maximum potency.',
+    description: 'Concentrated humic acid and kelp soil conditioner for compacted lawns. Supports water movement, nutrient availability, soil biology, and stronger grass roots.',
     category: 'Fertilizer',
-    tags: ['natural', 'liquid', 'b1-vitamin', 'aloe-vera', 'house-plants', 'garden', 'microbes'],
+    tags: ['lawn', 'soil-conditioner', 'humic-acid', 'kelp', 'liquid-aeration', 'compacted-soil', 'root-growth'],
     features: [
-      'Contains billions of beneficial living microbes',
-      '100% Natural and USDA Certified Biobased',
-      'B-1 Vitamin for enhanced root development',
-      'Aloe Vera Juice improves transplant success',
-      'Made fresh weekly for optimal microbial activity',
-      'Fast absorption for quick results',
-      'Safe for children, pets, and pollinators',
-      'Easy application - just mix with water'
+      'Humic acid supports nutrient availability and soil structure',
+      'Kelp extract supports root growth and stress response',
+      'Helps water move into compacted lawn soil',
+      'Supports beneficial activity in the grass root zone',
+      'Suitable for established lawns and newly seeded areas',
+      'Concentrated liquid mixes easily with water',
+      'Can be applied with a watering can or lawn sprayer',
+      'Designed for routine lawn and soil maintenance'
     ],
     images: [
       '/images/products/NWS_001/main.jpg',
@@ -55,10 +55,10 @@ export const allProducts: ProductData[] = [
       { name: '32 oz', price: 29.99, sku: '3L-3MPJ-6BQM' }
     ],
     usage: [
-      'Shake well before each use to activate the living microbes.',
-      'Mix 2 ounces with 1 gallon of water for routine feedings or 4 ounces for transplant rescue.',
-      'Drench soil around roots until evenly moist; safe to foliar spray at the same dilution.',
-      'Repeat every 10-14 days during active growth for best results.'
+      'Shake well before each use.',
+      'Mix 2 ounces with 1 gallon of water for routine lawn applications.',
+      'Apply evenly over the lawn and water in lightly to reach the root zone.',
+      'Repeat every 2-4 weeks during active growth or when soil becomes compacted.'
     ]
   },
   {
@@ -140,7 +140,7 @@ export const allProducts: ProductData[] = [
     asin: 'B0D69LNC5T',
     name: 'Soil Booster and Loosener',
     price: 29.99,
-  image: '/images/products/NWS_001/main.jpg',
+  image: '/images/products/NWS_004/main.jpg',
     description: 'Organic formula to enhance soil health, improve aeration, and promote root growth. Ideal for gardens, lawns, and potted plants.',
     category: 'Soil Amendment',
     tags: ['soil-booster', 'aeration', 'organic', 'root-growth', 'gardens', 'lawns'],
@@ -155,8 +155,8 @@ export const allProducts: ProductData[] = [
       'Easy to apply with watering'
     ],
     images: [
-      '/images/products/NWS_001/main.jpg',
-      '/images/products/NWS_001/thumb.jpg'
+      '/images/products/NWS_004/main.jpg',
+      '/images/products/NWS_004/thumb.jpg'
     ],
     inStock: true,
     video: '/videos/NWS_004.mp4',
@@ -483,7 +483,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_022',
     name: "Nature's Way Soil Hay, Pasture & Lawn Recovery System with Liquid Biochar",
     price: 179.00,
-    image: '/images/products/NWS_021/main.jpg',
+    image: '/images/products/NWS_022/main.svg',
     description: 'Concentrated soil-support formula for hay fields, pastures, lawns, turf, and food plots. Combines liquid biochar, humic acid, fulvic acid, kelp extract, BM-1 beneficial biology, and yucca extract to support stressed soil and grass recovery.',
     category: 'Fertilizer',
     tags: ['hay', 'pasture', 'lawn', 'recovery', 'liquid-biochar', 'humic-acid', 'fulvic-acid', 'kelp', 'bm-1', 'yucca'],
@@ -498,8 +498,8 @@ export const allProducts: ProductData[] = [
       'Concentrated formula for broadcast spraying or soil drench applications'
     ],
     images: [
-      '/images/products/NWS_021/main.jpg',
-      '/images/products/NWS_021/thumb.jpg'
+      '/images/products/NWS_022/main.svg',
+      '/images/products/NWS_022/back.svg'
     ],
     inStock: true,
     sizes: [
@@ -516,7 +516,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_023',
     name: "Nature's Way Soil Living Soil Revitalizer",
     price: 24.99,
-    image: '/images/products/NWS_023/main.jpg',
+    image: '/images/products/NWS_023/main.svg',
     description: 'Living Soil Revitalizer combines premium worm castings with activated biochar, plus kelp, humic and fulvic acids, and BM-1 beneficial biology to revive tired soil, support root growth, and help hold moisture and nutrients in gardens, raised beds, and potted plants.',
     category: 'Soil Amendment',
     tags: ['living-soil', 'soil-revitalizer', 'worm-castings', 'biochar', 'kelp', 'humic-fulvic', 'bm-1', 'compost', 'raised-beds', 'garden', 'containers', 'microbes'],
@@ -531,8 +531,8 @@ export const allProducts: ProductData[] = [
       'Small-batch soil amendment from Nature\'s Way Soil, 4 lb (1.81 kg) bag'
     ],
     images: [
-      '/images/products/NWS_023/main.jpg',
-      '/images/products/NWS_023/thumb.jpg'
+      '/images/products/NWS_023/main.svg',
+      '/images/products/NWS_023/back.svg'
     ],
     inStock: true,
     sizes: [
