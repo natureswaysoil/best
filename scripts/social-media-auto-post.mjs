@@ -37,6 +37,20 @@ const SHEET_PRODUCTS_FILE = path.join(PROJECT, 'content', 'video-scripts', 'shee
 const POSTED_SOCIAL_FILE = path.join(PROJECT, 'social-posted-content.json');
 const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.natureswaysoil.com';
 const ALL_PLATFORMS = ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'];
+const MAX_TWEET_LENGTH = 280;
+
+function fitTweetText(value, suffix = '') {
+  const normalizedSuffix = suffix.trim() ? `\n${suffix.trim()}` : '';
+  const available = MAX_TWEET_LENGTH - normalizedSuffix.length;
+  if (available <= 3) return normalizedSuffix.trim().slice(0, MAX_TWEET_LENGTH);
+  const text = String(value || '').trim();
+  const fitted = text.length <= available ? text : `${text.slice(0, available - 3).trimEnd()}...`;
+  return `${fitted}${normalizedSuffix}`;
+}
+
+function shouldFailSocialRun(successCount) {
+  return successCount === 0;
+}
 
 function requestedPlatforms(env = process.env) {
   return String(env.ENABLE_PLATFORMS || '')
@@ -380,18 +394,27 @@ class SocialMediaAutoPoster {
       const mediaResult = await createResponse.json();
       const containerId = mediaResult.id;
 
-      // Poll until media container is ready.
+      // Poll until media container is ready. Reels commonly take longer than one minute.
+      const maxPolls = Math.max(1, Number.parseInt(process.env.INSTAGRAM_MEDIA_MAX_POLLS || '40', 10));
+      const pollIntervalMs = Math.max(1000, Number.parseInt(process.env.INSTAGRAM_MEDIA_POLL_MS || '3000', 10));
       let ready = false;
-      for (let i = 0; i < 20; i++) {
-        await new Promise(r => setTimeout(r, 3000));
+      let lastStatus = null;
+      for (let i = 0; i < maxPolls; i++) {
+        await new Promise(r => setTimeout(r, pollIntervalMs));
         const statusRes = await fetch(
           `https://graph.facebook.com/v19.0/${containerId}?fields=status_code&access_token=${INSTAGRAM_ACCESS_TOKEN}`
         );
+        if (!statusRes.ok) {
+          throw new Error(`Instagram media status failed: ${statusRes.status} - ${await statusRes.text()}`);
+        }
         const statusData = await statusRes.json();
+        lastStatus = statusData.status_code || null;
         if (statusData.status_code === 'FINISHED') { ready = true; break; }
         if (statusData.status_code === 'ERROR') throw new Error(`Instagram media processing error: ${JSON.stringify(statusData)}`);
       }
-      if (!ready) throw new Error('Instagram media container timed out waiting to be ready');
+      if (!ready) {
+        throw new Error(`Instagram media container timed out after ${maxPolls * pollIntervalMs / 1000}s (last status: ${lastStatus || 'unknown'})`);
+      }
 
       // Publish the media
       const publishData = {
@@ -503,29 +526,34 @@ class SocialMediaAutoPoster {
       let tweetData;
       let oauth2Client = null;
       if (useOAuth2) {
-        const refreshed = await createTwitterOAuth2UserClient();
-        oauth2Client = refreshed.client;
-        this.log(`Twitter OAuth 2.0 user authorization refreshed (token rotated: ${refreshed.rotated})`);
+        try {
+          const refreshed = await createTwitterOAuth2UserClient();
+          oauth2Client = refreshed.client;
+          this.log(`Twitter OAuth 2.0 user authorization refreshed (token rotated: ${refreshed.rotated})`);
+        } catch (error) {
+          if (!hasOAuth1) throw error;
+          this.log(`Twitter OAuth 2.0 refresh failed; falling back to OAuth 1.0a: ${error.message}`);
+        }
       }
 
       if (this.hasLocalVideo(product) && process.env.TWITTER_FORCE_LINK_ONLY !== '1') {
         try {
           const mediaId = await this.uploadVideoToTwitter(product, oauth2Client);
           tweetData = {
-            text: content.text,
+            text: fitTweetText(content.text),
             media: { media_ids: [mediaId] }
           };
         } catch (uploadError) {
           this.log(`Twitter native media upload failed, falling back to video link: ${uploadError.message}`);
           tweetData = {
-            text: `${content.text}\n🎥 Watch: ${this.getPublicVideoUrl(product)}`
+            text: fitTweetText(content.text, `Watch: ${this.getPublicVideoUrl(product)}`)
           };
         }
       } else {
         const videoText = this.hasLocalVideo(product)
           ? `\n🎥 Watch: ${this.getPublicVideoUrl(product)}`
           : '';
-        tweetData = { text: `${content.text}${videoText}` };
+        tweetData = { text: fitTweetText(content.text, videoText) };
       }
 
       let result;
@@ -554,7 +582,7 @@ class SocialMediaAutoPoster {
         tweetId: result.data.id,
         mediaId: tweetData.media?.media_ids?.[0] || null,
         usedNativeMediaUpload: Boolean(tweetData.media?.media_ids?.[0]),
-        text: content.text,
+        text: fitTweetText(content.text),
         createdAt: new Date().toISOString(),
         productId: product.id
       };
@@ -675,7 +703,7 @@ class SocialMediaAutoPoster {
 
     for (let i = 0; i < 15; i++) {
       if (info.state === 'succeeded') {
-        return { media_id_string: mediaId, processing_info: info };
+        return mediaId;
       }
       if (info.state === 'failed') {
         const err = info.error ? `${info.error.code}: ${info.error.message}` : 'unknown processing error';
@@ -1276,9 +1304,16 @@ class SocialMediaAutoPoster {
         (total, platform) => total + results.errors[platform].length,
         0
       );
-      if (successCount === 0 || errorCount > 0) {
+      if (shouldFailSocialRun(successCount)) {
         throw new Error(
           `Social posting incomplete: ${successCount} successful post(s), ${errorCount} error(s) across ${activePlatforms.join(', ')}`
+        );
+      }
+
+      if (errorCount > 0) {
+        this.log(
+          `Social posting partially completed: ${successCount} successful post(s), ${errorCount} platform error(s). ` +
+          'Successful platforms will not be duplicated by the product fallback controller.'
         );
       }
 
@@ -1309,7 +1344,7 @@ async function main() {
 }
 
 // Export for use in other modules
-export { ALL_PLATFORMS, SocialMediaAutoPoster, configuredPlatforms, requestedPlatforms };
+export { ALL_PLATFORMS, SocialMediaAutoPoster, configuredPlatforms, fitTweetText, requestedPlatforms, shouldFailSocialRun };
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
