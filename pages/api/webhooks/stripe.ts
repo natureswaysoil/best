@@ -120,7 +120,8 @@ async function processCheckoutSessionCompleted(sessionId: string) {
     expand: ['line_items.data.price.product'],
   });
 
-  const lineItem = session.line_items?.data?.[0];
+  const productLineItems = (session.line_items?.data || []).filter((item) => item.description !== 'Standard Shipping');
+  const lineItem = productLineItems[0];
   const metadata = session.metadata || {};
   const productName = metadata.productName || metadata.product_name || lineItem?.description || 'Nature’s Way Soil Product';
   const sizeName = metadata.sizeName || metadata.size_name || '';
@@ -168,13 +169,12 @@ async function processCheckoutSessionCompleted(sessionId: string) {
     await sendOrderConfirmation(customerEmail, {
       orderId: session.id,
       name: customerName,
-      items: [{
-        title: productName,
-        size: sizeName || undefined,
-        qty: quantity,
-        price: (lineItem?.amount_subtotal || Number(metadata.subtotal_cents || session.amount_subtotal || 0)) / 100,
-        sku,
-      }],
+      items: productLineItems.length ? productLineItems.map((item) => ({
+        title: item.description || productName,
+        qty: item.quantity || 1,
+        price: (item.amount_subtotal || 0) / 100,
+        sku: '',
+      })) : [{ title: productName, size: sizeName || undefined, qty: quantity, price: (lineItem?.amount_subtotal || Number(metadata.subtotal_cents || session.amount_subtotal || 0)) / 100, sku }],
       subtotal: (session.amount_subtotal || 0) / 100,
       tax: (session.total_details?.amount_tax || 0) / 100,
       shipping: (session.total_details?.amount_shipping || 0) / 100,
