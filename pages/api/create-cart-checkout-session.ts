@@ -24,7 +24,8 @@ export default async function handler(req:NextApiRequest,res:NextApiResponse) {
   });
   const subtotal = normalized.reduce((sum,x)=>sum+Math.round(x.price*100)*x.quantity,0);
   const shipping = subtotal >= 5000 ? 0 : 995;
-  const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://natureswaysoil.com';
+  const rawOrigin = String(req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL || 'https://natureswaysoil.com').trim();
+  const origin = (rawOrigin.startsWith('http://') || rawOrigin.startsWith('https://') ? rawOrigin : `https://${rawOrigin}`).replace(/\/$/, '');
   const successPath = path(req.body?.successPath,'/cart-success?session_id={CHECKOUT_SESSION_ID}');
   const cancelPath = path(req.body?.cancelPath,'/cart');
   const summary = normalized.map(x=>`${x.quantity}x ${x.product.id}`).join(', ').slice(0,500);
