@@ -1,0 +1,5 @@
+{
+  "description": "Estimated gross-margin rates used only to prioritize organic social promotion. Replace estimates with verified COGS.",
+  "defaultMarginRate": 0.5,
+  "marginRates": {}
+}

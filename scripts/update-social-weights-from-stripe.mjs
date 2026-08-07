@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
 
 const PERFORMANCE_FILE = path.join(PROJECT, 'config', 'social-performance.json');
+const ECONOMICS_FILE = path.join(PROJECT, 'config', 'product-economics.json');
 const TOP_PRODUCTS_FILE = path.join(PROJECT, 'config', 'top-products.json');
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -92,8 +93,8 @@ async function fetchRecentSales() {
 function calculateScore(record, rules) {
   const clicks = Number(record.clicks || 0);
   const orders = Number(record.orders || 0);
-  const revenue = Number(record.revenue || 0);
-  return orders * Number(rules.ordersWeight || 4) + revenue * Number(rules.revenueWeight || 0.05) + clicks * Number(rules.clicksWeight || 0.1);
+  const profit = Number(record.estimatedProfit || 0);
+  return orders * Number(rules.ordersWeight || 4) + profit * Number(rules.profitWeight || rules.revenueWeight || 0.05) + clicks * Number(rules.clicksWeight || 0.1);
 }
 
 function scoreToWeight(score, perf) {
@@ -109,6 +110,8 @@ async function main() {
     mode: 'weighted', minWeight: 1, maxWeight: 8, defaultWeight: 3,
     weights: {}, performance: {}, rules: { ordersWeight: 4, revenueWeight: 0.05, clicksWeight: 0.1 }
   });
+  const economics = readJson(ECONOMICS_FILE, { defaultMarginRate: 0.5, marginRates: {} });
+
 
   const topProducts = readJson(TOP_PRODUCTS_FILE, { topProducts: [] }).topProducts || [];
   const sales = await fetchRecentSales();
@@ -124,6 +127,8 @@ async function main() {
     };
 
     merged.score = calculateScore(merged, perf.rules || {});
+    merged.marginRate = Number(economics.marginRates?.[product.id] ?? economics.defaultMarginRate ?? 0.5);
+    merged.estimatedProfit = merged.revenue * merged.marginRate;
     perf.performance = perf.performance || {};
     perf.weights = perf.weights || {};
     perf.performance[product.id] = merged;
