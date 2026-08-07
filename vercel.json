@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/revenue-agents",
       "schedule": "17 * * * *"
+    },
+    {
+      "path": "/api/cron/government-leads",
+      "schedule": "23 12 * * *"
     }
   ]
 }
