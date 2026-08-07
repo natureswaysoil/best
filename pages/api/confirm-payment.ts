@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { getServiceSupabase } from '../../lib/supabase';
+import { sendPaymentIntentOrderNotification } from '../../lib/paymentIntentOrder';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -51,6 +52,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await supabase.from('orders').update({ status: 'paid' }).eq('pi_id', paymentIntent.id);
       } catch (databaseError) {
         console.warn('Unable to update order status:', databaseError);
+      }
+      try {
+        await sendPaymentIntentOrderNotification(paymentIntent, `confirm-${paymentIntent.id}`);
+      } catch (notificationError) {
+        // Payment is complete; notification failure must not change checkout status.
+        console.error('Order notification fallback failed:', notificationError);
       }
     }
 

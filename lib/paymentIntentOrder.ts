@@ -36,7 +36,7 @@ function addressHtml(address: Stripe.Address | null | undefined): string {
 
 export async function sendPaymentIntentOrderNotification(
   paymentIntent: Stripe.PaymentIntent,
-  stripeEventId: string,
+  _idempotencyReference?: string,
 ) {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY is not configured');
@@ -77,7 +77,7 @@ export async function sendPaymentIntentOrderNotification(
         <a href="https://dashboard.stripe.com/payments/${encodeURIComponent(paymentIntent.id)}" style="background:#111827;color:white;padding:10px 20px;text-decoration:none;border-radius:4px">View in Stripe</a>
       </p>
     `,
-  }, { idempotencyKey: `stripe-order/${stripeEventId}` });
+  }, { idempotencyKey: `stripe-order/${paymentIntent.id}` });
 
   if (error) throw error;
   return data;

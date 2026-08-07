@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import { getServiceSupabase } from '../../../lib/supabase';
 import { sendOrderConfirmation } from '../../../lib/resend';
 
+import { sendPaymentIntentOrderNotification } from '../../../lib/paymentIntentOrder';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
 });
@@ -214,6 +215,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       await processCheckoutSessionCompleted(session.id);
+    } else if (event.type === 'payment_intent.succeeded') {
+      await sendPaymentIntentOrderNotification(
+        event.data.object as Stripe.PaymentIntent,
+        event.id,
+      );
     }
   } catch (err) {
     console.error('Webhook processing error:', err);
