@@ -138,6 +138,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (err2) throw err2;
 
+    const rfqKey = Buffer.from(`${agency}|${email}`).toString('base64url').slice(0, 80);
+    for (const delayHours of [24, 72]) {
+      const { error: reminderError } = await resend.emails.send({
+        from: fromAddress,
+        to: NOTIFY_TO.length > 0 ? NOTIFY_TO : [fromAddress],
+        replyTo: email,
+        subject: `[RFQ FOLLOW-UP] ${agency} ? ${delayHours === 24 ? '1 day' : '3 days'}`,
+        html: `<h2>Government lead follow-up</h2><p>Confirm that <strong>${name}</strong> at <strong>${agency}</strong> received a personal response and quote.</p><p>Reply directly to contact ${email}${phone ? ` or ${phone}` : ''}.</p><p>Use case: ${useCase || 'Not specified'}</p>`,
+        scheduledAt: new Date(Date.now() + delayHours * 60 * 60 * 1000).toISOString(),
+      }, { idempotencyKey: `rfq-followup/${rfqKey}/${delayHours}h` });
+      if (reminderError) throw reminderError;
+    }
     return res.status(200).json({ success: true });
 
   } catch (error) {
