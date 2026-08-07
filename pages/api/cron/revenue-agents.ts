@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const dry = req.query.dry_run === 'true';
   const now = Math.floor(Date.now() / 1000);
   const intents = (await stripe.paymentIntents.list({ limit: 100, created: { gte: now - 100 * 86400 } })).data;
-  const result: Record<string, number> = { cart: 0, failed: 0, upsell: 0, review: 0, reorder: 0, errors: 0 };
+  const result: Record<string, number> = { cart: 0, failed: 0, upsell: 0, review: 0, referral: 0, reorder: 0, 'reorder-60': 0, errors: 0 };
   for (const pi of intents) {
     const h = (now - pi.created) / 3600;
     const p = product(pi);
@@ -42,7 +42,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (pi.status === 'requires_payment_method' && pi.last_payment_error && h < 48) tasks.push(['failed','Your payment needs attention',`Stripe could not complete payment for ${p.name}. No additional charge was made.`,checkout(pi)]);
     if (pi.status === 'succeeded' && h >= 72 && h < 96) tasks.push(['upsell','Build a stronger soil-care routine',`Liquid biochar, kelp, and humic support can complement ${p.name}.`,`${site}/shop`]);
     if (pi.status === 'succeeded' && h >= 240 && h < 288) tasks.push(['review','How is your soil responding?',`We hope ${p.name} is working well. Share honest feedback or ask for application help.`,`${site}/contact?topic=review`]);
+    if (pi.status === 'succeeded' && h >= 504 && h < 552) tasks.push(['referral','Help a friend solve their soil problem',`If someone you know has a similar lawn or garden problem, share our free product advisor. First-time direct customers can use SAVE15.`,`${site}/soil-advisor?ref=customer`]);
     if (pi.status === 'succeeded' && h >= 720 && h < 768) tasks.push(['reorder',`Time to check your ${p.name} supply`,'If your supply is running low, you can reorder directly.',checkout(pi)]);
+    if (pi.status === 'succeeded' && h >= 1440 && h < 1488) tasks.push(['reorder-60',`Ready for another ${p.name} application?`,'Check your remaining supply and reorder before the next treatment window.',checkout(pi)]);
     for (const [kind,subject,message,href] of tasks) {
       try { if (await send(resend, pi, kind, subject, message, href, dry)) result[kind] += 1; }
       catch (error) { result.errors += 1; console.error('[revenue-agent]', kind, pi.id, error); }
