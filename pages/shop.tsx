@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Grid, List, Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import { allProducts } from '../data/products';
+import QuickAddButton from '../components/QuickAddButton';
 
 interface Product {
   id: string;
@@ -207,13 +208,10 @@ export default function Shop({ products, categories }: ShopProps) {
                         </span>
                       )}
                     </div>
-                    
-                    <Link 
-                      href={`/product/${product.id}`}
-                      className="btn-primary text-sm py-2 px-4"
-                    >
-                      View Details
-                    </Link>
+                    <div className="flex flex-col gap-2 min-w-[110px]">
+                      <QuickAddButton productId={product.id} productName={product.name} image={product.image} price={product.price} sizeName={allProducts.find((p) => p.id === product.id)?.sizes?.[0]?.name} sku={allProducts.find((p) => p.id === product.id)?.sizes?.[0]?.sku} />
+                      <Link href={`/product/${product.id}`} className="text-center text-xs underline text-gray-600">View details</Link>
+                    </div>
                   </div>
                 </div>
               </div>

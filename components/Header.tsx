@@ -12,6 +12,7 @@ export default function Header({ transparent = false }: HeaderProps) {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
+    { name: 'Cart', href: '/cart' },
     { name: 'Solutions', href: '/solutions' },
     { name: 'Lawn Recovery', href: '/homeowners-landscapers-government' },
     { name: 'Government', href: '/government' },
