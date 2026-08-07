@@ -1,0 +1,12 @@
+import type { NextApiRequest,NextApiResponse } from 'next';
+import { Resend } from 'resend';
+
+const queries=['landscaping company North Carolina','lawn care company North Carolina','garden center North Carolina','horse farm supply North Carolina','nursery South Carolina','property management landscaping Virginia'];
+const safe=(v:unknown)=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+export default async function handler(req:NextApiRequest,res:NextApiResponse){
+ const token=req.headers.authorization?.replace(/^Bearer\s+/i,'')||String(req.query.secret||''); if(!process.env.CRON_SECRET||token!==process.env.CRON_SECRET)return res.status(401).json({error:'Unauthorized'});
+ const key=process.env.GOOGLE_PLACES_API_KEY,dry=req.query.dry_run==='true'; if(!key)return res.status(200).json({success:true,dry_run:dry,leads:0,notes:['Add GOOGLE_PLACES_API_KEY to activate weekly landscaper, nursery, farm, and property-manager prospect discovery.']});
+ const found=new Map<string,any>(); for(const textQuery of queries){const response=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'content-type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.googleMapsUri'},body:JSON.stringify({textQuery,pageSize:10})}); if(!response.ok)continue;const data=await response.json();for(const p of data.places||[])found.set(p.id,p);}
+ const leads=Array.from(found.values()).slice(0,50); if(!dry&&process.env.RESEND_API_KEY){const resend=new Resend(process.env.RESEND_API_KEY),week=new Date().toISOString().slice(0,10);await resend.emails.send({from:process.env.RESEND_FROM||"Nature's Way Soil <no-reply@natureswaysoil.com>",to:[process.env.SALES_TO||'natureswaysoil@gmail.com'],subject:`[Wholesale Leads] ${leads.length} landscaper and reseller prospects`,html:`<h2>Wholesale prospect review</h2><p>Use public business contacts only. Personalize and approve outreach before sending.</p><ul>${leads.map(p=>`<li><a href="${safe(p.websiteUri||p.googleMapsUri)}">${safe(p.displayName?.text)}</a> — ${safe(p.formattedAddress)} — ${safe(p.nationalPhoneNumber)}</li>`).join('')}</ul>`},{idempotencyKey:`wholesale-leads/${week}`});}
+ return res.status(200).json({success:true,dry_run:dry,leads:leads.length,preview:dry?leads.slice(0,10):undefined});
+}

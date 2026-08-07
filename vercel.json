@@ -8,6 +8,14 @@
     {
       "path": "/api/cron/government-leads",
       "schedule": "23 12 * * *"
+    },
+    {
+      "path": "/api/cron/business-intelligence",
+      "schedule": "7 13 * * *"
+    },
+    {
+      "path": "/api/cron/wholesale-leads",
+      "schedule": "41 13 * * 1"
     }
   ]
 }
