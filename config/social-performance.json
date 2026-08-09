@@ -8,7 +8,7 @@
     "NWS_014": 8,
     "NWS_011": 3,
     "NWS_013": 3,
-    "NWS_021": 3,
+    "NWS_021": 4,
     "NWS_018": 3,
     "NWS_026": 3,
     "NWS_027": 3,
@@ -37,11 +37,11 @@
     },
     "NWS_021": {
       "clicks": 0,
-      "orders": 0,
-      "revenue": 0,
-      "score": 0,
+      "orders": 1,
+      "revenue": 84.99,
+      "score": 4,
       "marginRate": 0.5,
-      "estimatedProfit": 0
+      "estimatedProfit": 42.495
     },
     "NWS_018": {
       "clicks": 0,
@@ -81,7 +81,7 @@
     "winnerBoost": 2,
     "loserPenalty": 1
   },
-  "updatedAt": "2026-08-08T10:12:45.545Z",
+  "updatedAt": "2026-08-09T10:13:38.202Z",
   "source": "stripe_payment_intents",
   "lookbackDays": 14
 }
