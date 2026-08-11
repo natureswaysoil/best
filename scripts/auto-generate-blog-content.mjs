@@ -205,6 +205,11 @@ Requirements:
 - Mention only relevant products naturally: dog lawn spot support, liquid soil conditioner, liquid biochar, humic/fulvic/kelp, compost, worm castings, pasture fertilizer, or government quote page
 - Include this exact markdown link once where relevant: [View the recommended Nature's Way Soil solution](${topic.internalLink})
 - End with a CTA to shop or request a quote at natureswaysoil.com
+- Do not claim dog urine damage is primarily caused by acidity; explain concentrated nitrogen and salts when relevant
+- Never recommend baking soda, lime, gypsum, or household chemicals without a soil test and label-supported reason
+- Do not make pesticide, disease-treatment, pet-safety, guaranteed-results, or environmental claims that are not supplied in this prompt
+- Describe products as supporting soil or lawn care; do not claim they neutralize, cure, prevent, or eliminate unless that exact claim is provided
+- Use markdown only; do not output raw HTML
 - Do not mention "Premium Organic Soil Mix" unless the topic is specifically about potting or garden soil
 
 Return ONLY:
@@ -256,7 +261,7 @@ async function generateNewContent() {
     author: "Nature's Way Soil Team",
     publishedAt: now,
     updatedAt: now,
-    featuredImage: `/images/blog/${slug}.jpg`,
+    featuredImage: '/images/blog/default-blog-thumbnail.png',
     tags: topic.tags,
     category: topic.category,
     readTime: topic.readTime,

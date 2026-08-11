@@ -3,7 +3,10 @@ import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import fs from 'fs';
+import path from 'path';
 import Layout from '../../components/Layout';
+import BlogContent from '../../components/BlogContent';
 import { 
   getAllBlogArticles, 
   getBlogArticleBySlug, 
@@ -11,12 +14,18 @@ import {
   BlogArticle 
 } from '../../data/blog';
 
+type BlogArticleSummary = Omit<BlogArticle, 'content'>;
+
 interface BlogArticlePageProps {
   article: BlogArticle;
-  relatedArticles: BlogArticle[];
+  relatedArticles: BlogArticleSummary[];
+  hasVideo: boolean;
+  hasVideoPoster: boolean;
 }
 
-export default function BlogArticlePage({ article, relatedArticles }: BlogArticlePageProps) {
+const SITE_URL = 'https://natureswaysoil.com';
+
+export default function BlogArticlePage({ article, relatedArticles, hasVideo, hasVideoPoster }: BlogArticlePageProps) {
   const [readingProgress, setReadingProgress] = useState(0);
 
   useEffect(() => {
@@ -38,34 +47,10 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
     });
   };
 
-  const formatContent = (content: string) => {
-    // Convert markdown-style headers to HTML
-    return content
-      .split('\n')
-      .map((line, index) => {
-        if (line.startsWith('# ')) {
-          return `<h1 key=${index} class="text-3xl font-bold text-gray-900 mb-6 mt-8">${line.slice(2)}</h1>`;
-        } else if (line.startsWith('## ')) {
-          return `<h2 key=${index} class="text-2xl font-bold text-gray-900 mb-4 mt-6">${line.slice(3)}</h2>`;
-        } else if (line.startsWith('### ')) {
-          return `<h3 key=${index} class="text-xl font-semibold text-gray-900 mb-3 mt-5">${line.slice(4)}</h3>`;
-        } else if (line.startsWith('**') && line.endsWith('**')) {
-          return `<p key=${index} class="font-bold text-gray-900 mb-3">${line.slice(2, -2)}</p>`;
-        } else if (line.trim() === '') {
-          return '<br />';
-        } else if (line.startsWith('- ')) {
-          return `<li key=${index} class="text-gray-700 mb-1">${line.slice(2)}</li>`;
-        } else {
-          return `<p key=${index} class="text-gray-700 mb-4 leading-relaxed">${line}</p>`;
-        }
-      })
-      .join('');
-  };
-
-  // Check if article has video
   const videoUrl = `/videos/blog/${article.slug}.mp4`;
   const videoWebmUrl = `/videos/blog/${article.slug}.webm`;
   const videoPosterUrl = `/videos/blog/${article.slug}-poster.jpg`;
+  const absoluteImage = article.featuredImage.startsWith('http') ? article.featuredImage : `${SITE_URL}${article.featuredImage}`;
 
   return (
     <Layout>
@@ -77,7 +62,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
         />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={article.excerpt} />
-        <meta property="og:image" content={article.featuredImage} />
+        <meta property="og:image" content={absoluteImage} />
         <meta property="og:type" content="article" />
         <meta property="article:author" content={article.author} />
         <meta property="article:published_time" content={article.publishedAt} />
@@ -95,7 +80,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
             "description": article.seoDescription || article.excerpt,
             "datePublished": article.publishedAt,
             "dateModified": article.updatedAt || article.publishedAt,
-            "image": article.featuredImage,
+            "image": absoluteImage,
             "url": `https://natureswaysoil.com/blog/${article.slug}`,
             "author": {
               "@type": "Organization",
@@ -105,22 +90,19 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
             "publisher": {
               "@type": "Organization",
               "name": "Nature's Way Soil",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://natureswaysoil.com/images/logo.png"
-              }
+              "url": SITE_URL
             },
             "mainEntityOfPage": {
               "@type": "WebPage",
               "@id": `https://natureswaysoil.com/blog/${article.slug}`
             },
             "keywords": article.tags.join(', ')
-          })}}
+          }).replace(/</g, '\u003c')}}
         />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={article.seoDescription || article.excerpt} />
-        <meta name="twitter:image" content={article.featuredImage?.startsWith?.("http") ? article.featuredImage : `https://natureswaysoil.com/images/blog/${article.slug}.jpg`} />
+        <meta name="twitter:image" content={absoluteImage} />
         <meta name="twitter:site" content="@NaturesWaySoil" />
 
       </Head>
@@ -136,25 +118,23 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
         <div className="relative bg-gradient-to-b from-gray-900 to-gray-700 text-white overflow-hidden">
           {/* Background Video or Image */}
           <div className="absolute inset-0">
-            <video
+            {hasVideo ? <video
               autoPlay
               muted
               loop
               playsInline
               className="w-full h-full object-cover opacity-40"
-              poster={videoPosterUrl}
+              poster={hasVideoPoster ? videoPosterUrl : article.featuredImage}
             >
               <source src={videoWebmUrl} type="video/webm" />
               <source src={videoUrl} type="video/mp4" />
-              {/* Fallback to featured image */}
-              <Image
-                src={article.featuredImage}
-                alt={article.title}
-                fill
-                className="object-cover opacity-40"
-                priority
-              />
-            </video>
+            </video> : <Image
+              src={article.featuredImage}
+              alt={article.title}
+              fill
+              className="object-cover opacity-40"
+              priority
+            />}
           </div>
           
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -200,10 +180,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
         {/* Article Content */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="prose prose-lg max-w-none">
-            <div 
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
-            />
+            <BlogContent content={article.content} />
           </div>
 
           {/* Tags */}
@@ -351,12 +328,20 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     };
   }
 
-  const relatedArticles = getRelatedArticles(article, 3);
+  const relatedArticles = getRelatedArticles(article, 3).map(({ content, ...related }) => {
+    void content;
+    return related;
+  });
+  const videoDirectory = path.join(process.cwd(), 'public', 'videos', 'blog');
+  const hasVideo = fs.existsSync(path.join(videoDirectory, `${slug}.mp4`));
+  const hasVideoPoster = fs.existsSync(path.join(videoDirectory, `${slug}-poster.jpg`));
 
   return {
     props: {
       article,
       relatedArticles,
+      hasVideo,
+      hasVideoPoster,
     },
     revalidate: 3600, // Revalidate every hour
   };

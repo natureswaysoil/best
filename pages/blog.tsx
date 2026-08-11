@@ -2,15 +2,23 @@ import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import { getAllBlogArticles, getAllBlogCategories, BlogArticle } from '../data/blog';
 
+type BlogArticleSummary = Omit<BlogArticle, 'content'>;
+
 interface BlogPageProps {
-  articles: BlogArticle[];
+  articles: BlogArticleSummary[];
   categories: string[];
 }
 
 export default function BlogPage({ articles, categories }: BlogPageProps) {
+  const router = useRouter();
+  const selectedCategory = typeof router.query.category === 'string' ? router.query.category : '';
+  const visibleArticles = selectedCategory
+    ? articles.filter((article) => article.category === selectedCategory)
+    : articles;
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -31,11 +39,11 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
         <meta property="og:description" content="Expert gardening tips and sustainable growing techniques" />
         <meta property="og:type" content="website" />
         <link rel="canonical" href="https://natureswaysoil.com/blog" />
-        <meta property="og:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
+        <meta property="og:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Gardening Blog | Nature's Way Soil" />
         <meta name="twitter:description" content="Expert organic gardening tips, soil health guides, and sustainable agriculture advice." />
-        <meta name="twitter:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
+        <meta name="twitter:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.png" />
         <meta name="twitter:site" content="@NaturesWaySoil" />
 
       </Head>
@@ -58,7 +66,8 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
             <div className="flex flex-wrap justify-center gap-3">
               <Link
                 href="/blog"
-                className="px-4 py-2 rounded-full bg-nature-green-600 text-white font-medium hover:bg-nature-green-700 transition-colors"
+                aria-current={!selectedCategory ? 'page' : undefined}
+                className={`px-4 py-2 rounded-full font-medium transition-colors ${!selectedCategory ? 'bg-nature-green-600 text-white' : 'bg-white text-nature-green-600 border-2 border-nature-green-600 hover:bg-nature-green-50'}`}
               >
                 All Articles
               </Link>
@@ -66,7 +75,8 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
                 <Link
                   key={category}
                   href={`/blog?category=${encodeURIComponent(category)}`}
-                  className="px-4 py-2 rounded-full bg-white text-nature-green-600 border-2 border-nature-green-600 font-medium hover:bg-nature-green-50 transition-colors"
+                  aria-current={selectedCategory === category ? 'page' : undefined}
+                  className={`px-4 py-2 rounded-full border-2 border-nature-green-600 font-medium transition-colors ${selectedCategory === category ? 'bg-nature-green-600 text-white' : 'bg-white text-nature-green-600 hover:bg-nature-green-50'}`}
                 >
                   {category}
                 </Link>
@@ -76,7 +86,7 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
 
           {/* Articles Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articles.map((article) => (
+            {visibleArticles.map((article) => (
               <article
                 key={article.id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
@@ -211,7 +221,10 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  const articles = getAllBlogArticles();
+  const articles = getAllBlogArticles().map(({ content, ...article }) => {
+    void content;
+    return article;
+  });
   const categories = getAllBlogCategories();
 
   return {
