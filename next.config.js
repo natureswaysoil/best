@@ -41,6 +41,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Canonical consumer dog-urine funnel. Next.js preserves UTM query strings.
+      { source: '/lawn-repair', destination: '/dog-urine-lawn-repair', permanent: true },
+      { source: '/dog-urine-neutralizer-bundle', destination: '/dog-urine-lawn-repair', permanent: true },
+
       // Product landing page aliases
       { source: '/products/lawn-soil-recovery-system', destination: '/product/lawn-soil-recovery-system', permanent: true },
       { source: '/products/lawn-and-soil-recovery-system', destination: '/product/lawn-soil-recovery-system', permanent: true },

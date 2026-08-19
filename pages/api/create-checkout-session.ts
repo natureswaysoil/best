@@ -31,6 +31,7 @@ interface CheckoutRequestBody {
   successPath?: string;
   cancelPath?: string;
   checkoutMode?: 'hosted' | 'embedded';
+  attribution?: { source?: string; medium?: string; campaign?: string; content?: string };
 }
 
 function normalizeReturnPath(path: unknown, fallback: string): string {
@@ -67,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       successPath,
       cancelPath,
       checkoutMode = 'hosted',
+      attribution,
     } = req.body as CheckoutRequestBody;
 
     if (!productId || !productName || !price) {
@@ -101,6 +103,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       subtotal_cents: toMetadataValue(subtotalCents),
       shipping_cents: toMetadataValue(shippingCents),
       source: 'natureswaysoil.com',
+      utm_source: toMetadataValue(attribution?.source),
+      utm_medium: toMetadataValue(attribution?.medium),
+      utm_campaign: toMetadataValue(attribution?.campaign),
+      utm_content: toMetadataValue(attribution?.content),
     };
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [

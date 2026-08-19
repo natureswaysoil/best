@@ -8,7 +8,7 @@ export default function PetLawnSpotOdorControlPage() {
       title="Pet Lawn Spot & Outdoor Odor Control for Lawns, Kennels, Patios & Turf"
       description="A buyer-focused guide for pet lawn spots, outdoor odor, kennels, patios, concrete, artificial turf, dog runs, and facility pet relief areas."
       primaryCta="View Lawn Spot Repair"
-      primaryHref="/lawn-repair"
+      primaryHref="/dog-urine-lawn-repair"
       secondaryCta="Request Facility Quote"
       secondaryHref="/government#quote-request"
       problems={[
@@ -28,7 +28,7 @@ export default function PetLawnSpotOdorControlPage() {
       products={[
         {
           name: 'Dog Urine Neutralizer & Lawn Repair',
-          href: '/lawn-repair',
+          href: '/dog-urine-lawn-repair',
           bestFor: 'home lawns, pet lawn spots, yellow grass, and small pet-use areas',
           description: 'A direct homeowner funnel for pet lawn spots and lawn recovery support.',
         },

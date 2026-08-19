@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, Star, Shield, Droplets, Sprout } from 'lucide-react';
 import Layout from '../components/Layout';
+import { trackCheckoutStart, trackProductCtaClick } from '../lib/ga4';
 
 type CheckoutProduct = {
   productId: string;
@@ -79,10 +80,14 @@ function CheckoutButton({ product, children, secondary = false }: { product: Che
     setError(null);
 
     try {
+      const search = new URLSearchParams(window.location.search);
+      const attribution = { source: search.get('utm_source') || 'direct', medium: search.get('utm_medium') || 'none', campaign: search.get('utm_campaign') || 'dog_urine_lawn_repair', content: search.get('utm_content') || '' };
+      trackProductCtaClick({ cta_label: String(children), page_path: '/dog-urine-lawn-repair', destination: '/api/create-checkout-session', product_id: product.productId, campaign_id: attribution.campaign });
+      trackCheckoutStart({ value: product.price, items: [{ item_id: product.productId, item_name: product.productName, item_variant: product.sizeName, item_category: 'Pet Lawn Care', price: product.price, quantity: product.quantity }] });
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(product),
+        body: JSON.stringify({ ...product, attribution }),
       });
 
       const data = await response.json();
@@ -143,7 +148,7 @@ export default function DogUrineLawnRepair() {
                   Nature&apos;s Way Soil Dog Urine Neutralizer & Lawn Revitalizer helps support lawn recovery where dog urine has stressed the grass and soil — without relying on temporary green dye.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <CheckoutButton product={dogProducts.bundle}>Get the $49.99 Bundle with Link</CheckoutButton>
+                  <CheckoutButton product={dogProducts.bundle}>Get the Bundle — $49.99</CheckoutButton>
                   <GuideButton secondary>Get Free Lawn Recovery Guide</GuideButton>
                 </div>
                 <div className="mt-6 flex flex-wrap gap-4">
@@ -162,8 +167,8 @@ export default function DogUrineLawnRepair() {
                   className="w-full rounded-2xl shadow-xl object-cover"
                 />
                 <div className="absolute -bottom-5 -left-5 bg-white rounded-xl shadow-lg p-4 text-gray-900">
-                  <p className="text-2xl font-black text-nature-green-600">Link</p>
-                  <p className="text-sm text-gray-600">secure Stripe checkout</p>
+                  <p className="text-2xl font-black text-nature-green-600">Best Value</p>
+                  <p className="text-sm text-gray-600">sprayer + gallon refill</p>
                 </div>
               </div>
             </div>
@@ -245,7 +250,7 @@ export default function DogUrineLawnRepair() {
                   ))}
                 </ul>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <CheckoutButton product={dogProducts.bundle}>Get the $49.99 Bundle with Link</CheckoutButton>
+                  <CheckoutButton product={dogProducts.bundle}>Get the Bundle — $49.99</CheckoutButton>
                   <CheckoutButton product={dogProducts.small} secondary>Order 32 oz — $29.99</CheckoutButton>
                 </div>
               </div>
@@ -370,7 +375,7 @@ export default function DogUrineLawnRepair() {
               Order direct from Nature&apos;s Way Soil and give your lawn soil-level support after dog urine stress.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <CheckoutButton product={dogProducts.bundle}>Get the $49.99 Bundle with Link</CheckoutButton>
+              <CheckoutButton product={dogProducts.bundle}>Get the Bundle — $49.99</CheckoutButton>
               <GuideButton secondary>Get Free Guide</GuideButton>
             </div>
           </div>
