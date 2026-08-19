@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import { resolveCheckoutItem } from '../../lib/checkoutCatalog';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -71,12 +72,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       attribution,
     } = req.body as CheckoutRequestBody;
 
-    if (!productId || !productName || !price) {
+    if (!productId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const sanitizedQuantity = Math.max(1, Math.floor(quantity));
-    const unitAmount = Math.round(price * 100);
+    const catalogItem = resolveCheckoutItem(productId, sku, sizeName);
+    if (!catalogItem) {
+      return res.status(400).json({ error: 'Product or size is unavailable' });
+    }
+
+    const numericQuantity = Number(quantity);
+    if (!Number.isInteger(numericQuantity) || numericQuantity < 1 || numericQuantity > 99) {
+      return res.status(400).json({ error: 'Invalid quantity provided' });
+    }
+
+    const sanitizedQuantity = numericQuantity;
+    const unitAmount = Math.round(catalogItem.price * 100);
 
     if (!Number.isFinite(unitAmount) || unitAmount <= 0) {
       return res.status(400).json({ error: 'Invalid price provided' });
@@ -92,12 +103,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       : `${origin}${safeSuccessPath}${safeSuccessPath.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`;
 
     const orderMetadata = {
-      productId: toMetadataValue(productId),
-      productName: toMetadataValue(productName),
-      product_name: toMetadataValue(productName),
-      sizeName: toMetadataValue(sizeName),
-      size_name: toMetadataValue(sizeName),
-      sku: toMetadataValue(sku),
+      productId: toMetadataValue(catalogItem.productId),
+      productName: toMetadataValue(catalogItem.productName),
+      product_name: toMetadataValue(catalogItem.productName),
+      sizeName: toMetadataValue(catalogItem.sizeName),
+      size_name: toMetadataValue(catalogItem.sizeName),
+      sku: toMetadataValue(catalogItem.sku),
       quantity: toMetadataValue(sanitizedQuantity),
       unit_amount_cents: toMetadataValue(unitAmount),
       subtotal_cents: toMetadataValue(subtotalCents),
@@ -115,7 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           currency: 'usd',
           unit_amount: unitAmount,
           product_data: {
-            name: sizeName ? `${productName} – ${sizeName}` : productName,
+            name: catalogItem.sizeName ? `${catalogItem.productName} – ${catalogItem.sizeName}` : catalogItem.productName,
             metadata: {
               productId: orderMetadata.productId,
               sizeName: orderMetadata.sizeName,
