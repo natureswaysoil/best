@@ -1,7 +1,6 @@
-import { GetStaticProps } from 'next';
+import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import BlogImage from '../components/BlogImage';
 import Layout from '../components/Layout';
 import { getAllBlogArticles, getAllBlogCategories, BlogArticle } from '../data/blog';
@@ -9,12 +8,20 @@ import { getAllBlogArticles, getAllBlogCategories, BlogArticle } from '../data/b
 interface BlogPageProps {
   articles: BlogArticle[];
   categories: string[];
+  selectedCategory: string;
+  currentPage: number;
+  totalPages: number;
+  totalArticles: number;
 }
 
-export default function BlogPage({ articles, categories }: BlogPageProps) {
-  const router = useRouter();
-  const selectedCategory = typeof router.query.category === 'string' ? router.query.category : '';
-  const visibleArticles = selectedCategory ? articles.filter((article) => article.category === selectedCategory) : articles;
+export default function BlogPage({ articles, categories, selectedCategory, currentPage, totalPages, totalArticles }: BlogPageProps) {
+  const pageHref = (page: number) => {
+    const query = new URLSearchParams();
+    if (selectedCategory) query.set('category', selectedCategory);
+    if (page > 1) query.set('page', String(page));
+    const suffix = query.toString();
+    return suffix ? `/blog?${suffix}` : '/blog';
+  };
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -80,7 +87,7 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
 
           {/* Articles Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {visibleArticles.map((article) => (
+            {articles.map((article) => (
               <article
                 key={article.id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
@@ -167,6 +174,17 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
             ))}
           </div>
 
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <p className="text-sm text-gray-600">Showing {articles.length} of {totalArticles} articles</p>
+            {totalPages > 1 && (
+              <nav aria-label="Blog pagination" className="flex flex-wrap justify-center gap-2">
+                {currentPage > 1 && <Link href={pageHref(currentPage - 1)} className="rounded-lg border border-nature-green-600 px-4 py-2 font-semibold text-nature-green-700 hover:bg-nature-green-50">Previous</Link>}
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => <Link key={page} href={pageHref(page)} aria-current={page === currentPage ? 'page' : undefined} className={`rounded-lg border px-4 py-2 font-semibold ${page === currentPage ? 'border-nature-green-600 bg-nature-green-600 text-white' : 'border-gray-300 bg-white text-gray-700 hover:border-nature-green-600'}`}>{page}</Link>)}
+                {currentPage < totalPages && <Link href={pageHref(currentPage + 1)} className="rounded-lg border border-nature-green-600 px-4 py-2 font-semibold text-nature-green-700 hover:bg-nature-green-50">Next</Link>}
+              </nav>
+            )}
+          </div>
+
           {/* Call to Action */}
           <div className="mt-16 text-center bg-nature-green-50 rounded-2xl p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
@@ -202,15 +220,16 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
-  const articles = getAllBlogArticles();
-  const categories = getAllBlogCategories();
+const PAGE_SIZE = 9;
 
-  return {
-    props: {
-      articles,
-      categories,
-    },
-    revalidate: 3600, // Revalidate every hour
-  };
+export const getServerSideProps: GetServerSideProps<BlogPageProps> = async ({ query }) => {
+  const categories = getAllBlogCategories();
+  const requestedCategory = typeof query.category === 'string' ? query.category : '';
+  const selectedCategory = categories.includes(requestedCategory) ? requestedCategory : '';
+  const filtered = selectedCategory ? getAllBlogArticles().filter((article) => article.category === selectedCategory) : getAllBlogArticles();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const requestedPage = typeof query.page === 'string' ? Number.parseInt(query.page, 10) : 1;
+  const currentPage = Number.isFinite(requestedPage) ? Math.min(totalPages, Math.max(1, requestedPage)) : 1;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  return { props: { articles: filtered.slice(start, start + PAGE_SIZE), categories, selectedCategory, currentPage, totalPages, totalArticles: filtered.length } };
 };
