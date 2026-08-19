@@ -26,7 +26,7 @@ export default function CartPage() {
   const checkout = async () => {
     setBusy(true); setError('');
     try {
-      const response = await fetch('/api/create-cart-checkout-session', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ items, successPath:'/cart-success?session_id={CHECKOUT_SESSION_ID}', cancelPath:'/cart' }) });
+      const response = await fetch('/api/create-cart-checkout-session', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ items, successPath:'/order-success?session_id={CHECKOUT_SESSION_ID}', cancelPath:'/cart' }) });
       const data = await response.json();
       if (!response.ok || !data.url) throw new Error(data.error || 'Unable to start checkout');
       window.location.assign(data.url);

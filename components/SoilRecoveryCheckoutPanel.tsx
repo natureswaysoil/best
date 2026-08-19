@@ -74,7 +74,7 @@ export default function SoilRecoveryCheckoutPanel() {
         price: selectedProduct.price,
         sku: selectedProduct.sku,
         checkoutMode: 'embedded',
-        successPath: '/soil-recovery-systems?checkout=success',
+        successPath: '/order-success?session_id={CHECKOUT_SESSION_ID}',
       }),
     });
 

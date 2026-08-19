@@ -96,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const subtotalCents = unitAmount * sanitizedQuantity;
     const shippingCents = shippingCost > 0 ? Math.round(shippingCost * 100) : 0;
     const origin = req.headers.origin || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const safeSuccessPath = normalizeReturnPath(successPath, '/shop?session_id={CHECKOUT_SESSION_ID}');
+    const safeSuccessPath = normalizeReturnPath(successPath, '/order-success?session_id={CHECKOUT_SESSION_ID}');
     const safeCancelPath = normalizeReturnPath(cancelPath, `/product/${productId}`);
     const successUrl = safeSuccessPath.includes('{CHECKOUT_SESSION_ID}')
       ? `${origin}${safeSuccessPath}`
