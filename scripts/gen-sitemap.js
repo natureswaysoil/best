@@ -15,11 +15,19 @@ const STATIC_ROUTES = [
 ];
 
 let productIds = [];
+let blogSlugs = [];
 try {
   const src = fs.readFileSync(path.join(__dirname, '..', 'data', 'products.ts'), 'utf8');
   productIds = [...src.matchAll(/id:\s*'([^']+)'/g)].map((m) => m[1]);
 } catch (e) {
   console.warn('gen-sitemap: could not read products.ts:', e.message);
+}
+
+try {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'data', 'blog.ts'), 'utf8');
+  blogSlugs = [...new Set([...src.matchAll(/"slug":\s*"([^"]+)"/g)].map((m) => m[1]))];
+} catch (e) {
+  console.warn('gen-sitemap: could not read blog.ts:', e.message);
 }
 
 const entry = (loc, pr) =>
@@ -28,9 +36,10 @@ const entry = (loc, pr) =>
 const urls = [
   ...STATIC_ROUTES.map((r) => entry(r, r === '' ? '1.0' : '0.7')),
   ...productIds.map((id) => entry(`product/${id}`, '0.8')),
+  ...blogSlugs.map((slug) => entry(`blog/${slug}`, '0.7')),
 ];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
 fs.mkdirSync(path.join(__dirname, '..', 'public'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, '..', 'public', 'sitemap.xml'), xml);
-console.log(`gen-sitemap: wrote ${urls.length} urls (${productIds.length} products) to public/sitemap.xml`);
+console.log(`gen-sitemap: wrote ${urls.length} urls (${productIds.length} products, ${blogSlugs.length} articles) to public/sitemap.xml`);

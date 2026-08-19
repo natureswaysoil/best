@@ -1,7 +1,8 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
-import Image from 'next/image';
+import BlogImage from '../../components/BlogImage';
+import BlogMarkdown from '../../components/BlogMarkdown';
 import { useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import { 
@@ -134,28 +135,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
       <article className="bg-white">
         {/* Hero Section with Video/Image */}
         <div className="relative bg-gradient-to-b from-gray-900 to-gray-700 text-white overflow-hidden">
-          {/* Background Video or Image */}
-          <div className="absolute inset-0">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover opacity-40"
-              poster={videoPosterUrl}
-            >
-              <source src={videoWebmUrl} type="video/webm" />
-              <source src={videoUrl} type="video/mp4" />
-              {/* Fallback to featured image */}
-              <Image
-                src={article.featuredImage}
-                alt={article.title}
-                fill
-                className="object-cover opacity-40"
-                priority
-              />
-            </video>
-          </div>
+          <div className="absolute inset-0"><BlogImage src={article.featuredImage} alt={article.title} priority className="object-cover opacity-40" /></div>
           
           <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             {/* Breadcrumb */}
@@ -200,10 +180,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
         {/* Article Content */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="prose prose-lg max-w-none">
-            <div 
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
-            />
+            <BlogMarkdown content={article.content} />
           </div>
 
           {/* Tags */}
@@ -284,19 +261,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
                     className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
                   >
                     <div className="relative h-48 bg-gray-200">
-                      {relatedArticle.featuredImage ? (
-                        <Image
-                          src={relatedArticle.featuredImage}
-                          alt={relatedArticle.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full bg-nature-green-100">
-                          <span className="text-nature-green-600 text-6xl">🌱</span>
-                        </div>
-                      )}
+                      <BlogImage src={relatedArticle.featuredImage} alt={relatedArticle.title} className="object-cover" />
                     </div>
                     <div className="p-6">
                       <span className="inline-block px-3 py-1 text-xs font-semibold text-nature-green-600 bg-nature-green-100 rounded-full mb-3">

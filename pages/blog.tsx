@@ -1,7 +1,8 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useRouter } from 'next/router';
+import BlogImage from '../components/BlogImage';
 import Layout from '../components/Layout';
 import { getAllBlogArticles, getAllBlogCategories, BlogArticle } from '../data/blog';
 
@@ -11,6 +12,9 @@ interface BlogPageProps {
 }
 
 export default function BlogPage({ articles, categories }: BlogPageProps) {
+  const router = useRouter();
+  const selectedCategory = typeof router.query.category === 'string' ? router.query.category : '';
+  const visibleArticles = selectedCategory ? articles.filter((article) => article.category === selectedCategory) : articles;
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -58,7 +62,7 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
             <div className="flex flex-wrap justify-center gap-3">
               <Link
                 href="/blog"
-                className="px-4 py-2 rounded-full bg-nature-green-600 text-white font-medium hover:bg-nature-green-700 transition-colors"
+                className={`px-4 py-2 rounded-full font-medium transition-colors ${!selectedCategory ? 'bg-nature-green-600 text-white' : 'bg-white text-nature-green-600 border-2 border-nature-green-600 hover:bg-nature-green-50'}`}
               >
                 All Articles
               </Link>
@@ -66,7 +70,7 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
                 <Link
                   key={category}
                   href={`/blog?category=${encodeURIComponent(category)}`}
-                  className="px-4 py-2 rounded-full bg-white text-nature-green-600 border-2 border-nature-green-600 font-medium hover:bg-nature-green-50 transition-colors"
+                  className={`px-4 py-2 rounded-full border-2 border-nature-green-600 font-medium transition-colors ${selectedCategory === category ? 'bg-nature-green-600 text-white' : 'bg-white text-nature-green-600 hover:bg-nature-green-50'}`}
                 >
                   {category}
                 </Link>
@@ -76,26 +80,14 @@ export default function BlogPage({ articles, categories }: BlogPageProps) {
 
           {/* Articles Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {articles.map((article) => (
+            {visibleArticles.map((article) => (
               <article
                 key={article.id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
               >
                 {/* Featured Image */}
                 <div className="relative h-48 bg-gray-200">
-                  {article.featuredImage ? (
-                    <Image
-                      src={article.featuredImage}
-                      alt={article.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full bg-nature-green-100">
-                      <span className="text-nature-green-600 text-6xl">🌱</span>
-                    </div>
-                  )}
+                  <BlogImage src={article.featuredImage} alt={article.title} className="object-cover" />
                 </div>
 
                 {/* Article Content */}

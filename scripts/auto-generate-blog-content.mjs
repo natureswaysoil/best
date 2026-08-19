@@ -154,7 +154,7 @@ async function callOpenAI(prompt, systemPrompt) {
   throw lastError;
 }
 
-async function generateUniqueTopic(existingTitles) {
+async function generateUniqueTopic(existingTitles, focusArea) {
   const existingList = existingTitles.slice(0, 50).join('\n- ');
   const systemPrompt = `You are an SEO content strategist for Nature's Way Soil, a small family farm in Snow Hill, NC selling liquid soil conditioners, dog lawn spot products, liquid biochar, worm castings, compost, kelp, humic acid, pasture fertilizer, and government-friendly grounds products. Return valid JSON only. No markdown.`;
   const prompt = `Generate ONE unique, buyer-intent blog article topic.
@@ -162,8 +162,10 @@ async function generateUniqueTopic(existingTitles) {
 EXISTING ARTICLES (do NOT repeat):
 - ${existingList}
 
-Only choose from these product-relevant topic areas:
-- ${PRODUCT_FOCUS_AREAS.join('\n- ')}
+This run MUST focus on this product area:
+- ${focusArea}
+
+Do not switch to another area. This rotation prevents repetitive coverage.
 
 Do NOT choose generic lifestyle topics like vertical gardening, companion planting, herbs, decor, or broad gardening unless the article directly connects to a Nature's Way Soil product and a buying problem.
 
@@ -235,7 +237,9 @@ async function generateNewContent() {
   const { slugs: existingSlugs, titles: existingTitles } = await readExistingArticles();
   await logActivity(`Found ${existingSlugs.length} existing unique articles`);
 
-  const topic = await generateUniqueTopic(existingTitles);
+  const focusArea = PRODUCT_FOCUS_AREAS[existingSlugs.length % PRODUCT_FOCUS_AREAS.length];
+  await logActivity(`Rotating focus area: ${focusArea}`);
+  const topic = await generateUniqueTopic(existingTitles, focusArea);
   await logActivity(`Topic: "${topic.title}" targeting "${topic.targetKeyword}"`);
 
   let slug = topic.slug.slice(0, 60);
