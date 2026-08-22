@@ -1,6 +1,6 @@
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Dog, Sprout, Tractor, Leaf, Shield, Truck, BadgeCheck } from 'lucide-react';
+import { ArrowRight, Dog, Sprout, Tractor, Leaf, Shield, Truck, BadgeCheck, Tag } from 'lucide-react';
 import Layout from '../components/Layout';
 import HeroVideo from '../components/HeroVideo';
 import SEO from '../components/SEO';
@@ -44,6 +44,14 @@ export default function Home({ featuredProducts }: HomeProps) {
     />
     <Layout transparentHeader>
       <HeroVideo />
+
+      <section className="bg-amber-50 border-y border-amber-200">
+        <div className="max-w-7xl mx-auto container-padding py-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-center">
+          <Tag className="w-5 h-5 text-amber-700 flex-none" />
+          <p className="font-bold text-amber-950">Save 15% at checkout</p>
+          <p className="text-sm text-amber-900">Apply your 15% coupon in the promotion-code box before payment.</p>
+        </div>
+      </section>
 
       <section className="py-12 md:py-16 bg-white border-b">
         <div className="max-w-7xl mx-auto container-padding">
@@ -90,6 +98,7 @@ export default function Home({ featuredProducts }: HomeProps) {
                     <div><span className="text-sm text-gray-500">From</span><div className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</div></div>
                     <Link href={`/product/${product.id}`} className="btn-primary text-sm px-4 py-2.5">{productAction(product.name)}</Link>
                   </div>
+                  <p className="mt-3 text-xs font-semibold text-amber-800">15% coupon can be applied at checkout.</p>
                 </div>
               </article>
             ))}
@@ -98,7 +107,8 @@ export default function Home({ featuredProducts }: HomeProps) {
       </section>
 
       <section className="py-12 bg-white">
-        <div className="max-w-6xl mx-auto container-padding grid md:grid-cols-3 gap-6">
+        <div className="max-w-6xl mx-auto container-padding grid md:grid-cols-4 gap-6">
+          <div className="rounded-2xl border p-6"><Tag className="w-7 h-7 text-amber-700 mb-3"/><h3 className="font-bold text-lg mb-2">15% checkout coupon</h3><p className="text-gray-600">Apply the coupon in the promotion-code box before payment.</p></div>
           <div className="rounded-2xl border p-6"><BadgeCheck className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">Practical product guidance</h3><p className="text-gray-600">Clear application directions and product-specific use information.</p></div>
           <div className="rounded-2xl border p-6"><Truck className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">Free shipping over $50</h3><p className="text-gray-600">Build a complete solution and unlock free shipping on qualifying orders.</p></div>
           <div className="rounded-2xl border p-6"><Shield className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">30-day guarantee</h3><p className="text-gray-600">Shop with a clear return-and-support promise.</p></div>
