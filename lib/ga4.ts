@@ -11,21 +11,29 @@ declare global {
   interface Window {
     dataLayer?: unknown[];
     gtag?: (...args: unknown[]) => void;
+    fbq?: (...args: unknown[]) => void;
+    ttq?: { track?: (event: string, params?: Record<string, unknown>) => void };
   }
 }
 
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '';
+export const GOOGLE_ADS_PURCHASE_SEND_TO = process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_SEND_TO || '';
 
 export const hasGa4 = () => Boolean(GA_MEASUREMENT_ID);
 
 type GaEventParams = Record<string, string | number | boolean | null | undefined | PurchaseEventItem[]>;
 
 function trackEvent(eventName: string, params: GaEventParams = {}) {
-  if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
-    return;
-  }
-
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
   window.gtag('event', eventName, params);
+}
+
+export function trackViewItem(params: { value: number; currency?: string; items: PurchaseEventItem[] }) {
+  trackEvent('view_item', { value: params.value, currency: params.currency || 'USD', items: params.items });
+}
+
+export function trackAddToCart(params: { value: number; currency?: string; items: PurchaseEventItem[] }) {
+  trackEvent('add_to_cart', { value: params.value, currency: params.currency || 'USD', items: params.items });
 }
 
 export function trackPurchase(params: {
@@ -44,6 +52,15 @@ export function trackPurchase(params: {
     currency: params.currency || 'USD',
     items: params.items,
   });
+
+  if (GOOGLE_ADS_PURCHASE_SEND_TO && typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    window.gtag('event', 'conversion', {
+      send_to: GOOGLE_ADS_PURCHASE_SEND_TO,
+      value: params.value,
+      currency: params.currency || 'USD',
+      transaction_id: params.transaction_id,
+    });
+  }
 }
 
 export function trackCheckoutStart(params: {
