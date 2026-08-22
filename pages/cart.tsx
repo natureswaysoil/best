@@ -15,36 +15,11 @@ type CrossSellRule = {
 };
 
 const CROSS_SELL_RULES: CrossSellRule[] = [
-  {
-    triggerIds: ['NWS_014'],
-    title: 'Complete Your Dog Lawn Recovery',
-    reason: 'Pair odor and urine-spot treatment with lawn and root-zone support.',
-    recommendIds: ['NWS_018', 'NWS_011'],
-  },
-  {
-    triggerIds: ['NWS_018'],
-    title: 'Build a Stronger Lawn Program',
-    reason: 'Add dog-spot support or humic/fulvic soil conditioning to your lawn treatment.',
-    recommendIds: ['NWS_014', 'NWS_011'],
-  },
-  {
-    triggerIds: ['NWS_011', 'NWS_001', 'NWS_004', 'NWS_023'],
-    title: 'Build the Soil from Both Sides',
-    reason: 'Combine liquid root-zone support with a carbon-rich or living soil amendment.',
-    recommendIds: ['NWS_023', 'NWS_011', 'NWS_002'],
-  },
-  {
-    triggerIds: ['NWS_021'],
-    title: 'Upgrade to Pasture Recovery',
-    reason: 'For stressed hay or pasture, add the recovery system with liquid biochar and humic support.',
-    recommendIds: ['NWS_022', 'NWS_011'],
-  },
-  {
-    triggerIds: ['NWS_022'],
-    title: 'Keep the Recovery Program Going',
-    reason: 'Use the base hay/pasture fertilizer for routine feeding between recovery applications.',
-    recommendIds: ['NWS_021', 'NWS_011'],
-  },
+  { triggerIds: ['NWS_014'], title: 'Complete Your Dog Lawn Recovery', reason: 'Pair odor and urine-spot treatment with lawn and root-zone support.', recommendIds: ['NWS_018', 'NWS_011'] },
+  { triggerIds: ['NWS_018'], title: 'Build a Stronger Lawn Program', reason: 'Add dog-spot support or humic/fulvic soil conditioning to your lawn treatment.', recommendIds: ['NWS_014', 'NWS_011'] },
+  { triggerIds: ['NWS_011', 'NWS_001', 'NWS_004', 'NWS_023'], title: 'Build the Soil from Both Sides', reason: 'Combine liquid root-zone support with a carbon-rich or living soil amendment.', recommendIds: ['NWS_023', 'NWS_011', 'NWS_002'] },
+  { triggerIds: ['NWS_021'], title: 'Upgrade to Pasture Recovery', reason: 'For stressed hay or pasture, add the recovery system with liquid biochar and humic support.', recommendIds: ['NWS_022', 'NWS_011'] },
+  { triggerIds: ['NWS_022'], title: 'Keep the Recovery Program Going', reason: 'Use the base hay/pasture fertilizer for routine feeding between recovery applications.', recommendIds: ['NWS_021', 'NWS_011'] },
 ];
 
 function firstSize(product: ProductData) {
@@ -60,6 +35,8 @@ export default function CartPage() {
 
   const subtotal = useMemo(() => items.reduce((sum, x) => sum + x.price * x.quantity, 0), [items]);
   const remaining = Math.max(0, FREE_SHIPPING - subtotal);
+  const estimatedCouponSavings = subtotal * 0.15;
+  const estimatedAfterCoupon = subtotal - estimatedCouponSavings;
   const cartProductIds = useMemo(() => new Set(items.map((x) => x.productId)), [items]);
 
   const matchedRule = CROSS_SELL_RULES.find((rule) => rule.triggerIds.some((id) => cartProductIds.has(id)));
@@ -84,9 +61,7 @@ export default function CartPage() {
   };
 
   const update = (index: number, quantity: number) => {
-    const next = items
-      .map((x, i) => (i === index ? { ...x, quantity: Math.max(0, quantity) } : x))
-      .filter((x) => x.quantity > 0);
+    const next = items.map((x, i) => (i === index ? { ...x, quantity: Math.max(0, quantity) } : x)).filter((x) => x.quantity > 0);
     setItems(next);
     writeCart(next);
   };
@@ -113,13 +88,27 @@ export default function CartPage() {
     <Layout>
       <Head><title>Your Cart - Nature&apos;s Way Soil</title></Head>
       <main className="max-w-6xl mx-auto px-4 py-12">
-        <div className="flex flex-wrap items-end justify-between gap-3 mb-8">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-nature-green-700">Your order</p>
             <h1 className="text-3xl font-bold">Your Cart</h1>
           </div>
           <p className="text-sm text-gray-600">Free shipping on orders over ${FREE_SHIPPING}</p>
         </div>
+
+        {!!items.length && (
+          <div className="mb-7 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="font-bold text-amber-950 text-lg">Save 15% at checkout</p>
+              <p className="text-sm text-amber-900">Apply your 15% coupon in the promotion-code box before payment.</p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-sm text-amber-900">Estimated coupon savings</p>
+              <p className="text-2xl font-bold text-amber-950">${estimatedCouponSavings.toFixed(2)}</p>
+              <p className="text-xs text-amber-800">About ${estimatedAfterCoupon.toFixed(2)} after coupon, before any applicable shipping/tax.</p>
+            </div>
+          </div>
+        )}
 
         {!items.length ? (
           <div className="bg-white border rounded-2xl p-10 text-center">
@@ -149,7 +138,8 @@ export default function CartPage() {
                 <section className="rounded-2xl border-2 border-nature-green-200 bg-nature-green-50 p-5">
                   <p className="text-xs font-bold uppercase tracking-wide text-nature-green-700">Frequently bought together</p>
                   <h2 className="text-xl font-bold text-gray-900 mt-1">{matchedRule.title}</h2>
-                  <p className="text-sm text-gray-650 mt-1 mb-4">{matchedRule.reason}</p>
+                  <p className="text-sm text-gray-650 mt-1">{matchedRule.reason}</p>
+                  <p className="text-sm font-semibold text-amber-800 mt-2 mb-4">Build the complete system, then apply your 15% coupon at checkout.</p>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {systemRecommendations.map((product) => {
                       const size = firstSize(product);
@@ -172,15 +162,15 @@ export default function CartPage() {
 
             <aside className="bg-white border rounded-2xl p-6 h-fit space-y-5 lg:sticky lg:top-24">
               <div className="flex justify-between text-lg font-bold"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
+              <div className="flex justify-between text-sm text-amber-800 font-semibold"><span>15% coupon savings</span><span>−${estimatedCouponSavings.toFixed(2)}</span></div>
+              <div className="flex justify-between text-base font-bold text-gray-900 border-t pt-3"><span>After coupon</span><span>${estimatedAfterCoupon.toFixed(2)}</span></div>
+              <p className="text-xs text-gray-500 -mt-3">Coupon must be entered at checkout. Shipping/tax may apply.</p>
 
               {remaining > 0 ? (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
                   <strong>Add ${remaining.toFixed(2)} for free shipping.</strong>
                   {freeShippingSuggestion && (
-                    <button
-                      onClick={() => addProduct(freeShippingSuggestion.product)}
-                      className="block mt-3 text-green-700 font-semibold text-left"
-                    >
+                    <button onClick={() => addProduct(freeShippingSuggestion.product)} className="block mt-3 text-green-700 font-semibold text-left">
                       + Add {freeShippingSuggestion.product.name} (${freeShippingSuggestion.size.price.toFixed(2)})
                     </button>
                   )}
@@ -190,6 +180,7 @@ export default function CartPage() {
               )}
 
               <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-700 space-y-1">
+                <p>✓ 15% coupon field available at checkout</p>
                 <p>✓ Secure payment</p>
                 <p>✓ 30-day satisfaction guarantee</p>
                 <p>✓ Lower-48 shipping</p>
@@ -197,7 +188,7 @@ export default function CartPage() {
 
               {error && <p className="text-red-700 text-sm">{error}</p>}
               <button onClick={checkout} disabled={busy} className="btn-primary w-full disabled:opacity-50">
-                {busy ? 'Opening secure checkout…' : `Secure Checkout — $${subtotal.toFixed(2)}`}
+                {busy ? 'Opening secure checkout…' : `Checkout & Apply 15% Coupon`}
               </button>
               <Link href="/shop" className="block text-center underline text-sm">Continue shopping</Link>
             </aside>
