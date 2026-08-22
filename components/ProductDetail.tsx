@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { Check, Leaf, Pause, Play, Shield, ShoppingCart, Truck, Volume2, VolumeX } from 'lucide-react';
+import { Check, Leaf, Pause, Play, Shield, ShoppingCart, Tag, Truck, Volume2, VolumeX } from 'lucide-react';
 import Layout from '../components/Layout';
 import { addCartItem } from '../lib/cart';
 import { FarmTransparency, WhyItWorks, HonestValue, PracticalGuidance, HelpfulContact, GentleGuarantee } from './AuthenticConversion';
@@ -31,6 +31,8 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const currentPrice = activeSize?.price ?? product.price;
   const totalPrice = currentPrice * quantity;
   const largestPrice = Math.max(...explicitSizes.map(s => s.price));
+  const estimatedCouponSavings = totalPrice * 0.15;
+  const estimatedAfterCoupon = totalPrice - estimatedCouponSavings;
 
   useEffect(() => {
     if (videoRef.current && (product.video || product.videoWebm)) videoRef.current.play().catch(() => undefined);
@@ -104,15 +106,24 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-4">{product.name}</h1>
           <p className="text-lg text-gray-600 leading-relaxed mb-6">{product.description}</p>
 
-          <div className="flex items-end gap-3 mb-6">
+          <div className="flex items-end gap-3 mb-3">
             <div><span className="text-sm text-gray-500">Selected price</span><div className="text-4xl font-bold text-gray-900">${currentPrice.toFixed(2)}</div></div>
             {product.originalPrice && <span className="text-lg text-gray-400 line-through mb-1">${product.originalPrice.toFixed(2)}</span>}
+          </div>
+
+          <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 flex gap-3">
+            <Tag className="w-6 h-6 text-amber-700 flex-none mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-950">Save 15% at checkout</p>
+              <p className="text-sm text-amber-900">Apply your 15% coupon in the promotion-code box before payment.</p>
+              <p className="text-sm font-semibold text-amber-950 mt-1">On this selection: save about ${estimatedCouponSavings.toFixed(2)} · about ${estimatedAfterCoupon.toFixed(2)} after coupon</p>
+            </div>
           </div>
 
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2"><label className="font-semibold text-gray-900">Choose size</label>{explicitSizes.length > 1 && <span className="text-xs font-semibold text-nature-green-700">Larger sizes = better value per ounce</span>}</div>
             <div className={`grid gap-3 ${explicitSizes.length >= 3 ? 'grid-cols-3' : explicitSizes.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              {explicitSizes.map((size, index) => <button key={size.name} onClick={() => setSelectedSize(size.name)} className={`relative rounded-xl border-2 p-3 text-left ${selectedSize === size.name ? 'border-nature-green-600 bg-nature-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+              {explicitSizes.map((size) => <button key={size.name} onClick={() => setSelectedSize(size.name)} className={`relative rounded-xl border-2 p-3 text-left ${selectedSize === size.name ? 'border-nature-green-600 bg-nature-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
                 {size.price === largestPrice && explicitSizes.length > 1 && <span className="absolute -top-2 right-2 bg-nature-green-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">BEST VALUE</span>}
                 <div className="font-bold text-sm">{size.name}</div><div className="text-gray-700">${size.price.toFixed(2)}</div>
               </button>)}
@@ -134,7 +145,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <button onClick={handleBuyNow} disabled={!product.inStock || isSubmitting} className="w-full py-4 rounded-xl font-bold text-lg bg-nature-green-700 hover:bg-nature-green-800 text-white disabled:opacity-50">
               {!product.inStock ? 'Out of Stock' : isSubmitting ? 'Opening Secure Checkout…' : `Buy Now — $${totalPrice.toFixed(2)}`}
             </button>
-            <p className="text-center text-sm text-gray-500">Secure checkout · Shipping shown before payment · No account required</p>
+            <p className="text-center text-sm text-gray-500">Secure checkout · Apply 15% coupon before payment · Shipping shown before payment · No account required</p>
           </div>
 
           <div className="bg-gray-50 border rounded-2xl p-5 mb-8">
@@ -153,7 +164,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     </div>
 
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl px-4 py-3 flex items-center gap-3">
-      <div className="flex-1 min-w-0"><div className="text-xs text-gray-500 truncate">{selectedSize}</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
+      <div className="flex-1 min-w-0"><div className="text-xs text-amber-700 font-semibold">15% coupon at checkout</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
       <button onClick={handleAddToCart} disabled={!product.inStock} className="bg-nature-green-700 text-white font-bold px-5 py-3 rounded-xl">Add to Cart</button>
     </div>
   </Layout>;
