@@ -1,387 +1,160 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Play, Pause, Volume2, VolumeX, Truck, Shield, Leaf } from 'lucide-react';
-import Layout from '../components/Layout';
 import { useRouter } from 'next/router';
-import { 
-  FarmTransparency, 
-  WhyItWorks, 
-  HonestValue, 
-  PracticalGuidance, 
-  HelpfulContact, 
-  GentleGuarantee 
-} from './AuthenticConversion';
-
+import { Check, Leaf, Pause, Play, Shield, ShoppingCart, Truck, Volume2, VolumeX } from 'lucide-react';
+import Layout from '../components/Layout';
+import { addCartItem } from '../lib/cart';
+import { FarmTransparency, WhyItWorks, HonestValue, PracticalGuidance, HelpfulContact, GentleGuarantee } from './AuthenticConversion';
 
 type SizeOption = { name: string; price: number; sku?: string };
-
 interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  description: string;
-  features: string[];
-  images: string[];
-  image: string;
-  video?: string;
-  videoWebm?: string;
-  videoPoster?: string;
-  inStock: boolean;
-  category: string;
-  sizes?: SizeOption[];
-  usage?: string[];
+  id: string; name: string; price: number; originalPrice?: number; description: string;
+  features: string[]; images: string[]; image: string; video?: string; videoWebm?: string;
+  videoPoster?: string; inStock: boolean; category: string; sizes?: SizeOption[]; usage?: string[];
 }
-
-interface ProductDetailProps {
-  product: Product;
-}
+interface ProductDetailProps { product: Product }
 
 export default function ProductDetail({ product }: ProductDetailProps) {
+  const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const router = useRouter();
-  const galleryImages = product.images && product.images.length > 0 ? product.images : [product.image];
-  // Prefer the generated video poster as the first gallery image when available
-  const enrichedGallery = product.videoPoster ? [product.videoPoster, ...galleryImages] : galleryImages;
+  const [added, setAdded] = useState(false);
 
-  // Auto-play video when component mounts (muted for better UX)
+  const galleryImages = product.images?.length ? product.images : [product.image];
+  const heroImage = product.videoPoster || galleryImages[0] || product.image;
+  const explicitSizes = product.sizes?.length ? product.sizes : [{ name: 'Standard', price: product.price, sku: product.id }];
+  const [selectedSize, setSelectedSize] = useState(explicitSizes[0]?.name || '');
+  const activeSize = explicitSizes.find(s => s.name === selectedSize) || explicitSizes[0];
+  const currentPrice = activeSize?.price ?? product.price;
+  const totalPrice = currentPrice * quantity;
+  const largestPrice = Math.max(...explicitSizes.map(s => s.price));
+
   useEffect(() => {
-    if (videoRef.current && (product.video || product.videoWebm)) {
-      const video = videoRef.current;
-      const playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {
-          // Auto-play prevented, user will need to click play
-        });
-      }
-    }
+    if (videoRef.current && (product.video || product.videoWebm)) videoRef.current.play().catch(() => undefined);
   }, [product.video, product.videoWebm]);
 
-  // Use product sizes if available, otherwise determine based on category
-  const isLiquid = product.category === 'Fertilizer' || product.category === 'Soil Amendment' || product.category === 'Lawn Care';
-  const isCompost = product.category === 'Compost';
+  const cartPayload = () => ({
+    productId: product.id,
+    productName: product.name,
+    sizeName: selectedSize,
+    sku: activeSize?.sku,
+    image: heroImage,
+    price: currentPrice,
+    quantity
+  });
 
-  // Prefer explicit product sizes when provided. Only fall back to heuristics when sizes are missing.
-  const explicitSizes = product.sizes;
-  const sizes: SizeOption[] = explicitSizes && explicitSizes.length > 0
-    ? explicitSizes
-    : (isLiquid
-      ? [
-          { name: '32 oz', price: +(product.price * 0.6).toFixed(2) },
-          { name: '1 Gallon', price: +product.price.toFixed(2) },
-          { name: '2.5 Gallon', price: +(product.price * 2.8).toFixed(2) }
-        ]
-      : isCompost
-        ? [ { name: '10 lb', price: +product.price.toFixed(2) } ]
-        : [ { name: '4 Quarts', price: +product.price.toFixed(2) } ]);
-
-  const [selectedSize, setSelectedSize] = useState(sizes[0]?.name || '');
-
-  const toggleVideo = () => {
-    const video = videoRef.current;
-    if (video) {
-      if (isVideoPlaying) {
-        video.pause();
-      } else {
-        video.play();
-      }
-      setIsVideoPlaying(!isVideoPlaying);
-    }
+  const handleAddToCart = () => {
+    if (!product.inStock) return;
+    addCartItem(cartPayload());
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1800);
   };
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (video) {
-      video.muted = !video.muted;
-      setIsVideoMuted(video.muted);
-      if (!video.muted) {
-        video.volume = 1;
-        const playPromise = video.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-          playPromise.catch(() => {
-            /* ignore */
-          });
-        }
-      }
-    }
-  };
-
-  const activeSize = sizes.find((size) => size.name === selectedSize);
-  const currentPrice = activeSize?.price ?? product.price;
 
   const handleBuyNow = async () => {
-    if (isSubmitting || !product.inStock) {
-      return;
-    }
-
+    if (isSubmitting || !product.inStock) return;
     setIsSubmitting(true);
-
     try {
-      if (typeof window === 'undefined') {
-        throw new Error('Checkout is only available in the browser.');
-      }
-
-      const payload = {
-        productId: product.id,
-        productName: product.name,
-        productImage: (product.videoPoster ?? enrichedGallery[0] ?? product.image),
-        sizeName: selectedSize,
-        quantity,
-        price: currentPrice,
-        sku: activeSize?.sku,
-      };
-
+      const payload = { ...cartPayload(), productImage: heroImage };
       window.sessionStorage.setItem('nws-checkout-selection', JSON.stringify(payload));
       await router.push('/checkout');
     } catch (error) {
       console.error('Unable to prepare checkout', error);
       alert('Unable to prepare checkout. Please reach out to support.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    } finally { setIsSubmitting(false); }
   };
 
-  return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          
-          {/* Product Video & Images Section - Video embedded directly */}
-          <div className="space-y-4">
-            {/* Main Video Display - Videos embedded directly when available */}
-            {(product.video || product.videoWebm) ? (
-              <div className="relative bg-black rounded-2xl overflow-hidden border border-gray-200 
-                              aspect-video max-h-[70vh]">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-contain bg-black"
-                  poster={product.videoPoster ?? galleryImages[0] ?? product.image}
-                  muted={isVideoMuted}
-                  crossOrigin="anonymous"
-                  onPlay={() => setIsVideoPlaying(true)}
-                  onPause={() => setIsVideoPlaying(false)}
-                  onEnded={() => setIsVideoPlaying(false)}
-                >
-                  {product.videoWebm && (
-                    <source src={product.videoWebm} type="video/webm" />
-                  )}
-                  {product.video && (
-                    <source src={product.video} type="video/mp4" />
-                  )}
-                  Your browser does not support the video tag.
-                </video>
-                
-                {/* Video Controls - Fully functional play/pause and mute controls */}
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                  <button
-                    onClick={toggleVideo}
-                    className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg"
-                    aria-label={isVideoPlaying ? 'Pause video' : 'Play video'}
-                  >
-                    {isVideoPlaying ? (
-                      <Pause className="w-5 h-5" />
-                    ) : (
-                      <Play className="w-5 h-5 ml-0.5" />
-                    )}
-                  </button>
-                  
-                  <button
-                    onClick={toggleMute}
-                    className="bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors shadow-lg"
-                    aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'}
-                  >
-                    {isVideoMuted ? (
-                      <VolumeX className="w-5 h-5" />
-                    ) : (
-                      <Volume2 className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
+  const toggleVideo = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play(); else video.pause();
+  };
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setIsVideoMuted(video.muted);
+  };
 
-                {/* Video info badge */}
-                <div className="absolute top-4 left-4 bg-nature-green-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
-                  Product Video
-                </div>
-              </div>
-            ) : (
-              /* Fallback to image display when no video available */
-              <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-200 
-                              aspect-[4/3] sm:aspect-[4/3] lg:aspect-[16/10] 2xl:aspect-[16/9] max-h-[70vh]">
-                <Image
-                  src={enrichedGallery[0]}
-                  alt={product.name}
-                  fill
-                  className="object-contain lg:object-cover bg-white"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Product Information */}
-          <div className="space-y-6">
-            <div>
-              <p className="text-nature-green-600 font-medium text-sm uppercase tracking-wide">
-                {product.category}
-              </p>
-              <h1 className="text-3xl font-bold text-gray-900 mt-2">
-                {product.name}
-              </h1>
+  return <Layout>
+    <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 pb-28 md:pb-10">
+      <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+        <div className="lg:sticky lg:top-24">
+          {(product.video || product.videoWebm) ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-video">
+            <video ref={videoRef} className="w-full h-full object-contain" poster={heroImage} muted={isVideoMuted} playsInline onPlay={() => setIsVideoPlaying(true)} onPause={() => setIsVideoPlaying(false)}>
+              {product.videoWebm && <source src={product.videoWebm} type="video/webm" />}
+              {product.video && <source src={product.video} type="video/mp4" />}
+            </video>
+            <div className="absolute bottom-3 left-3 right-3 flex justify-between">
+              <button onClick={toggleVideo} aria-label={isVideoPlaying ? 'Pause video' : 'Play video'} className="bg-black/65 text-white p-3 rounded-full">{isVideoPlaying ? <Pause className="w-5 h-5"/> : <Play className="w-5 h-5"/>}</button>
+              <button onClick={toggleMute} aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'} className="bg-black/65 text-white p-3 rounded-full">{isVideoMuted ? <VolumeX className="w-5 h-5"/> : <Volume2 className="w-5 h-5"/>}</button>
             </div>
-
-            {/* Price */}
-            <div className="space-y-4">
-              <div className="flex items-baseline space-x-2">
-                <span className="text-3xl font-bold text-gray-900">
-                  ${currentPrice.toFixed(2)}
-                </span>
-                {product.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through">
-                    ${product.originalPrice.toFixed(2)}
-                  </span>
-                )}
-              </div>
-              
-              {/* Size Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Size
-                </label>
-                <div className={`grid gap-3 ${sizes.length === 1 ? 'grid-cols-1' : sizes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                  {sizes.map((size: SizeOption) => (
-                    <button
-                      key={size.name}
-                      onClick={() => setSelectedSize(size.name)}
-                      className={`p-3 text-sm font-medium rounded-lg border-2 transition-colors ${
-                        selectedSize === size.name
-                          ? 'border-nature-green-500 bg-nature-green-50 text-nature-green-700'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      aria-pressed={selectedSize === size.name}
-                    >
-                      <div>{size.name}</div>
-                      <div className="text-xs text-gray-500">${size.price.toFixed(2)}</div>
-                      {size.sku && <div className="text-[11px] text-gray-400 mt-1">SKU: {size.sku}</div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quantity */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity
-                </label>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 font-medium"
-                  >
-                    -
-                  </button>
-                  <span className="w-12 text-center font-medium">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 font-medium"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Add to Cart */}
-            <div className="space-y-4">
-              <button
-                onClick={handleBuyNow}
-                disabled={!product.inStock || isSubmitting}
-                className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-colors ${
-                  product.inStock
-                    ? 'bg-nature-green-600 hover:bg-nature-green-700 text-white disabled:hover:bg-nature-green-600'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                } disabled:opacity-70 disabled:cursor-not-allowed`}
-              >
-                {!product.inStock ? 'Out of Stock' : isSubmitting ? 'Redirecting...' : 'Buy Now with Stripe'}
-              </button>
-              
-              <div className="text-sm text-gray-600 space-y-1 bg-gray-50 p-4 rounded-lg">
-                <p>• Secure checkout with Stripe payment processing</p>
-                <p>• Taxes and shipping (if applicable) handled during checkout</p>
-                <p>• Selected size: {selectedSize} · Quantity: {quantity}</p>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                <div className="flex flex-col items-center space-y-1">
-                  <Truck className="w-5 h-5 text-nature-green-600" />
-                  <span className="text-gray-600">Free shipping over $50</span>
-                </div>
-                <div className="flex flex-col items-center space-y-1">
-                  <Shield className="w-5 h-5 text-nature-green-600" />
-                  <span className="text-gray-600">30-day guarantee</span>
-                </div>
-                <div className="flex flex-col items-center space-y-1">
-                  <Leaf className="w-5 h-5 text-nature-green-600" />
-                  <span className="text-gray-600">100% natural</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Description</h3>
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
-              
-              <h4 className="font-medium text-gray-900">Key Features:</h4>
-              <ul className="space-y-2">
-                {product.features.map((feature, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <div className="w-1.5 h-1.5 bg-nature-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-gray-600">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {product.usage && product.usage.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">How to Use:</h4>
-                  <ul className="space-y-2">
-                    {product.usage.map((step, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <div className="w-1.5 h-1.5 bg-nature-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <span className="text-gray-600">{step}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+          </div> : <div className="relative aspect-square bg-white rounded-2xl border overflow-hidden"><Image src={heroImage} alt={product.name} fill className="object-contain p-4" sizes="(max-width:1024px) 100vw, 50vw" /></div>}
+          <div className="grid grid-cols-3 gap-3 mt-4 text-center text-xs text-gray-700">
+            <div className="border rounded-xl p-3"><Truck className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>Free shipping over $50</div>
+            <div className="border rounded-xl p-3"><Shield className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>30-day guarantee</div>
+            <div className="border rounded-xl p-3"><Leaf className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>Clear use directions</div>
           </div>
         </div>
 
-        {/* Authentic Trust-Building Section */}
-        <div className="max-w-4xl mx-auto mt-16 space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              <FarmTransparency />
-              <WhyItWorks product={product} />
-              <PracticalGuidance product={product} />
-            </div>
-            
-            {/* Right Column */}
-            <div className="space-y-6">
-              <HonestValue product={product} />
-              <HelpfulContact />
-              <GentleGuarantee />
+        <div>
+          <p className="text-sm uppercase tracking-widest font-bold text-nature-green-700 mb-2">{product.category}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-4">{product.name}</h1>
+          <p className="text-lg text-gray-600 leading-relaxed mb-6">{product.description}</p>
+
+          <div className="flex items-end gap-3 mb-6">
+            <div><span className="text-sm text-gray-500">Selected price</span><div className="text-4xl font-bold text-gray-900">${currentPrice.toFixed(2)}</div></div>
+            {product.originalPrice && <span className="text-lg text-gray-400 line-through mb-1">${product.originalPrice.toFixed(2)}</span>}
+          </div>
+
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2"><label className="font-semibold text-gray-900">Choose size</label>{explicitSizes.length > 1 && <span className="text-xs font-semibold text-nature-green-700">Larger sizes = better value per ounce</span>}</div>
+            <div className={`grid gap-3 ${explicitSizes.length >= 3 ? 'grid-cols-3' : explicitSizes.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {explicitSizes.map((size, index) => <button key={size.name} onClick={() => setSelectedSize(size.name)} className={`relative rounded-xl border-2 p-3 text-left ${selectedSize === size.name ? 'border-nature-green-600 bg-nature-green-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                {size.price === largestPrice && explicitSizes.length > 1 && <span className="absolute -top-2 right-2 bg-nature-green-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">BEST VALUE</span>}
+                <div className="font-bold text-sm">{size.name}</div><div className="text-gray-700">${size.price.toFixed(2)}</div>
+              </button>)}
             </div>
           </div>
+
+          <div className="flex items-center gap-3 mb-6">
+            <span className="font-semibold">Quantity</span>
+            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 border rounded-lg text-lg">−</button>
+            <span className="w-8 text-center font-bold">{quantity}</span>
+            <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 border rounded-lg text-lg">+</button>
+            <span className="ml-auto font-bold text-gray-900">Total ${totalPrice.toFixed(2)}</span>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <button onClick={handleAddToCart} disabled={!product.inStock} className="w-full py-4 rounded-xl font-bold text-lg border-2 border-nature-green-700 text-nature-green-800 hover:bg-nature-green-50 disabled:opacity-50 flex items-center justify-center gap-2">
+              {added ? <><Check className="w-5 h-5"/>Added to Cart</> : <><ShoppingCart className="w-5 h-5"/>Add to Cart — ${totalPrice.toFixed(2)}</>}
+            </button>
+            <button onClick={handleBuyNow} disabled={!product.inStock || isSubmitting} className="w-full py-4 rounded-xl font-bold text-lg bg-nature-green-700 hover:bg-nature-green-800 text-white disabled:opacity-50">
+              {!product.inStock ? 'Out of Stock' : isSubmitting ? 'Opening Secure Checkout…' : `Buy Now — $${totalPrice.toFixed(2)}`}
+            </button>
+            <p className="text-center text-sm text-gray-500">Secure checkout · Shipping shown before payment · No account required</p>
+          </div>
+
+          <div className="bg-gray-50 border rounded-2xl p-5 mb-8">
+            <h2 className="font-bold text-lg mb-3">Why customers choose this product</h2>
+            <ul className="space-y-2">{product.features.slice(0, 5).map((feature, i) => <li key={i} className="flex gap-2 text-gray-700"><Check className="w-5 h-5 text-nature-green-700 flex-none"/><span>{feature}</span></li>)}</ul>
+          </div>
+
+          {product.usage?.length ? <div className="border rounded-2xl p-5 mb-8"><h2 className="font-bold text-lg mb-3">How to use it</h2><ol className="space-y-3">{product.usage.map((step, i) => <li key={i} className="flex gap-3"><span className="w-7 h-7 rounded-full bg-nature-green-100 text-nature-green-800 font-bold flex items-center justify-center flex-none">{i + 1}</span><span className="text-gray-700">{step}</span></li>)}</ol></div> : null}
         </div>
       </div>
-    </Layout>
-  );
+
+      <div className="max-w-5xl mx-auto mt-16 grid lg:grid-cols-2 gap-8">
+        <div className="space-y-6"><FarmTransparency/><WhyItWorks product={product}/><PracticalGuidance product={product}/></div>
+        <div className="space-y-6"><HonestValue product={product}/><HelpfulContact/><GentleGuarantee/></div>
+      </div>
+    </div>
+
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl px-4 py-3 flex items-center gap-3">
+      <div className="flex-1 min-w-0"><div className="text-xs text-gray-500 truncate">{selectedSize}</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
+      <button onClick={handleAddToCart} disabled={!product.inStock} className="bg-nature-green-700 text-white font-bold px-5 py-3 rounded-xl">Add to Cart</button>
+    </div>
+  </Layout>;
 }
