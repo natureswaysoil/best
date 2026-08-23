@@ -35,15 +35,22 @@ export default function OrderSuccess() {
         const trackingKey = `nws-purchase-${order.transaction_id}`;
         if (!window.localStorage.getItem(trackingKey)) {
           trackPurchase(order);
-          const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
-          if (typeof fbq === 'function') {
-            fbq('track', 'Purchase', {
-              value: order.value,
-              currency: order.currency,
-              content_ids: order.items.map((item) => item.item_id).filter(Boolean),
-              content_type: 'product',
-            }, { eventID: order.transaction_id });
-          }
+
+          window.fbq?.('track', 'Purchase', {
+            value: order.value,
+            currency: order.currency,
+            content_ids: order.items.map((item) => item.item_id).filter(Boolean),
+            content_type: 'product',
+            num_items: order.items.reduce((sum, item) => sum + item.quantity, 0),
+          }, { eventID: order.transaction_id });
+
+          window.ttq?.track?.('CompletePayment', {
+            value: order.value,
+            currency: order.currency,
+            content_ids: order.items.map((item) => item.item_id).filter(Boolean),
+            quantity: order.items.reduce((sum, item) => sum + item.quantity, 0),
+          });
+
           window.localStorage.setItem(trackingKey, '1');
         }
         window.localStorage.removeItem(CART_KEY);
