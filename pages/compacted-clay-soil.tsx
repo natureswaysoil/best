@@ -4,11 +4,11 @@ export default function CompactedClaySoilPage() {
   return (
     <SeoProblemLandingPage
       slug="compacted-clay-soil"
-      eyebrow="Liquid soil conditioner for hard lawns"
+      eyebrow="Professional liquid soil recovery for hard lawns"
       title="Fix Compacted Clay Soil Without Tilling the Whole Lawn"
-      description="A practical lawn-recovery guide for hard clay soil, poor drainage, dry spots, and weak roots using liquid humic, fulvic, kelp, and soil-conditioning products."
-      primaryCta="View Lawn Recovery System"
-      primaryHref="/homeowners-landscapers-government"
+      description="Build a serious soil-recovery program for hard clay, poor drainage, dry spots, and weak roots with concentrated humic, fulvic, kelp, and soil-building products sized for whole-lawn treatment."
+      primaryCta="Build My Soil Recovery Program"
+      primaryHref="/product/NWS_011"
       problems={[
         'Hard clay soil that water runs off instead of soaking in',
         'Dry patches, weak roots, thin grass, and poor fertilizer response',
@@ -19,28 +19,28 @@ export default function CompactedClaySoilPage() {
       ]}
       solutionSteps={[
         'Start by watering the area and identifying the worst hard spots, dry patches, and runoff areas.',
-        'Apply a liquid soil conditioner containing humic, fulvic, and kelp ingredients during active grass growth.',
+        'Apply a concentrated liquid soil conditioner containing humic, fulvic, and kelp ingredients during active grass growth.',
         'Water the product in so it reaches the root zone instead of drying on the leaf surface.',
-        'Repeat on a maintenance schedule and combine with compost, biochar, or overseeding where the soil needs deeper rebuilding.',
+        'Repeat on a maintenance schedule and combine with biochar or compost-based amendments where the soil needs deeper rebuilding.',
       ]}
       products={[
         {
-          name: 'Liquid Humic & Fulvic Acid with Kelp',
+          name: 'Liquid Humic & Fulvic Acid with Kelp — Primary Soil Recovery Treatment',
           href: '/product/NWS_011',
-          bestFor: 'root-zone support, hard soil, yellow grass, and weak fertilizer response',
-          description: 'A concentrated liquid soil conditioner for lawns, gardens, landscape beds, and larger grounds programs.',
+          bestFor: 'whole-lawn root-zone support, hard soil, yellow grass, and weak fertilizer response',
+          description: 'Start here for a full soil-conditioning program. Choose the 1 gallon or 2.5 gallon size for larger lawn and grounds applications instead of treating compacted soil as a small spot-treatment problem.',
         },
         {
-          name: 'Seaweed & Humic Acid Lawn Treatment',
-          href: '/product/NWS_018',
-          bestFor: 'lawn stress, heat stress, dry spots, and routine turf support',
-          description: 'A simple entry product for homeowners and grounds crews that want a liquid lawn soil treatment.',
-        },
-        {
-          name: 'Liquid Biochar Soil Amendment',
+          name: 'Liquid Biochar Soil Amendment — Long-Term Soil Builder',
           href: '/government#quote-request',
-          bestFor: 'longer-term soil building, poor soil, and public grounds restoration',
-          description: 'A premium biobased soil-building option for agencies, landscapers, and restoration-minded buyers.',
+          bestFor: 'longer-term soil rebuilding, poor soil, commercial grounds, and larger restoration projects',
+          description: 'A premium carbon-rich soil-building option to pair with liquid humic and fulvic treatments when the root zone needs more than routine maintenance.',
+        },
+        {
+          name: 'Seaweed & Humic Acid Lawn Treatment — Maintenance Option',
+          href: '/product/NWS_018',
+          bestFor: 'follow-up lawn stress support, dry spots, heat stress, and routine maintenance',
+          description: 'A lighter maintenance treatment for customers who have already started rebuilding the soil and want ongoing turf support.',
         },
       ]}
       faqs={[
@@ -49,8 +49,12 @@ export default function CompactedClaySoilPage() {
           answer: 'It is best positioned as a liquid soil-conditioning tool, not a mechanical replacement for every aeration job. It can be used when tilling is not practical and can also support lawns before or after aeration.',
         },
         {
-          question: 'What products should I start with for compacted clay soil?',
-          answer: 'Start with Liquid Humic & Fulvic Acid with Kelp or the Lawn Recovery System. For poor soil restoration projects, add Liquid Biochar or compost-based amendments.',
+          question: 'What size should I start with for compacted clay soil?',
+          answer: 'For a whole-lawn soil recovery program, start with the 1 gallon or 2.5 gallon Liquid Humic & Fulvic Acid with Kelp option. Smaller sizes are better suited to testing or limited spot applications, while larger sizes make more sense for repeated lawn treatment.',
+        },
+        {
+          question: 'What products should I combine for badly compacted soil?',
+          answer: 'Start with Liquid Humic & Fulvic Acid with Kelp for liquid root-zone support. For soil that needs deeper rebuilding, add Liquid Biochar or a compost-based amendment and use the Seaweed & Humic Acid Lawn Treatment later as a maintenance option.',
         },
         {
           question: 'Is this useful for landscapers and government grounds crews?',
