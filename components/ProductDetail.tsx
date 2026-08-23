@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { Check, Leaf, Pause, Play, Shield, ShoppingCart, Tag, Truck, Volume2, VolumeX } from 'lucide-react';
+import { Check, Leaf, Pause, Play, Shield, ShoppingCart, Truck, Volume2, VolumeX } from 'lucide-react';
 import Layout from '../components/Layout';
 import { addCartItem } from '../lib/cart';
+import { trackAddToCart, trackViewItem } from '../lib/ga4';
 import { FarmTransparency, WhyItWorks, HonestValue, PracticalGuidance, HelpfulContact, GentleGuarantee } from './AuthenticConversion';
 
 type SizeOption = { name: string; price: number; sku?: string };
@@ -34,9 +35,28 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const estimatedCouponSavings = totalPrice * 0.15;
   const estimatedAfterCoupon = totalPrice - estimatedCouponSavings;
 
+  const eventItem = {
+    item_id: activeSize?.sku || product.id,
+    item_name: product.name,
+    item_variant: selectedSize,
+    item_category: product.category,
+    price: currentPrice,
+    quantity,
+  };
+
   useEffect(() => {
     if (videoRef.current && (product.video || product.videoWebm)) videoRef.current.play().catch(() => undefined);
   }, [product.video, product.videoWebm]);
+
+  useEffect(() => {
+    trackViewItem({ value: currentPrice, items: [{ ...eventItem, quantity: 1 }] });
+    if (typeof window !== 'undefined') {
+      window.fbq?.('track', 'ViewContent', { value: currentPrice, currency: 'USD', content_ids: [activeSize?.sku || product.id], content_type: 'product' });
+      window.ttq?.track?.('ViewContent', { value: currentPrice, currency: 'USD', content_id: activeSize?.sku || product.id, content_type: 'product' });
+    }
+    // Track once per product landing; size changes are captured on add-to-cart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   const cartPayload = () => ({
     productId: product.id,
@@ -48,9 +68,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     quantity
   });
 
+  const fireAddToCartEvents = () => {
+    trackAddToCart({ value: totalPrice, items: [eventItem] });
+    window.fbq?.('track', 'AddToCart', { value: totalPrice, currency: 'USD', content_ids: [activeSize?.sku || product.id], content_type: 'product' });
+    window.ttq?.track?.('AddToCart', { value: totalPrice, currency: 'USD', content_id: activeSize?.sku || product.id, quantity });
+  };
+
   const handleAddToCart = () => {
     if (!product.inStock) return;
     addCartItem(cartPayload());
+    fireAddToCartEvents();
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   };
@@ -59,6 +86,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     if (isSubmitting || !product.inStock) return;
     setIsSubmitting(true);
     try {
+      fireAddToCartEvents();
       const payload = { ...cartPayload(), productImage: heroImage };
       window.sessionStorage.setItem('nws-checkout-selection', JSON.stringify(payload));
       await router.push('/checkout');
@@ -106,18 +134,13 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-4">{product.name}</h1>
           <p className="text-lg text-gray-600 leading-relaxed mb-6">{product.description}</p>
 
-          <div className="flex items-end gap-3 mb-3">
+          <div className="flex items-end gap-3 mb-4">
             <div><span className="text-sm text-gray-500">Selected price</span><div className="text-4xl font-bold text-gray-900">${currentPrice.toFixed(2)}</div></div>
             {product.originalPrice && <span className="text-lg text-gray-400 line-through mb-1">${product.originalPrice.toFixed(2)}</span>}
           </div>
-
-          <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 flex gap-3">
-            <Tag className="w-6 h-6 text-amber-700 flex-none mt-0.5" />
-            <div>
-              <p className="font-bold text-amber-950">Save 15% at checkout</p>
-              <p className="text-sm text-amber-900">Apply your 15% coupon in the promotion-code box before payment.</p>
-              <p className="text-sm font-semibold text-amber-950 mt-1">On this selection: save about ${estimatedCouponSavings.toFixed(2)} · about ${estimatedAfterCoupon.toFixed(2)} after coupon</p>
-            </div>
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <div className="font-bold">Save 15% at checkout</div>
+            <div>Estimated savings on this selection: ${estimatedCouponSavings.toFixed(2)} · Approx. after coupon: ${estimatedAfterCoupon.toFixed(2)}</div>
           </div>
 
           <div className="mb-6">
@@ -145,7 +168,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <button onClick={handleBuyNow} disabled={!product.inStock || isSubmitting} className="w-full py-4 rounded-xl font-bold text-lg bg-nature-green-700 hover:bg-nature-green-800 text-white disabled:opacity-50">
               {!product.inStock ? 'Out of Stock' : isSubmitting ? 'Opening Secure Checkout…' : `Buy Now — $${totalPrice.toFixed(2)}`}
             </button>
-            <p className="text-center text-sm text-gray-500">Secure checkout · Apply 15% coupon before payment · Shipping shown before payment · No account required</p>
+            <p className="text-center text-sm text-gray-500">Secure checkout · Apply your 15% coupon at checkout · No account required</p>
           </div>
 
           <div className="bg-gray-50 border rounded-2xl p-5 mb-8">
@@ -164,7 +187,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     </div>
 
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl px-4 py-3 flex items-center gap-3">
-      <div className="flex-1 min-w-0"><div className="text-xs text-amber-700 font-semibold">15% coupon at checkout</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
+      <div className="flex-1 min-w-0"><div className="text-xs text-gray-500 truncate">15% coupon at checkout · {selectedSize}</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
       <button onClick={handleAddToCart} disabled={!product.inStock} className="bg-nature-green-700 text-white font-bold px-5 py-3 rounded-xl">Add to Cart</button>
     </div>
   </Layout>;
