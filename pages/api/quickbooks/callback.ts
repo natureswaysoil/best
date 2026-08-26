@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const tokens = await exchangeQuickBooksCode(code);
     await saveQuickBooksConnection(realmId, tokens);
-    return res.redirect(302, '/api/quickbooks/status?connected=1');
+    return res.status(200).send(`<!doctype html><html><head><title>QuickBooks Connected</title></head><body style="font-family:Arial,sans-serif;max-width:680px;margin:60px auto;padding:24px"><h1>QuickBooks Online connected</h1><p>Nature's Way Soil is now authorized to communicate with this QuickBooks company.</p><p>You can close this window.</p></body></html>`);
   } catch (error) {
     console.error('QuickBooks callback error:', error);
     return res.status(500).send('QuickBooks connection failed. Check server logs for details.');
