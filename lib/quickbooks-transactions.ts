@@ -123,10 +123,6 @@ export async function postWebsiteCheckoutToQuickBooks(session: Stripe.Checkout.S
     });
     const salesReceipt = receiptPayload?.SalesReceipt;
 
-    // Stripe-collected tax is kept out of revenue. Because this integration is not
-    // asking QuickBooks to calculate the tax, we add the tax amount to the Stripe
-    // clearing balance and credit a dedicated liability account with a journal entry.
-    // Marketplace-facilitator tax should be handled from marketplace settlements instead.
     if (salesTax > 0 && accountMap.sales_tax) {
       const taxSyncId = `${session.id}:tax`;
       if (!(await wasSynced('stripe_tax', taxSyncId))) {
@@ -190,6 +186,29 @@ export async function postStripeProcessingFee(input: { balanceTransactionId: str
   }
 }
 
+export async function postStripeRefund(input: { refundId: string; amount: number; paymentId?: string }) {
+  const existing = await wasSynced('stripe_refund', input.refundId);
+  if (existing || input.amount <= 0) return { skipped: true, qboId: existing?.qbo_id };
+  const accounts = await getAccountMap();
+  if (!accounts.stripe_clearing || !accounts.discounts_refunds) throw new Error('Stripe refund accounts are missing.');
+
+  try {
+    const je = await createJournalEntry({
+      privateNote: `Stripe refund ${input.refundId}${input.paymentId ? ` for ${input.paymentId}` : ''}`,
+      docNumber: `SR-${input.refundId}`,
+      lines: [
+        { account: accounts.discounts_refunds, amount: input.amount, postingType: 'Debit', description: 'Customer refund / sales return' },
+        { account: accounts.stripe_clearing, amount: input.amount, postingType: 'Credit', description: 'Refund deducted from Stripe balance' },
+      ],
+    });
+    await recordSync({ source: 'stripe_refund', sourceId: input.refundId, entity: 'JournalEntry', qboId: je?.Id, status: 'posted', amount: input.amount, payload: je });
+    return { skipped: false, qboId: je?.Id };
+  } catch (error) {
+    await recordSync({ source: 'stripe_refund', sourceId: input.refundId, entity: 'JournalEntry', status: 'failed', amount: input.amount, error: error instanceof Error ? error.message : String(error) });
+    throw error;
+  }
+}
+
 export async function postStripePayout(input: { payoutId: string; amount: number; bankAccountKey?: string }) {
   const existing = await wasSynced('stripe_payout', input.payoutId);
   if (existing) return { skipped: true, qboId: existing.qbo_id };
@@ -241,7 +260,6 @@ export async function postMarketplaceSettlement(input: {
   const adSpend = Math.abs(input.advertising || 0);
   const adjustment = input.otherAdjustments || 0;
 
-  // Settlement journal entry books gross channel economics and the actual payout in one balanced entry.
   const lines: Array<{ account: any; amount: number; postingType: 'Debit' | 'Credit'; description?: string }> = [];
   if (input.payout > 0) lines.push({ account: bank, amount: input.payout, postingType: 'Debit', description: `${input.marketplace} settlement deposit` });
   if (refund > 0 && refundsAccount) lines.push({ account: refundsAccount, amount: refund, postingType: 'Debit', description: `${input.marketplace} refunds` });
