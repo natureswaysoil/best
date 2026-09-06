@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
+import { sendPaymentIntentOrderNotification } from '../../../lib/paymentIntentOrder';
 
 const site = (process.env.NEXT_PUBLIC_SITE_URL || 'https://natureswaysoil.com').replace(/\/$/, '');
 const from = process.env.RESEND_FROM || "Nature's Way Soil <no-reply@natureswaysoil.com>";
@@ -33,9 +34,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const dry = req.query.dry_run === 'true';
   const now = Math.floor(Date.now() / 1000);
   const intents = (await stripe.paymentIntents.list({ limit: 100, created: { gte: now - 100 * 86400 } })).data;
-  const result: Record<string, number> = { cart: 0, failed: 0, upsell: 0, review: 0, referral: 0, reorder: 0, 'reorder-60': 0, errors: 0 };
+  const result: Record<string, number> = { 'order-recovery': 0, cart: 0, failed: 0, upsell: 0, review: 0, referral: 0, reorder: 0, 'reorder-60': 0, errors: 0 };
+
   for (const pi of intents) {
     const h = (now - pi.created) / 3600;
+
+    // Safety net for a missed/delayed Stripe webhook. The notification helper uses
+    // the same Resend idempotency key as the payment_intent.succeeded webhook,
+    // so an order that was already notified will not create a duplicate email.
+    if (pi.status === 'succeeded' && h < 48) {
+      try {
+        if (!dry) await sendPaymentIntentOrderNotification(pi, `recovery/${pi.id}`);
+        result['order-recovery'] += 1;
+      } catch (error) {
+        result.errors += 1;
+        console.error('[order-recovery]', pi.id, error);
+      }
+    }
+
     const p = product(pi);
     const tasks: Array<[string,string,string,string]> = [];
     if (['requires_payment_method','requires_confirmation','requires_action'].includes(pi.status) && h >= 1 && h < 25) tasks.push(['cart', `Still interested in ${p.name}?`, `Your order is waiting. Use SAVE15 if this is your first direct purchase.`, checkout(pi, 'SAVE15')]);
