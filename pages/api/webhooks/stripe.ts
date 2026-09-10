@@ -3,8 +3,14 @@ import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { getServiceSupabase } from '../../../lib/supabase';
 import { sendOrderConfirmation } from '../../../lib/resend';
-
 import { sendPaymentIntentOrderNotification } from '../../../lib/paymentIntentOrder';
+import {
+  postStripePayout,
+  postStripeProcessingFee,
+  postStripeRefund,
+  postWebsiteCheckoutToQuickBooks,
+} from '../../../lib/quickbooks-transactions';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
 });
@@ -12,6 +18,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://natureswaysoil.com';
 const printSlipToken = process.env.PRINT_SLIP_TOKEN || process.env.PRINT_QUEUE_SECRET || '';
+const quickBooksAutoPost = process.env.QUICKBOOKS_AUTO_POST === 'true';
 const INTERNAL_EMAIL_RECIPIENTS = Array.from(
   new Set([
     'natureswaysoil@natureswaysoil.com',
@@ -115,6 +122,16 @@ async function saveOrderToSupabase(session: Stripe.Checkout.Session, lineItem?: 
   }
 }
 
+async function safelyPostAccounting(label: string, operation: () => Promise<unknown>) {
+  if (!quickBooksAutoPost) return;
+  try {
+    await operation();
+  } catch (error) {
+    // Accounting failures must not interrupt fulfillment or cause Stripe webhook retries.
+    console.error(`QuickBooks ${label} posting failed:`, error);
+  }
+}
+
 async function processCheckoutSessionCompleted(sessionId: string) {
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
     expand: ['line_items.data.price.product'],
@@ -134,6 +151,7 @@ async function processCheckoutSessionCompleted(sessionId: string) {
   const stripePaymentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.id;
 
   await saveOrderToSupabase(session, lineItem);
+  await safelyPostAccounting('website sale', () => postWebsiteCheckoutToQuickBooks(session, productLineItems));
 
   if (process.env.RESEND_API_KEY) {
     const resendClient = new Resend(process.env.RESEND_API_KEY);
@@ -220,6 +238,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         event.data.object as Stripe.PaymentIntent,
         event.id,
       );
+    } else if (event.type === 'charge.succeeded') {
+      const charge = event.data.object as Stripe.Charge;
+      const balanceTransactionId = typeof charge.balance_transaction === 'string'
+        ? charge.balance_transaction
+        : charge.balance_transaction?.id;
+      if (balanceTransactionId) {
+        await safelyPostAccounting('Stripe fee', async () => {
+          const balance = await stripe.balanceTransactions.retrieve(balanceTransactionId);
+          return postStripeProcessingFee({
+            balanceTransactionId,
+            fee: (balance.fee || 0) / 100,
+            net: (balance.net || 0) / 100,
+            gross: (balance.amount || 0) / 100,
+            paymentId: typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.id,
+          });
+        });
+      }
+    } else if (event.type === 'refund.created') {
+      const refund = event.data.object as Stripe.Refund;
+      await safelyPostAccounting('Stripe refund', () => postStripeRefund({
+        refundId: refund.id,
+        amount: (refund.amount || 0) / 100,
+        paymentId: typeof refund.payment_intent === 'string' ? refund.payment_intent : undefined,
+      }));
+    } else if (event.type === 'payout.paid') {
+      const payout = event.data.object as Stripe.Payout;
+      if (payout.amount > 0) {
+        await safelyPostAccounting('Stripe payout', () => postStripePayout({
+          payoutId: payout.id,
+          amount: payout.amount / 100,
+        }));
+      }
     }
   } catch (err) {
     console.error('Webhook processing error:', err);
