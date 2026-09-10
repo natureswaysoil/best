@@ -25,7 +25,55 @@ export function assessVideoProbe({ fileSize = 0, format = {}, streams = [] } = {
   };
 }
 
-export function validateVideoForPublishing(videoPath, { ffprobe = 'ffprobe' } = {}) {
+export function assessSampledFrames(buffer, { grid = 16 } = {}) {
+  const frameBytes = grid * grid * 3;
+  const frameCount = Math.floor(buffer.length / frameBytes);
+  let greenFrames = 0;
+
+  for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
+    const start = frameIndex * frameBytes;
+    const frame = buffer.subarray(start, start + frameBytes);
+    let green = 0;
+    let minLuma = 255;
+    let maxLuma = 0;
+    let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
+    let minDominance = 255, maxDominance = 0;
+
+    for (let i = 0; i + 2 < frame.length; i += 3) {
+      const r = frame[i], g = frame[i + 1], b = frame[i + 2];
+      const luma = (r + g + b) / 3;
+      minLuma = Math.min(minLuma, luma);
+      maxLuma = Math.max(maxLuma, luma);
+      const dominance = g - Math.max(r, b);
+      if (g > r * 1.35 && g > b * 1.35 && dominance > 28) {
+        green++;
+        minR = Math.min(minR, r); maxR = Math.max(maxR, r);
+        minG = Math.min(minG, g); maxG = Math.max(maxG, g);
+        minB = Math.min(minB, b); maxB = Math.max(maxB, b);
+        minDominance = Math.min(minDominance, dominance);
+        maxDominance = Math.max(maxDominance, dominance);
+      }
+    }
+
+    const pixels = frame.length / 3;
+    const greenRatio = pixels ? green / pixels : 1;
+    const greenRange = green ? Math.max(maxR - minR, maxG - minG, maxB - minB) : 255;
+    const dominanceRange = green ? maxDominance - minDominance : 255;
+    if ((greenRatio >= 0.90 && maxLuma - minLuma < 65) ||
+        (greenRatio >= 0.70 && greenRange < 38 && dominanceRange < 28)) {
+      greenFrames++;
+    }
+  }
+
+  return {
+    ok: frameCount >= 10 && greenFrames < 3 && greenFrames / Math.max(frameCount, 1) < 0.12,
+    frameCount,
+    greenFrames,
+    greenRatio: greenFrames / Math.max(frameCount, 1)
+  };
+}
+
+export function validateVideoForPublishing(videoPath, { ffprobe = 'ffprobe', ffmpeg = 'ffmpeg' } = {}) {
   if (!fs.existsSync(videoPath)) throw new Error(`Video file is missing: ${videoPath}`);
   const result = spawnSync(ffprobe, [
     '-v', 'error',
@@ -62,5 +110,23 @@ export function validateVideoForPublishing(videoPath, { ffprobe = 'ffprobe' } = 
   if (!assessment.ok) {
     throw new Error(`Video failed publish QA: ${assessment.failures.join('; ')}`);
   }
-  return assessment;
+
+  const grid = 16;
+  const sampled = spawnSync(ffmpeg, [
+    '-hide_banner', '-loglevel', 'error', '-i', videoPath,
+    '-vf', `fps=1,scale=${grid}:${grid},format=rgb24`,
+    '-f', 'rawvideo', '-'
+  ], { encoding: null, timeout: 60_000, maxBuffer: 8 * 1024 * 1024 });
+  if (sampled.error) throw new Error(`Video QA could not start ${ffmpeg} for ${videoPath}: ${sampled.error.message}`);
+  if (sampled.status !== 0 || !Buffer.isBuffer(sampled.stdout)) {
+    throw new Error(`Video QA could not sample frames for ${videoPath}`);
+  }
+  const frameAssessment = assessSampledFrames(sampled.stdout, { grid });
+  if (!frameAssessment.ok) {
+    throw new Error(
+      `Video failed publish QA: green-screen/placeholder background detected ` +
+      `(${frameAssessment.greenFrames}/${frameAssessment.frameCount} sampled frames)`
+    );
+  }
+  return { ...assessment, ...frameAssessment };
 }
