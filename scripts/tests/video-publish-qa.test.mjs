@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { assessVideoProbe, validateVideoForPublishing } from '../lib/video-publish-qa.mjs';
+import { assessSampledFrames, assessVideoProbe, validateVideoForPublishing } from '../lib/video-publish-qa.mjs';
 import { buildForcedSocialContent } from '../social-caption-overrides.mjs';
 
 test('rejects the low-resolution fallback video that reached YouTube', () => {
@@ -32,6 +32,34 @@ test('accepts a production vertical video with audio', () => {
   });
 
   assert.equal(result.ok, true);
+});
+
+test('rejects sustained flat green placeholder frames', () => {
+  const grid = 16;
+  const frame = Buffer.alloc(grid * grid * 3);
+  for (let i = 0; i < frame.length; i += 3) {
+    frame[i] = 0;
+    frame[i + 1] = 255;
+    frame[i + 2] = 0;
+  }
+  const result = assessSampledFrames(Buffer.concat(Array.from({ length: 20 }, () => frame)), { grid });
+  assert.equal(result.ok, false);
+  assert.equal(result.greenFrames, 20);
+});
+
+test('accepts varied non-placeholder frames', () => {
+  const grid = 16;
+  const frames = [];
+  for (let f = 0; f < 20; f++) {
+    const frame = Buffer.alloc(grid * grid * 3);
+    for (let i = 0; i < frame.length; i += 3) {
+      frame[i] = (i + f * 7) % 256;
+      frame[i + 1] = (i * 3 + f * 11) % 256;
+      frame[i + 2] = (i * 5 + f * 13) % 256;
+    }
+    frames.push(frame);
+  }
+  assert.equal(assessSampledFrames(Buffer.concat(frames), { grid }).ok, true);
 });
 
 test('reports a missing ffprobe executable instead of an empty inspection error', () => {
