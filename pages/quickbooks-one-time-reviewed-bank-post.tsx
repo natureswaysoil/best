@@ -108,7 +108,7 @@ export const getStaticProps:GetStaticProps<Props>=async()=>{
 
     if(rule.kind==='self_stripe'){
       const {error:selfError}=await supabase.from('accounting_import_staging').update({
-        status:'resolved_internal',qbo_txn_id:qboId,posted_at:new Date().toISOString(),updated_at:new Date().toISOString(),
+        status:'posted',qbo_txn_id:qboId,posted_at:new Date().toISOString(),updated_at:new Date().toISOString(),
         notes:'Matched to bank self-charge; excluded from revenue. Net $48.39 to Stripe Clearing and $1.60 Stripe fee.'
       }).eq('source','stripe_charge').eq('external_id','py_3UCgliIwQKMqOanf1pSXqGp6');
       if(selfError) throw selfError;
