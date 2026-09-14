@@ -23,9 +23,13 @@ export const getSupabase = () =>
 
 export const getServiceSupabase = () => {
   const supabaseUrl = requireEnvironmentVariable('NEXT_PUBLIC_SUPABASE_URL');
-  const supabaseServiceKey = requireEnvironmentVariable(
-    'SUPABASE_SERVICE_ROLE_KEY'
-  );
+  const supabaseServiceKey =
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseServiceKey) {
+    throw new Error('SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is not configured');
+  }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: { persistSession: false },
