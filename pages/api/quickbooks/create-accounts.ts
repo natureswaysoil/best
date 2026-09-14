@@ -29,13 +29,13 @@ const SAFE_CREATE: Record<string, AccountSpec> = {
   '6020': { number: '6020', name: 'Advertising - Meta / Social', accountType: 'Expense', accountSubType: 'AdvertisingPromotional' },
   '6110': { number: '6110', name: 'Stripe Processing Fees', accountType: 'Expense', accountSubType: 'BankCharges' },
   '6210': { number: '6210', name: 'Shipping Supplies', accountType: 'Expense', accountSubType: 'SuppliesMaterials' },
-  '6320': { number: '6320', name: 'Fuel & Equipment Operating Costs', accountType: 'Expense', accountSubType: 'OtherBusinessExpenses' },
-  '6340': { number: '6340', name: 'Waste / Disposal', accountType: 'Expense', accountSubType: 'OtherBusinessExpenses' },
-  '6400': { number: '6400', name: 'Software & Online Services', accountType: 'Expense', accountSubType: 'OtherBusinessExpenses' },
-  '6410': { number: '6410', name: 'Website & Hosting', accountType: 'Expense', accountSubType: 'OtherBusinessExpenses' },
-  '6430': { number: '6430', name: 'Telephone & Internet', accountType: 'Expense', accountSubType: 'Telephone' },
+  '6320': { number: '6320', name: 'Fuel & Equipment Operating Costs', accountType: 'Expense', accountSubType: 'OtherMiscellaneousExpense' },
+  '6340': { number: '6340', name: 'Waste / Disposal', accountType: 'Expense', accountSubType: 'OtherMiscellaneousExpense' },
+  '6400': { number: '6400', name: 'Software & Online Services', accountType: 'Expense', accountSubType: 'OtherMiscellaneousExpense' },
+  '6410': { number: '6410', name: 'Website & Hosting', accountType: 'Expense', accountSubType: 'OtherMiscellaneousExpense' },
+  '6430': { number: '6430', name: 'Telephone & Internet', accountType: 'Expense', accountSubType: 'Utilities' },
   '6540': { number: '6540', name: 'Dues, Subscriptions & Memberships', accountType: 'Expense', accountSubType: 'DuesSubscriptions' },
-  '6550': { number: '6550', name: 'Education & Training', accountType: 'Expense', accountSubType: 'OtherBusinessExpenses' },
+  '6550': { number: '6550', name: 'Education & Training', accountType: 'Expense', accountSubType: 'OtherMiscellaneousExpense' },
 };
 
 function normalize(value: unknown) {
