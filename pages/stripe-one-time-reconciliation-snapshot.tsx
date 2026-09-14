@@ -20,7 +20,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   let payouts:any[] = [];
   let startingAfter:string|undefined;
   do {
-    const page = await stripe.payouts.list({ created: { gte, lte }, limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) });
+    const page: Stripe.ApiList<Stripe.Payout> = await stripe.payouts.list({ created: { gte, lte }, limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) });
     payouts = payouts.concat(page.data);
     if (!page.has_more || !page.data.length) break;
     startingAfter = page.data[page.data.length - 1].id;
@@ -29,7 +29,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   let txns:any[] = [];
   startingAfter = undefined;
   do {
-    const page = await stripe.balanceTransactions.list({ created: { gte, lte }, limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) });
+    const page: Stripe.ApiList<Stripe.BalanceTransaction> = await stripe.balanceTransactions.list({ created: { gte, lte }, limit: 100, ...(startingAfter ? { starting_after: startingAfter } : {}) });
     txns = txns.concat(page.data);
     if (!page.has_more || !page.data.length) break;
     startingAfter = page.data[page.data.length - 1].id;
