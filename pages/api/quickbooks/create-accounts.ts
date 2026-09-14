@@ -20,6 +20,7 @@ const SAFE_CREATE: Record<string, AccountSpec> = {
   '4000': { number: '4000', name: 'Product Sales - Website / Stripe', accountType: 'Income', accountSubType: 'SalesOfProductIncome' },
   '4020': { number: '4020', name: 'Wholesale / Retail Sales', accountType: 'Income', accountSubType: 'SalesOfProductIncome' },
   '4030': { number: '4030', name: 'Government / B2B Sales', accountType: 'Income', accountSubType: 'SalesOfProductIncome' },
+  '4040': { number: '4040', name: 'Shipping Income', accountType: 'Income', accountSubType: 'OtherPrimaryIncome' },
 
   '5000': { number: '5000', name: 'COGS - Ingredients', accountType: 'Cost of Goods Sold', accountSubType: 'SuppliesMaterialsCogs' },
   '5010': { number: '5010', name: 'COGS - Packaging', accountType: 'Cost of Goods Sold', accountSubType: 'SuppliesMaterialsCogs' },
