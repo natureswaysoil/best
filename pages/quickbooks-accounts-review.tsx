@@ -111,15 +111,17 @@ const SUGGESTED_ALIASES: Record<string, string[]> = {
   '1040': ['Channel clearing account'],
   '2200': ['Channel sales tax payable'],
   '4010': ['Channel sales:Amazon sales'],
-  '4040': ['Channel shipping income'],
+  '4040': ['Channel shipping income', 'Channel shipping income:Amazon shipping income'],
   '4050': ['Channel discount', 'Channel discount:Amazon discount'],
   '4060': ['Channel refund', 'Channel refund:Amazon refund'],
   '5020': ['Cost of goods sold:Direct supplies & materials'],
+  '5030': ['Freight & Delivery Costs'],
   '5040': ['Cost of goods sold:Direct subcontractor expenses'],
   '6000': ['Channel Advertising Fee:Amazon advertising fees'],
   '6030': ['Advertising & marketing'],
   '6100': ['Channel selling fees:Amazon fees'],
   '6120': ['Commissions & fees'],
+  '6200': ['Fulfillment and Warehouse Fees', 'Freight & Delivery Costs'],
   '6300': ['Supplies'],
   '6310': ['Repairs & maintenance'],
   '6500': ['Professional Fees', 'Professional Services', 'Professional Services:Accounting fees', 'Professional Services:Legal fees'],
@@ -131,6 +133,7 @@ const SUGGESTED_ALIASES: Record<string, string[]> = {
   '6720': ['Rent or Lease', 'Building & land rent'],
   '6800': ['Payroll expenses:Wages'],
   '6990': ['Other business expenses'],
+  '4090': ['Other income'],
 };
 
 function findSuggestedAlias(targetNumber: string, liveAccounts: LiveAccount[]) {
