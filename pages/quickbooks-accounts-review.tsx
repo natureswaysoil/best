@@ -107,6 +107,35 @@ function normalizeName(value: string) {
     .replace(/\s+/g, ' ');
 }
 
+const SUGGESTED_ALIASES: Record<string, string[]> = {
+  '1040': ['Channel clearing account'],
+  '4010': ['Channel sales:Amazon sales'],
+  '4050': ['Channel discount', 'Channel discount:Amazon discount'],
+  '4060': ['Channel refund', 'Channel refund:Amazon refund'],
+  '6000': ['Channel Advertising Fee:Amazon advertising fees'],
+  '6100': ['Channel selling fees:Amazon fees'],
+  '6300': ['Supplies'],
+  '6310': ['Repairs & maintenance'],
+  '6500': ['Professional Fees', 'Professional Services', 'Professional Services:Accounting fees', 'Professional Services:Legal fees'],
+  '6510': ['Bank Fees', 'Other business expenses:Bank and credit card fees'],
+  '6530': ['Taxes and Licenses'],
+  '6600': ['Vehicle expenses'],
+  '6620': ['Meals'],
+  '6720': ['Rent or Lease', 'Building & land rent'],
+  '6800': ['Payroll expenses:Wages'],
+  '6990': ['Other business expenses'],
+};
+
+function findSuggestedAlias(targetNumber: string, liveAccounts: LiveAccount[]) {
+  const aliases = SUGGESTED_ALIASES[targetNumber] || [];
+  return liveAccounts.find((account) =>
+    aliases.some((alias) =>
+      normalizeName(account.fullyQualifiedName || account.name) === normalizeName(alias)
+    )
+  );
+}
+
+
 export default function QuickBooksAccountsReviewPage() {
   const [secret, setSecret] = useState('');
   const [liveAccounts, setLiveAccounts] = useState<LiveAccount[]>([]);
@@ -141,13 +170,16 @@ export default function QuickBooksAccountsReviewPage() {
       const byName = liveAccounts.find(
         (account) => normalizeName(account.name) === normalizeName(target.name)
       );
-      const match = byNumber || byName;
+      const suggested = !byNumber && !byName ? findSuggestedAlias(target.number, liveAccounts) : undefined;
+      const match = byNumber || byName || suggested;
 
       let status = 'Missing';
       if (match) {
         const numberMatches = match.accountNumber === target.number;
         const nameMatches = normalizeName(match.name) === normalizeName(target.name);
-        status = numberMatches && nameMatches ? 'Exact match' : 'Review match';
+        if (numberMatches && nameMatches) status = 'Exact match';
+        else if (suggested) status = 'Suggested reuse';
+        else status = 'Review match';
       }
 
       return { target, match, status };
@@ -156,6 +188,7 @@ export default function QuickBooksAccountsReviewPage() {
 
   const exact = comparison.filter((row) => row.status === 'Exact match').length;
   const review = comparison.filter((row) => row.status === 'Review match').length;
+  const suggestedReuse = comparison.filter((row) => row.status === 'Suggested reuse').length;
   const missing = comparison.filter((row) => row.status === 'Missing').length;
 
   const matchedIds = new Set(comparison.filter((r) => r.match).map((r) => r.match!.id));
@@ -166,7 +199,8 @@ export default function QuickBooksAccountsReviewPage() {
       <h1 style={{ color: '#2d5016' }}>QuickBooks Chart of Accounts Review</h1>
       <p>
         This page compares the live QuickBooks chart against the proposed Nature&apos;s Way Soil
-        accounting structure. It does not create, rename, deactivate, or delete accounts.
+        accounting structure. Suggested reuses identify likely existing accounts with different names.
+        It does not create, rename, deactivate, or delete accounts.
       </p>
 
       <form onSubmit={loadAccounts} style={{ maxWidth: 560, marginTop: 24 }}>
@@ -206,6 +240,7 @@ export default function QuickBooksAccountsReviewPage() {
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', margin: '24px 0' }}>
             <strong>Exact matches: {exact}</strong>
             <strong>Review matches: {review}</strong>
+            <strong>Suggested reuses: {suggestedReuse}</strong>
             <strong>Missing: {missing}</strong>
             <strong>Existing unmatched: {existingOnly.length}</strong>
           </div>
