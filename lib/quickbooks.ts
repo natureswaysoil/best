@@ -54,7 +54,8 @@ export function decryptSecret(value: string): string {
 }
 
 export function quickBooksRedirectUri(): string {
-  return process.env.QUICKBOOKS_REDIRECT_URI || 'https://natureswaysoil.com/api/quickbooks/callback';
+  // Keep this fixed so Intuit's production OAuth redirect always matches exactly.
+  return 'https://natureswaysoil.com/api/quickbooks/callback';
 }
 
 export function buildAuthorizationUrl(state: string): string {
