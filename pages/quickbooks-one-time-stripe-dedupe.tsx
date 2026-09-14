@@ -58,7 +58,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
   let skipped = 0;
   const actions:any[] = [];
 
-  for (const [doc, items] of groups.entries()) {
+  for (const [doc, items] of Array.from(groups.entries())) {
     if (items.length <= 1) continue;
 
     const signatures = new Set(items.map((j:any) =>
