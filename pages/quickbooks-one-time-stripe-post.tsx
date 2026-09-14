@@ -96,7 +96,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
     let held = 0;
 
     for (const row of rows || []) {
-      const docNumber = 'STRIPE-' + String(row.external_id).slice(-20);
+      const docNumber = 'ST-' + String(row.external_id).slice(-18);
       const existing = await existingJournalEntry(connection.realm_id, docNumber);
 
       if (existing?.Id) {
