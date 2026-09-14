@@ -44,8 +44,8 @@ async function logActivity(message) {
 async function readExistingArticles() {
   try {
     const content = await fs.readFile(BLOG_DATA_PATH, 'utf-8');
-    const slugs = [...content.matchAll(/"slug":\s*"([^"]+)"/g)].map(m => m[1]);
-    const titles = [...content.matchAll(/"title":\s*"([^"]+)"/g)].map(m => m[1].toLowerCase());
+    const slugs = [...content.matchAll(/(?:"slug"|slug):\s*(["'])([^"']+)\1/g)].map(m => m[2]);
+    const titles = [...content.matchAll(/(?:"title"|title):\s*(["'])([^"']+)\1/g)].map(m => m[2].toLowerCase());
     return { slugs: [...new Set(slugs)], titles: [...new Set(titles)] };
   } catch {
     return { slugs: [], titles: [] };

@@ -86,7 +86,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
         {article.tags.map(tag => (
           <meta key={tag} property="article:tag" content={tag} />
         ))}
-        <link rel="canonical" href={`https://natureswaysoil.com/blog/${article.slug}`} />
+        <link rel="canonical" href={`https://www.natureswaysoil.com/blog/${article.slug}`} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -97,23 +97,23 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
             "datePublished": article.publishedAt,
             "dateModified": article.updatedAt || article.publishedAt,
             "image": article.featuredImage,
-            "url": `https://natureswaysoil.com/blog/${article.slug}`,
+            "url": `https://www.natureswaysoil.com/blog/${article.slug}`,
             "author": {
               "@type": "Organization",
               "name": "Nature's Way Soil",
-              "url": "https://natureswaysoil.com"
+              "url": "https://www.natureswaysoil.com"
             },
             "publisher": {
               "@type": "Organization",
               "name": "Nature's Way Soil",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://natureswaysoil.com/images/logo.png"
+                "url": "https://www.natureswaysoil.com/images/logo.png"
               }
             },
             "mainEntityOfPage": {
               "@type": "WebPage",
-              "@id": `https://natureswaysoil.com/blog/${article.slug}`
+              "@id": `https://www.natureswaysoil.com/blog/${article.slug}`
             },
             "keywords": article.tags.join(', ')
           })}}
@@ -121,7 +121,7 @@ export default function BlogArticlePage({ article, relatedArticles }: BlogArticl
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={article.seoDescription || article.excerpt} />
-        <meta name="twitter:image" content={article.featuredImage?.startsWith?.("http") ? article.featuredImage : `https://natureswaysoil.com/images/blog/${article.slug}.jpg`} />
+        <meta name="twitter:image" content={article.featuredImage?.startsWith?.("http") ? article.featuredImage : `https://www.natureswaysoil.com/images/blog/${article.slug}.jpg`} />
         <meta name="twitter:site" content="@NaturesWaySoil" />
 
       </Head>

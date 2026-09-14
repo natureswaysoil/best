@@ -39,7 +39,7 @@ export default function Home({ featuredProducts }: HomeProps) {
     <SEO
       title="Nature's Way Soil | Lawn, Soil, Garden & Pasture Solutions"
       description="Shop Nature's Way Soil by the problem you want to solve: dog urine lawn spots, pale grass, compacted soil, pasture recovery and root-zone support."
-      url="https://natureswaysoil.com"
+      url="https://www.natureswaysoil.com"
       type="website"
     />
     <Layout transparentHeader>

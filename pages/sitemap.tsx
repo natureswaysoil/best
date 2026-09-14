@@ -65,7 +65,7 @@ export default function Sitemap() {
       <Head>
         <title>Sitemap - Nature&apos;s Way Soil</title>
         <meta name="description" content="Explore Nature's Way Soil products, lawn and soil solutions, pasture resources, guides, and support pages." />
-        <link rel="canonical" href="https://natureswaysoil.com/sitemap" />
+        <link rel="canonical" href="https://www.natureswaysoil.com/sitemap" />
         <meta name="robots" content="index, follow" />
       </Head>
       <Layout>

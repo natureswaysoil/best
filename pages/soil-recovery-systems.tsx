@@ -89,7 +89,7 @@ export default function SoilRecoverySystems() {
       <SEO
         title="Lawn & Soil Recovery Systems | Dog Urine Repair, Liquid Humic Acid & Liquid Biochar | Nature's Way Soil"
         description="Shop Nature's Way Soil's best direct lawn and soil recovery products: dog urine lawn repair, liquid humic and fulvic acid with kelp, and premium liquid biochar soil conditioner."
-        url="https://natureswaysoil.com/soil-recovery-systems"
+        url="https://www.natureswaysoil.com/soil-recovery-systems"
         type="website"
       />
 

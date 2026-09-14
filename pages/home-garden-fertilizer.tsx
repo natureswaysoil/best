@@ -13,7 +13,7 @@ export default function HomeGardenFertilizer() {
           content="Supercharge your home garden with Nature's Way Soil organic liquid fertilizers. Made fresh weekly with billions of living microbes. Safe for kids, pets, and pollinators."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://natureswaysoil.com/home-garden-fertilizer" />
+        <link rel="canonical" href="https://www.natureswaysoil.com/home-garden-fertilizer" />
       </Head>
 
       <Layout>

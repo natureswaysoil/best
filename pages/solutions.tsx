@@ -48,7 +48,7 @@ export default function SolutionsPage() {
       <SEO
         title="Soil, Lawn & Facility Care Solutions | Nature's Way Soil"
         description="Find Nature's Way Soil solutions for pet lawn spots, compacted clay soil, liquid biochar, pasture recovery, lawn recovery, and government grounds purchasing."
-        url="https://natureswaysoil.com/solutions"
+        url="https://www.natureswaysoil.com/solutions"
         type="website"
       />
       <Layout>

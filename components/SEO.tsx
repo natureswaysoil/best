@@ -17,8 +17,8 @@ interface SEOProps {
 export default function SEO({
   title = 'Nature\'s Way Soil - Premium Organic Fertilizer & Soil Amendments | Pet & Kid Safe',
   description = 'Premium organic liquid fertilizers, activated biochar, and living compost. Made fresh weekly on our family farm. Safe for kids, pets & pollinators. Free shipping on orders $50+.',
-  image = 'https://natureswaysoil.com/images/og-image.jpg',
-  url = 'https://natureswaysoil.com',
+  image = 'https://www.natureswaysoil.com/images/og-image.jpg',
+  url = 'https://www.natureswaysoil.com',
   type = 'website',
   productData
 }: SEOProps) {
@@ -85,7 +85,7 @@ export default function SEO({
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: siteName,
-    url: 'https://natureswaysoil.com',
+    url: 'https://www.natureswaysoil.com',
     telephone: '+1-252-560-7390',
     email: 'sales@natureswaysoil.com',
     address: {

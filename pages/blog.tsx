@@ -41,12 +41,12 @@ export default function BlogPage({ articles, categories, selectedCategory, curre
         <meta property="og:title" content="Gardening Blog - Nature's Way Soil" />
         <meta property="og:description" content="Expert gardening tips and sustainable growing techniques" />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://natureswaysoil.com/blog" />
-        <meta property="og:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
+        <link rel="canonical" href="https://www.natureswaysoil.com/blog" />
+        <meta property="og:image" content="https://www.natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Gardening Blog | Nature's Way Soil" />
         <meta name="twitter:description" content="Expert organic gardening tips, soil health guides, and sustainable agriculture advice." />
-        <meta name="twitter:image" content="https://natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
+        <meta name="twitter:image" content="https://www.natureswaysoil.com/images/blog/default-blog-thumbnail.jpg" />
         <meta name="twitter:site" content="@NaturesWaySoil" />
 
       </Head>

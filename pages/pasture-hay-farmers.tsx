@@ -13,7 +13,7 @@ export default function PastureHayFarmers() {
           content="Nature's Way Soil Horse Safe Hay & Pasture Fertilizer. Microbial nitrogen formula grows greener, denser hay fields and pastures. Safe for horses and livestock."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://natureswaysoil.com/pasture-hay-farmers" />
+        <link rel="canonical" href="https://www.natureswaysoil.com/pasture-hay-farmers" />
       </Head>
 
       <Layout>

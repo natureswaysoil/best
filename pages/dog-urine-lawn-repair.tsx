@@ -130,7 +130,7 @@ export default function DogUrineLawnRepair() {
           content="Nature’s Way Soil Dog Urine Neutralizer & Lawn Revitalizer helps support lawn recovery where dog urine has stressed grass and soil. Order direct."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://natureswaysoil.com/dog-urine-lawn-repair" />
+        <link rel="canonical" href="https://www.natureswaysoil.com/dog-urine-lawn-repair" />
       </Head>
 
       <main className="bg-stone-50 text-gray-900">

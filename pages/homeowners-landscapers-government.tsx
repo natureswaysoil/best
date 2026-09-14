@@ -46,7 +46,7 @@ export default function HomeownersLandscapersGovernmentPage() {
       <SEO
         title="Lawn Recovery System for Homeowners, Landscapers & Government Grounds | Nature's Way Soil"
         description="Nature's Way Soil Lawn Recovery System is a 2.5 gallon liquid humic, fulvic, and kelp soil conditioner for yellow grass, hard soil, dry spots, weak roots, landscapers, and government grounds maintenance."
-        url="https://natureswaysoil.com/homeowners-landscapers-government"
+        url="https://www.natureswaysoil.com/homeowners-landscapers-government"
         type="website"
       />
 

@@ -50,7 +50,7 @@ export default function SeoProblemLandingPage({
   keywords,
   audienceNote,
 }: SeoProblemLandingPageProps) {
-  const pageUrl = `https://natureswaysoil.com/${slug}`;
+  const pageUrl = `https://www.natureswaysoil.com/${slug}`;
   const primaryTrackedHref = primaryHref.startsWith('/')
     ? buildTrackedPath(primaryHref, {
       source: 'seo_problem_page',
