@@ -83,7 +83,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
     });
   }
 
-  console.info('Stripe review-source audit', { matched });
+  console.info('Stripe review-source audit JSON', JSON.stringify({ matched }));
   return { props:{ok:true} };
 };
 
