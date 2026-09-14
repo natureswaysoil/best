@@ -46,7 +46,8 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
 
     let source:any = null;
     try {
-      if (sourceId.startsWith('ch_')) source = await stripe.charges.retrieve(sourceId);
+      const expanded:any = await stripe.balanceTransactions.retrieve(t.id, { expand: ['source'] });
+      source = typeof expanded.source === 'string' ? null : expanded.source;
     } catch {}
 
     matched.push({
@@ -74,6 +75,10 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
         paymentIntent:typeof source.payment_intent === 'string' ? source.payment_intent : source.payment_intent?.id || null,
         statementDescriptor:source.statement_descriptor || null,
         metadata:source.metadata || {},
+        customerEmail:source.customer_email || source.email || null,
+        customerName:source.customer_name || source.name || null,
+        cardLast4:source.card?.last4 || source.payment_method_details?.card?.last4 || null,
+        cardBrand:source.card?.brand || source.payment_method_details?.card?.brand || null,
       } : null,
     });
   }
