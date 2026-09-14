@@ -15,6 +15,21 @@ function encryptionKey(): Buffer {
   return crypto.createHash('sha256').update(required('QUICKBOOKS_TOKEN_ENCRYPTION_KEY')).digest();
 }
 
+function intuitTid(response: Response): string | null {
+  return response.headers.get('intuit_tid');
+}
+
+function logIntuitFailure(context: string, response: Response, body: unknown) {
+  const tid = intuitTid(response);
+  console.error('QuickBooks API error', {
+    context,
+    status: response.status,
+    intuit_tid: tid,
+    body,
+  });
+  return tid;
+}
+
 export function encryptSecret(value: string): string {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', encryptionKey(), iv);
@@ -69,9 +84,17 @@ async function tokenRequest(params: URLSearchParams) {
   });
 
   const body = await response.json().catch(() => ({}));
+  const tid = intuitTid(response);
+
   if (!response.ok) {
-    throw new Error('QuickBooks token request failed (' + response.status + '): ' + JSON.stringify(body));
+    logIntuitFailure('oauth_token', response, body);
+    throw new Error(
+      'QuickBooks token request failed (' + response.status + ')' +
+      (tid ? ' intuit_tid=' + tid : '') +
+      ': ' + JSON.stringify(body)
+    );
   }
+
   return body as {
     access_token: string;
     refresh_token: string;
@@ -193,12 +216,25 @@ export async function qboRequest(path: string, init: RequestInit = {}) {
   let body: any = text;
   try { body = JSON.parse(text); } catch {}
 
+  const tid = intuitTid(response);
+
   if (!response.ok) {
+    logIntuitFailure('qbo_request', response, body);
     throw new Error(
-      'QuickBooks API failed (' + response.status + '): ' +
-      (typeof body === 'string' ? body : JSON.stringify(body))
+      'QuickBooks API failed (' + response.status + ')' +
+      (tid ? ' intuit_tid=' + tid : '') +
+      ': ' + (typeof body === 'string' ? body : JSON.stringify(body))
     );
   }
+
+  if (tid) {
+    console.info('QuickBooks API response', {
+      path,
+      status: response.status,
+      intuit_tid: tid,
+    });
+  }
+
   return body;
 }
 
@@ -213,9 +249,25 @@ export async function fetchCompanyInfo(realmId: string, accessToken?: string) {
     { headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' } }
   );
   const body = await response.json().catch(() => ({}));
+  const tid = intuitTid(response);
+
   if (!response.ok) {
-    throw new Error('CompanyInfo failed (' + response.status + '): ' + JSON.stringify(body));
+    logIntuitFailure('company_info', response, body);
+    throw new Error(
+      'CompanyInfo failed (' + response.status + ')' +
+      (tid ? ' intuit_tid=' + tid : '') +
+      ': ' + JSON.stringify(body)
+    );
   }
+
+  if (tid) {
+    console.info('QuickBooks CompanyInfo response', {
+      realmId,
+      status: response.status,
+      intuit_tid: tid,
+    });
+  }
+
   return body;
 }
 
