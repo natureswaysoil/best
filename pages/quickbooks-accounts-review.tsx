@@ -109,11 +109,17 @@ function normalizeName(value: string) {
 
 const SUGGESTED_ALIASES: Record<string, string[]> = {
   '1040': ['Channel clearing account'],
+  '2200': ['Channel sales tax payable'],
   '4010': ['Channel sales:Amazon sales'],
+  '4040': ['Channel shipping income'],
   '4050': ['Channel discount', 'Channel discount:Amazon discount'],
   '4060': ['Channel refund', 'Channel refund:Amazon refund'],
+  '5020': ['Cost of goods sold:Direct supplies & materials'],
+  '5040': ['Cost of goods sold:Direct subcontractor expenses'],
   '6000': ['Channel Advertising Fee:Amazon advertising fees'],
+  '6030': ['Advertising & marketing'],
   '6100': ['Channel selling fees:Amazon fees'],
+  '6120': ['Commissions & fees'],
   '6300': ['Supplies'],
   '6310': ['Repairs & maintenance'],
   '6500': ['Professional Fees', 'Professional Services', 'Professional Services:Accounting fees', 'Professional Services:Legal fees'],
@@ -121,6 +127,7 @@ const SUGGESTED_ALIASES: Record<string, string[]> = {
   '6530': ['Taxes and Licenses'],
   '6600': ['Vehicle expenses'],
   '6620': ['Meals'],
+  '6700': ['Taxes and Licenses:Property taxes'],
   '6720': ['Rent or Lease', 'Building & land rent'],
   '6800': ['Payroll expenses:Wages'],
   '6990': ['Other business expenses'],
@@ -128,11 +135,25 @@ const SUGGESTED_ALIASES: Record<string, string[]> = {
 
 function findSuggestedAlias(targetNumber: string, liveAccounts: LiveAccount[]) {
   const aliases = SUGGESTED_ALIASES[targetNumber] || [];
-  return liveAccounts.find((account) =>
-    aliases.some((alias) =>
-      normalizeName(account.fullyQualifiedName || account.name) === normalizeName(alias)
-    )
-  );
+  for (const alias of aliases) {
+    const found = liveAccounts.find(
+      (account) =>
+        normalizeName(account.fullyQualifiedName || account.name) === normalizeName(alias)
+    );
+    if (found) return found;
+  }
+  return undefined;
+}
+
+function groupMatchesType(group: string, accountType?: string) {
+  const type = (accountType || '').toLowerCase();
+  if (group === 'Assets') return type.includes('asset') || type.includes('bank') || type.includes('receivable');
+  if (group === 'Liabilities') return type.includes('liability') || type.includes('payable') || type.includes('credit card');
+  if (group === 'Equity') return type.includes('equity');
+  if (group === 'Income') return type === 'income' || type.includes('other income');
+  if (group === 'COGS') return type.includes('cost of goods sold');
+  if (group === 'Expenses') return type === 'expense' || type === 'other expense';
+  return true;
 }
 
 
@@ -167,18 +188,23 @@ export default function QuickBooksAccountsReviewPage() {
       const byNumber = liveAccounts.find(
         (account) => account.accountNumber && account.accountNumber === target.number
       );
-      const byName = liveAccounts.find(
-        (account) => normalizeName(account.name) === normalizeName(target.name)
-      );
-      const suggested = !byNumber && !byName ? findSuggestedAlias(target.number, liveAccounts) : undefined;
-      const match = byNumber || byName || suggested;
+      const preferredAlias = !byNumber ? findSuggestedAlias(target.number, liveAccounts) : undefined;
+      const byName = !byNumber && !preferredAlias
+        ? liveAccounts.find(
+            (account) => normalizeName(account.name) === normalizeName(target.name)
+          )
+        : undefined;
+      const match = byNumber || preferredAlias || byName;
 
       let status = 'Missing';
       if (match) {
         const numberMatches = match.accountNumber === target.number;
         const nameMatches = normalizeName(match.name) === normalizeName(target.name);
-        if (numberMatches && nameMatches) status = 'Exact match';
-        else if (suggested) status = 'Suggested reuse';
+        const typeMatches = groupMatchesType(target.group, match.accountType);
+        if (numberMatches && nameMatches && typeMatches) status = 'Exact match';
+        else if (preferredAlias && typeMatches) status = 'Suggested reuse';
+        else if (preferredAlias && !typeMatches) status = 'Suggested reuse - type review';
+        else if (!typeMatches) status = 'Review match - type review';
         else status = 'Review match';
       }
 
@@ -189,6 +215,7 @@ export default function QuickBooksAccountsReviewPage() {
   const exact = comparison.filter((row) => row.status === 'Exact match').length;
   const review = comparison.filter((row) => row.status === 'Review match').length;
   const suggestedReuse = comparison.filter((row) => row.status === 'Suggested reuse').length;
+  const typeReview = comparison.filter((row) => row.status.includes('type review')).length;
   const missing = comparison.filter((row) => row.status === 'Missing').length;
 
   const matchedIds = new Set(comparison.filter((r) => r.match).map((r) => r.match!.id));
@@ -241,6 +268,7 @@ export default function QuickBooksAccountsReviewPage() {
             <strong>Exact matches: {exact}</strong>
             <strong>Review matches: {review}</strong>
             <strong>Suggested reuses: {suggestedReuse}</strong>
+            <strong>Type reviews: {typeReview}</strong>
             <strong>Missing: {missing}</strong>
             <strong>Existing unmatched: {existingOnly.length}</strong>
           </div>
