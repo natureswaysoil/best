@@ -23,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       accounts: accounts.map((a: any) => ({
         id: a.Id,
         name: a.Name,
+        accountNumber: a.AcctNum || null,
         fullyQualifiedName: a.FullyQualifiedName,
         accountType: a.AccountType,
         accountSubType: a.AccountSubType,
