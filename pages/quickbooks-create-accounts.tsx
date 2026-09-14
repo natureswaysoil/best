@@ -9,6 +9,7 @@ const SAFE_ACCOUNTS = [
   ['4000', 'Product Sales - Website / Stripe', 'Income'],
   ['4020', 'Wholesale / Retail Sales', 'Income'],
   ['4030', 'Government / B2B Sales', 'Income'],
+  ['4040', 'Shipping Income', 'Income'],
   ['5000', 'COGS - Ingredients', 'Cost of Goods Sold'],
   ['5010', 'COGS - Packaging', 'Cost of Goods Sold'],
   ['5090', 'Inventory Adjustments / Shrinkage', 'Cost of Goods Sold'],
