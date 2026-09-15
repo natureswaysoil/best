@@ -71,13 +71,32 @@ export const getStaticProps:GetStaticProps<Props>=async()=>{
   }
   for(const k of Object.keys(byEntity)) byEntity[k].total=Number(byEntity[k].total.toFixed(2));
 
+  const accountFlow:Record<string,{debit:number,credit:number,count:number}> = {};
+  for(const h of hits){
+    for(const line of h.lines||[]){
+      const d=line.SalesItemLineDetail||line.AccountBasedExpenseLineDetail||line.DepositLineDetail||{};
+      const ref=d.AccountRef||d.ItemAccountRef||line?.SalesItemLineDetail?.ItemAccountRef||null;
+      if(!ref) continue;
+      const name=String(ref.name||ref.value||'UNKNOWN');
+      const cur=accountFlow[name]||{debit:0,credit:0,count:0};
+      cur.count += 1;
+      const amt=Number(line.Amount||0);
+      if(h.entity==='SalesReceipt') cur.credit += amt;
+      else cur.debit += amt;
+      accountFlow[name]=cur;
+    }
+  }
+  for(const k of Object.keys(accountFlow)){
+    accountFlow[k].debit=Number(accountFlow[k].debit.toFixed(2));
+    accountFlow[k].credit=Number(accountFlow[k].credit.toFixed(2));
+  }
+
   console.info('QBO Amazon connector concise audit JSON',JSON.stringify({
     count:hits.length,
     earliestDate:hits[0]?.txnDate||null,
     latestDate:hits[hits.length-1]?.txnDate||null,
-    firstFive:hits.slice(0,5).map(h=>({entity:h.entity,id:h.id,txnDate:h.txnDate,totalAmt:h.totalAmt,privateNote:h.privateNote,lines:h.lines})),
-    lastFive:hits.slice(-5).map(h=>({entity:h.entity,id:h.id,txnDate:h.txnDate,totalAmt:h.totalAmt,privateNote:h.privateNote,lines:h.lines})),
-    byEntity
+    byEntity,
+    accountFlow
   }));
 
   return {props:{ok:true}};
