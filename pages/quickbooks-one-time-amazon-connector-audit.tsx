@@ -34,7 +34,15 @@ export const getStaticProps:GetStaticProps<Props>=async()=>{
     if(!Array.isArray(rows)) continue;
     for(const row of rows as any[]){
       const blob = JSON.stringify(row).toLowerCase();
-      if(blob.includes('amazon') || blob.includes('intuit') || blob.includes('marketplace') || blob.includes('seller')){
+      const entityName = String(row?.EntityRef?.name || '').toLowerCase();
+      const departmentName = String(row?.DepartmentRef?.name || '').toLowerCase();
+      const note = String(row?.PrivateNote || '').toLowerCase();
+      const isAmazonConnector =
+        entityName === 'amazon' ||
+        departmentName.includes("nature's way soil us") ||
+        note.includes('sellercentral.amazon.com/payments/event/details') ||
+        note.includes('order id:');
+      if(isAmazonConnector){
         hits.push({
           entity,
           id:row.Id,
@@ -51,11 +59,25 @@ export const getStaticProps:GetStaticProps<Props>=async()=>{
   }
 
   hits.sort((a,b)=>String(a.txnDate||'').localeCompare(String(b.txnDate||'')));
-  console.info('QBO Amazon/Intuit historical connector audit JSON',JSON.stringify({
+  const byEntity:Record<string,{count:number,total:number,first:string|null,last:string|null}> = {};
+  for(const h of hits){
+    const key=h.entity;
+    const cur=byEntity[key]||{count:0,total:0,first:null,last:null};
+    cur.count += 1;
+    cur.total += Number(h.totalAmt||0);
+    cur.first = !cur.first || h.txnDate < cur.first ? h.txnDate : cur.first;
+    cur.last = !cur.last || h.txnDate > cur.last ? h.txnDate : cur.last;
+    byEntity[key]=cur;
+  }
+  for(const k of Object.keys(byEntity)) byEntity[k].total=Number(byEntity[k].total.toFixed(2));
+
+  console.info('QBO Amazon connector concise audit JSON',JSON.stringify({
     count:hits.length,
-    first:hits[0]||null,
-    last:hits[hits.length-1]||null,
-    hits
+    earliestDate:hits[0]?.txnDate||null,
+    latestDate:hits[hits.length-1]?.txnDate||null,
+    firstFive:hits.slice(0,5).map(h=>({entity:h.entity,id:h.id,txnDate:h.txnDate,totalAmt:h.totalAmt,privateNote:h.privateNote,lines:h.lines})),
+    lastFive:hits.slice(-5).map(h=>({entity:h.entity,id:h.id,txnDate:h.txnDate,totalAmt:h.totalAmt,privateNote:h.privateNote,lines:h.lines})),
+    byEntity
   }));
 
   return {props:{ok:true}};
