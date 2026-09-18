@@ -115,9 +115,6 @@ export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
 
       setCouponCode(nextCouponCode);
       setCouponClaimed(true);
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 3000);
     } catch (submitError) {
       console.warn('Exit intent lead submit failed', submitError);
       setError('Unable to claim your code right now. Please try again.');
@@ -127,7 +124,7 @@ export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
   };
 
   const generateCouponCode = () => {
-    return 'SAVE15' + Math.random().toString(36).substr(2, 3).toUpperCase();
+    return 'SAVE15';
   };
 
   if (!isVisible) return null;
@@ -233,7 +230,7 @@ export default function ExitIntentPopup({ onClose }: ExitIntentPopupProps) {
             </div>
             
             <p className="text-gray-600 mb-4">
-              We've sent this code to your email. Use it at checkout for 15% off!
+              Copy this code now and use it at checkout for 15% off your first direct website order.
             </p>
             
             <button

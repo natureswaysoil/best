@@ -54,7 +54,13 @@ export default function EmailCapture({ productId }: { productId?: string }) {
   };
 
   if (submitted) {
-    return <p className="text-green-600">Thanks! Your discount is ready at checkout.</p>;
+    return (
+      <div className="rounded-xl border-2 border-dashed border-green-300 bg-green-50 p-4 text-center">
+        <p className="font-semibold text-green-800">Your 15% discount code is:</p>
+        <p className="mt-1 text-2xl font-mono font-bold tracking-wider text-green-900">SAVE15</p>
+        <p className="mt-1 text-sm text-green-700">Enter it at checkout on your first direct website order.</p>
+      </div>
+    );
   }
 
   return (
