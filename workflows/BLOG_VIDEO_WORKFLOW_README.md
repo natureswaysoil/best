@@ -70,7 +70,36 @@ cp .env.local.example .env.local
 
 ## Environment Configuration
 
-Required API keys in `.env.local`:
+### 🔐 Google Secret Manager (Recommended)
+
+All credentials are **automatically loaded from Google Secret Manager** when the workflow runs. The following secrets should be configured in your GCP project (`natureswaysoil-video`):
+
+**Required secrets:**
+- `OPENAI_API_KEY` — OpenAI API key for blog + video script generation
+- `HEYGEN_API_KEY` — HeyGen API key for video creation
+
+**Social platform secrets (optional, omit to skip platform):**
+- `TWITTER_API_KEY`, `TWITTER_API_SECRET`, `TWITTER_ACCESS_TOKEN`, `TWITTER_ACCESS_TOKEN_SECRET`, `TWITTER_BEARER_TOKEN`
+- `INSTAGRAM_ACCESS_TOKEN`, `INSTAGRAM_USER_ID`
+- `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`
+- `PINTEREST_ACCESS_TOKEN`
+- `FACEBOOK_ACCESS_TOKEN`
+
+**Google Sheets tracking (optional):**
+- `GS_SERVICE_ACCOUNT_EMAIL`
+- `GS_SERVICE_ACCOUNT_KEY`
+
+**Google Cloud authentication:**
+Set one of these environment variables to authenticate:
+- `GOOGLE_APPLICATION_CREDENTIALS` — path to service account JSON
+- `GOOGLE_SERVICE_ACCOUNT_JSON` — inline service account JSON
+- Or run in GCP environment (Cloud Run, Cloud Functions, GKE)
+
+The workflow automatically loads all secrets at startup — no manual configuration needed in production.
+
+### Local Development (Fallback)
+
+For local testing without GCP, add credentials to `.env.local`:
 
 ```env
 # OpenAI (for blog + video script generation)

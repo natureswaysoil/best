@@ -10,12 +10,15 @@
  * 
  * This workflow bridges the `best` (website) and `video` (campaign engine) repos
  * to create a unified content-to-distribution pipeline.
+ * 
+ * Credentials are loaded from Google Secret Manager automatically.
  */
 
 import 'dotenv/config';
 import { promises as fs } from 'fs';
 import https from 'https';
 import path from 'path';
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -301,6 +304,106 @@ async function updateGoogleSheetTracking(
 }
 
 // ============================================================================
+// GOOGLE SECRET MANAGER INTEGRATION
+// ============================================================================
+
+let secretClient: SecretManagerServiceClient | null = null;
+const loadedSecrets = new Set<string>();
+
+function getSecretManagerClient(): SecretManagerServiceClient {
+  if (!secretClient) {
+    secretClient = new SecretManagerServiceClient();
+  }
+  return secretClient;
+}
+
+function getProjectId(): string {
+  return (
+    process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.GCLOUD_PROJECT ||
+    process.env.GCP_PROJECT ||
+    'natureswaysoil-video'
+  );
+}
+
+function hasGoogleCredentials(): boolean {
+  return Boolean(
+    process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON ||
+    process.env.K_SERVICE ||
+    process.env.CLOUD_RUN_JOB
+  );
+}
+
+async function loadSecretFromGCP(secretName: string): Promise<boolean> {
+  if (process.env[secretName]) return true;
+  if (loadedSecrets.has(secretName)) return !!process.env[secretName];
+
+  if (!hasGoogleCredentials()) {
+    console.warn(`⚠️  Google credentials not configured. Skipping secret: ${secretName}`);
+    loadedSecrets.add(secretName);
+    return false;
+  }
+
+  const projectId = getProjectId();
+  const candidates = [
+    secretName,
+    secretName.toLowerCase().replace(/_/g, '-'),
+    secretName.toUpperCase().replace(/-/g, '_'),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const name = `projects/${projectId}/secrets/${candidate}/versions/latest`;
+      const [version] = await getSecretManagerClient().accessSecretVersion({ name });
+      const value = version.payload?.data?.toString().trim();
+
+      if (value) {
+        process.env[secretName] = value;
+        loadedSecrets.add(secretName);
+        console.log(`✅ Loaded secret from GCP: ${candidate} → ${secretName}`);
+        return true;
+      }
+    } catch (error: any) {
+      if (error?.code !== 5) {
+        console.warn(`Warning loading ${candidate}: ${error?.message}`);
+      }
+    }
+  }
+
+  console.warn(`⚠️  Could not load secret: ${secretName}`);
+  loadedSecrets.add(secretName);
+  return false;
+}
+
+async function loadAllSecrets(): Promise<void> {
+  console.log('🔐 Loading credentials from Google Secret Manager...\n');
+
+  const requiredSecrets = [
+    'OPENAI_API_KEY',
+    'HEYGEN_API_KEY',
+    'TWITTER_API_KEY',
+    'TWITTER_API_SECRET',
+    'TWITTER_ACCESS_TOKEN',
+    'TWITTER_ACCESS_TOKEN_SECRET',
+    'TWITTER_BEARER_TOKEN',
+    'INSTAGRAM_ACCESS_TOKEN',
+    'INSTAGRAM_USER_ID',
+    'YOUTUBE_CLIENT_ID',
+    'YOUTUBE_CLIENT_SECRET',
+    'YOUTUBE_REFRESH_TOKEN',
+    'PINTEREST_ACCESS_TOKEN',
+    'FACEBOOK_ACCESS_TOKEN',
+    'GS_SERVICE_ACCOUNT_EMAIL',
+    'GS_SERVICE_ACCOUNT_KEY',
+  ];
+
+  await Promise.all(requiredSecrets.map((secret) => loadSecretFromGCP(secret)));
+
+  console.log('\n✅ Secret loading complete\n');
+}
+
+// ============================================================================
 // UTILITY
 // ============================================================================
 
@@ -325,6 +428,9 @@ export async function runBlogVideoComboWorkflow(input: WorkflowInput): Promise<W
     console.log(`🌱 Blog + Video Combo Workflow`);
     console.log(`Product: ${input.productName}`);
     console.log(`${'='.repeat(60)}\n`);
+
+    // Step 0: Load credentials from Google Secret Manager
+    await loadAllSecrets();
 
     // Step 1: Generate blog post
     const blogPost = await generateBlogPost(input);

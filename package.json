@@ -62,9 +62,12 @@
     "test:e2e:dry": "node scripts/test-e2e-integration.mjs --dry-run",
     "test:all": "node scripts/test-all.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
-    "prebuild": "node scripts/gen-sitemap.js"
+    "prebuild": "node scripts/gen-sitemap.js",
+    "workflow:blog-video": "ts-node workflows/blog-video-combo-workflow.ts",
+    "workflow:blog-video:dry": "ts-node workflows/blog-video-combo-workflow.ts --dry-run"
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^6.1.1",
     "@stripe/react-stripe-js": "^5.2.0",
     "@stripe/stripe-js": "^8.1.0",
     "@supabase/supabase-js": "^2.75.1",
