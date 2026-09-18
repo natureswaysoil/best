@@ -16,8 +16,8 @@
 
 import 'dotenv/config';
 import { promises as fs } from 'fs';
-import https from 'https';
-import path from 'path';
+import * as https from 'https';
+import * as path from 'path';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 // ============================================================================
@@ -283,22 +283,22 @@ async function updateGoogleSheetTracking(
   video: VideoAsset,
   socialResults: Record<string, any>,
   dryRun = false
-): Promise<{ updated: boolean; rowId?: string; error?: string }> {
+): Promise<{ sheetUpdated: boolean; rowId?: string; error?: string }> {
   console.log(`📊 Updating Google Sheets tracking`);
 
   if (dryRun) {
     console.log('[DRY RUN] Would update Google Sheets');
-    return { updated: true };
+    return { sheetUpdated: true };
   }
 
   if (!sheetUrl) {
-    return { updated: false, error: 'No Google Sheet URL provided' };
+    return { sheetUpdated: false, error: 'No Google Sheet URL provided' };
   }
 
   // In production, use Google Sheets API to append or update row
   // For now, return success
   return {
-    updated: true,
+    sheetUpdated: true,
     rowId: `row_${Date.now()}`,
   };
 }
