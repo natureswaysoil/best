@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.env.local
+.env
+*.log
+test-campaign-videos
+scripts
+pages
+components
+public
+styles
+*.md
+!workflows/*.md
