@@ -66,7 +66,38 @@ interface WorkflowOutput {
 // OPENAI INTEGRATION
 // ============================================================================
 
-async function callOpenAI(prompt: string, systemPrompt: string, maxRetries = 5): Promise<string> {
+/**
+ * Robustly parse a JSON object out of an LLM response that may be wrapped in
+ * markdown code fences (```json ... ```) or contain surrounding prose.
+ */
+function parseJsonResponse<T = any>(raw: string): T {
+  let text = (raw || '').trim();
+
+  // Strip ```json ... ``` or ``` ... ``` fences
+  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenceMatch) {
+    text = fenceMatch[1].trim();
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // Fallback: extract the first {...} block
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      return JSON.parse(text.slice(start, end + 1)) as T;
+    }
+    throw new Error(`Could not parse JSON from LLM response: ${text.slice(0, 200)}`);
+  }
+}
+
+async function callOpenAI(
+  prompt: string,
+  systemPrompt: string,
+  maxRetries = 5,
+  jsonMode = false
+): Promise<string> {
   const TIMEOUT_MS = 120000;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -77,6 +108,7 @@ async function callOpenAI(prompt: string, systemPrompt: string, maxRetries = 5):
         const body = JSON.stringify({
           model: 'gpt-4o-mini',
           max_tokens: 3000,
+          ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: prompt },
@@ -155,8 +187,8 @@ Requirements:
 
 Return valid JSON only.`;
 
-  const response = await callOpenAI(prompt, systemPrompt);
-  const parsed = JSON.parse(response);
+  const response = await callOpenAI(prompt, systemPrompt, 5, true);
+  const parsed = parseJsonResponse(response);
 
   return {
     slug: parsed.slug || parsed.title.toLowerCase().replace(/\s+/g, '-'),
@@ -310,6 +342,20 @@ async function updateGoogleSheetTracking(
 let secretClient: SecretManagerServiceClient | null = null;
 const loadedSecrets = new Set<string>();
 
+/**
+ * Alias map: logical secret name -> actual names used in this GCP project.
+ * The Nature's Way Soil `natureswaysoil-video` project stores some secrets
+ * under different names (e.g. YouTube uses YT_* instead of YOUTUBE_*).
+ */
+const SECRET_ALIASES: Record<string, string[]> = {
+  YOUTUBE_CLIENT_ID: ['YT_CLIENT_ID', 'GOOGLE_CLIENT_ID'],
+  YOUTUBE_CLIENT_SECRET: ['YT_CLIENT_SECRET', 'GOOGLE_CLIENT_SECRET'],
+  YOUTUBE_REFRESH_TOKEN: ['YT_REFRESH_TOKEN', 'GOOGLE_REFRESH_TOKEN'],
+  FACEBOOK_ACCESS_TOKEN: ['FACEBOOK_PAGE_ACCESS_TOKEN', 'FB_ACCESS_TOKEN'],
+  INSTAGRAM_ACCESS_TOKEN: ['IG_ACCESS_TOKEN'],
+  INSTAGRAM_USER_ID: ['IG_USER_ID'],
+};
+
 function getSecretManagerClient(): SecretManagerServiceClient {
   if (!secretClient) {
     secretClient = new SecretManagerServiceClient();
@@ -348,6 +394,7 @@ async function loadSecretFromGCP(secretName: string): Promise<boolean> {
   const projectId = getProjectId();
   const candidates = [
     secretName,
+    ...(SECRET_ALIASES[secretName] || []),
     secretName.toLowerCase().replace(/_/g, '-'),
     secretName.toUpperCase().replace(/-/g, '_'),
   ];
@@ -510,6 +557,9 @@ Successfully created and distributed content for "${input.productName}":
 // ============================================================================
 
 if (require.main === module) {
+  // Honor a `--dry-run` CLI flag (used by the npm run workflow:blog-video:dry script)
+  const isDryRun = process.argv.includes('--dry-run');
+
   // Example usage
   const exampleInput: WorkflowInput = {
     productName: 'Liquid Biochar Soil Conditioner',
@@ -519,7 +569,7 @@ if (require.main === module) {
     productId: 'NWS_BIOCHAR_LIQ',
     googleSheetUrl: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID',
     enablePlatforms: ['instagram', 'twitter', 'youtube', 'pinterest'],
-    dryRun: false,
+    dryRun: isDryRun,
   };
 
   runBlogVideoComboWorkflow(exampleInput)
