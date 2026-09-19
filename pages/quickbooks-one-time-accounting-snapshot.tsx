@@ -1,5 +1,5 @@
-import type { GetStaticProps } from 'next';
-import { getLatestConnection, qboRequest } from '../lib/quickbooks';
+import type { GetServerSideProps } from 'next';
+import { adminAuthorized, getLatestConnection, qboRequest } from '../lib/quickbooks';
 import { getServiceSupabase } from '../lib/supabase';
 
 type Row = {
@@ -43,7 +43,13 @@ function flattenReportRows(rows: any[], out: Row[] = [], depth = 0): Row[] {
   return out;
 }
 
-export const getStaticProps: GetStaticProps<Props> = async () => {
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  // Diagnostics run only on authorized requests, never during static builds.
+  ctx.res.setHeader('Cache-Control', 'private, no-store');
+  ctx.res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  const secret = ctx.req.headers['x-quickbooks-admin-secret'] || ctx.query.secret;
+  if (!adminAuthorized(secret)) return { notFound: true };
+
   if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production') {
     return { props: { ok: true, asOf: new Date().toISOString(), pnlRows: [], accountBalances: [], stagingSummary: [] } };
   }

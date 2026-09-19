@@ -1,4 +1,5 @@
-import type { GetStaticProps } from 'next';
+import { adminAuthorized } from '../lib/quickbooks';
+import type { GetServerSideProps } from 'next';
 import Stripe from 'stripe';
 
 type Props = { ok: boolean };
@@ -14,7 +15,13 @@ const IDS = [
   'py_3UCgliIwQKMqOanf1pSXqGp6',
 ];
 
-export const getStaticProps: GetStaticProps<Props> = async () => {
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
+  // Diagnostics run only on authorized requests, never during static builds.
+  ctx.res.setHeader('Cache-Control', 'private, no-store');
+  ctx.res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  const secret = ctx.req.headers['x-quickbooks-admin-secret'] || ctx.query.secret;
+  if (!adminAuthorized(secret)) return { notFound: true };
+
   if (process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production') {
     return { props: { ok: true } };
   }
