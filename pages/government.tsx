@@ -121,6 +121,8 @@ export default function GovernmentPage() {
     products: '',
     shipping: '',
   });
+  const [formStartedAt] = useState(() => Date.now());
+  const [website, setWebsite] = useState('');
   const [submitState, setSubmitState] = useState<{
     status: 'idle' | 'submitting' | 'success' | 'error';
     message: string;
@@ -396,6 +398,18 @@ export default function GovernmentPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="rounded-3xl border border-[#d6decd] bg-white p-6 shadow-sm">
+                <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+                  <label>
+                    Website
+                    <input
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={website}
+                      onChange={(event) => setWebsite(event.target.value)}
+                    />
+                  </label>
+                </div>
                 <div className="grid gap-4">
                   <label className="grid gap-2">
                     <span className="text-sm font-medium">Name</span>
