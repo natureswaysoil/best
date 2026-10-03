@@ -141,7 +141,8 @@ function uploadOutputsToCloudStorage() {
   const publicBase = (process.env.VIDEO_PUBLIC_BASE_URL || `https://storage.googleapis.com/${bucket}/${prefix}`).replace(/\/$/, '');
   process.env.VIDEO_PUBLIC_BASE_URL = publicBase;
   process.env.NEXT_PUBLIC_VIDEO_PUBLIC_BASE_URL = publicBase;
-  console.log(`[Cloud Video Job] Website /videos/* should rewrite to: ${publicBase}/*`);
+  process.env.SOCIAL_VIDEO_BASE_URL = publicBase;
+  console.log(`[Cloud Video Job] Social publishing will use uploaded assets from: ${publicBase}/*`);
 }
 
 function runSocialPoster() {
