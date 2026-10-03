@@ -86,6 +86,102 @@ class SocialMediaAutoPoster {
   }
 
   getVideoPath(product) {
+    const requested = String(product?.video || '').trim();
+    if (requested.startsWith('/videos/')) {
+      const fileName = path.basename(requested);
+      const allowed = new RegExp(`^${product.id}(?:[-_][A-Za-z0-9._-]+)?\\.mp4#!/usr/bin/env node
+/**
+ * Complete Social Media Automation System
+ * Automatically posts generated videos to Instagram, Twitter, and YouTube
+ * Integrates with the video generation pipeline
+ */
+
+import { createReadStream } from 'fs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createHmac } from 'crypto';
+import { buildForcedSocialContent } from './social-caption-overrides.mjs';
+import { createTwitterOAuth2UserClient, hasTwitterOAuth2User } from './twitter-oauth2.mjs';
+import { validateVideoForPublishing } from './lib/video-publish-qa.mjs';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT = path.resolve(__dirname, '..');
+
+// API Configuration
+const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+const INSTAGRAM_IG_ID = process.env.INSTAGRAM_IG_ID;
+const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+const YOUTUBE_CLIENT_ID = process.env.YT_CLIENT_ID;
+const YOUTUBE_CLIENT_SECRET = process.env.YT_CLIENT_SECRET;
+const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
+const FACEBOOK_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
+const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
+
+// Configuration
+const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
+const PRODUCTS_FILE = path.join(PROJECT, 'data', 'products.ts');
+const SHEET_PRODUCTS_FILE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
+const POSTED_SOCIAL_FILE = path.join(PROJECT, 'social-posted-content.json');
+const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.natureswaysoil.com';
+const ALL_PLATFORMS = ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'];
+const MAX_TWEET_LENGTH = 280;
+
+function fitTweetText(value, suffix = '') {
+  const normalizedSuffix = suffix.trim() ? `\n${suffix.trim()}` : '';
+  const available = MAX_TWEET_LENGTH - normalizedSuffix.length;
+  if (available <= 3) return normalizedSuffix.trim().slice(0, MAX_TWEET_LENGTH);
+  const text = String(value || '').trim();
+  const fitted = text.length <= available ? text : `${text.slice(0, available - 3).trimEnd()}...`;
+  return `${fitted}${normalizedSuffix}`;
+}
+
+function shouldFailSocialRun(successCount) {
+  return successCount === 0;
+}
+
+function requestedPlatforms(env = process.env) {
+  return String(env.ENABLE_PLATFORMS || '')
+    .split(/[,+|]/)
+    .map((platform) => platform.trim().toLowerCase())
+    .filter((platform) => ALL_PLATFORMS.includes(platform));
+}
+
+function configuredPlatforms(env = process.env) {
+  const configured = [];
+  if (env.INSTAGRAM_ACCESS_TOKEN && env.INSTAGRAM_IG_ID) configured.push('instagram');
+  if (hasTwitterOAuth2User(env) || (
+    env.TWITTER_API_KEY &&
+    env.TWITTER_API_SECRET &&
+    env.TWITTER_ACCESS_TOKEN &&
+    (env.TWITTER_ACCESS_TOKEN_SECRET || env.TWITTER_ACCESS_SECRET)
+  )) configured.push('twitter');
+  if (env.YT_CLIENT_ID && env.YT_CLIENT_SECRET && env.YT_REFRESH_TOKEN) configured.push('youtube');
+  if (env.FACEBOOK_PAGE_ID && (env.FACEBOOK_PAGE_ACCESS_TOKEN || env.FACEBOOK_ACCESS_TOKEN)) configured.push('facebook');
+  if (env.PINTEREST_ACCESS_TOKEN && env.PINTEREST_BOARD_ID) configured.push('pinterest');
+
+  const requested = requestedPlatforms(env);
+
+  return requested.length
+    ? configured.filter((platform) => requested.includes(platform))
+    : configured;
+}
+
+class SocialMediaAutoPoster {
+  constructor() {
+    this.postedContent = this.loadPostedContent();
+    this.warnRootLevelMp4Ignored();
+  }
+
+);
+      if (allowed.test(fileName)) {
+        return path.join(VIDEOS_DIR, fileName);
+      }
+      this.log(`Ignoring invalid configured video for ${product.id}: ${requested}`);
+    }
     return path.join(VIDEOS_DIR, `${product.id}.mp4`);
   }
 
@@ -139,7 +235,253 @@ class SocialMediaAutoPoster {
   }
 
   getPublicVideoUrl(product) {
-    return `${WEBSITE_BASE_URL}/videos/${product.id}.mp4`;
+    const requested = String(product?.video || '').trim();
+    if (requested.startsWith('/videos/')) {
+      const fileName = path.basename(requested);
+      const allowed = new RegExp(`^${product.id}(?:[-_][A-Za-z0-9._-]+)?\\.mp4#!/usr/bin/env node
+/**
+ * Complete Social Media Automation System
+ * Automatically posts generated videos to Instagram, Twitter, and YouTube
+ * Integrates with the video generation pipeline
+ */
+
+import { createReadStream } from 'fs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createHmac } from 'crypto';
+import { buildForcedSocialContent } from './social-caption-overrides.mjs';
+import { createTwitterOAuth2UserClient, hasTwitterOAuth2User } from './twitter-oauth2.mjs';
+import { validateVideoForPublishing } from './lib/video-publish-qa.mjs';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT = path.resolve(__dirname, '..');
+
+// API Configuration
+const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+const INSTAGRAM_IG_ID = process.env.INSTAGRAM_IG_ID;
+const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+const YOUTUBE_CLIENT_ID = process.env.YT_CLIENT_ID;
+const YOUTUBE_CLIENT_SECRET = process.env.YT_CLIENT_SECRET;
+const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
+const FACEBOOK_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
+const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
+
+// Configuration
+const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
+const PRODUCTS_FILE = path.join(PROJECT, 'data', 'products.ts');
+const SHEET_PRODUCTS_FILE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
+const POSTED_SOCIAL_FILE = path.join(PROJECT, 'social-posted-content.json');
+const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.natureswaysoil.com';
+const ALL_PLATFORMS = ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'];
+const MAX_TWEET_LENGTH = 280;
+
+function fitTweetText(value, suffix = '') {
+  const normalizedSuffix = suffix.trim() ? `\n${suffix.trim()}` : '';
+  const available = MAX_TWEET_LENGTH - normalizedSuffix.length;
+  if (available <= 3) return normalizedSuffix.trim().slice(0, MAX_TWEET_LENGTH);
+  const text = String(value || '').trim();
+  const fitted = text.length <= available ? text : `${text.slice(0, available - 3).trimEnd()}...`;
+  return `${fitted}${normalizedSuffix}`;
+}
+
+function shouldFailSocialRun(successCount) {
+  return successCount === 0;
+}
+
+function requestedPlatforms(env = process.env) {
+  return String(env.ENABLE_PLATFORMS || '')
+    .split(/[,+|]/)
+    .map((platform) => platform.trim().toLowerCase())
+    .filter((platform) => ALL_PLATFORMS.includes(platform));
+}
+
+function configuredPlatforms(env = process.env) {
+  const configured = [];
+  if (env.INSTAGRAM_ACCESS_TOKEN && env.INSTAGRAM_IG_ID) configured.push('instagram');
+  if (hasTwitterOAuth2User(env) || (
+    env.TWITTER_API_KEY &&
+    env.TWITTER_API_SECRET &&
+    env.TWITTER_ACCESS_TOKEN &&
+    (env.TWITTER_ACCESS_TOKEN_SECRET || env.TWITTER_ACCESS_SECRET)
+  )) configured.push('twitter');
+  if (env.YT_CLIENT_ID && env.YT_CLIENT_SECRET && env.YT_REFRESH_TOKEN) configured.push('youtube');
+  if (env.FACEBOOK_PAGE_ID && (env.FACEBOOK_PAGE_ACCESS_TOKEN || env.FACEBOOK_ACCESS_TOKEN)) configured.push('facebook');
+  if (env.PINTEREST_ACCESS_TOKEN && env.PINTEREST_BOARD_ID) configured.push('pinterest');
+
+  const requested = requestedPlatforms(env);
+
+  return requested.length
+    ? configured.filter((platform) => requested.includes(platform))
+    : configured;
+}
+
+class SocialMediaAutoPoster {
+  constructor() {
+    this.postedContent = this.loadPostedContent();
+    this.warnRootLevelMp4Ignored();
+  }
+
+  getVideoPath(product) {
+    const requested = String(product?.video || '').trim();
+    if (requested.startsWith('/videos/')) {
+      const fileName = path.basename(requested);
+      const allowed = new RegExp(`^${product.id}(?:[-_][A-Za-z0-9._-]+)?\\.mp4#!/usr/bin/env node
+/**
+ * Complete Social Media Automation System
+ * Automatically posts generated videos to Instagram, Twitter, and YouTube
+ * Integrates with the video generation pipeline
+ */
+
+import { createReadStream } from 'fs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createHmac } from 'crypto';
+import { buildForcedSocialContent } from './social-caption-overrides.mjs';
+import { createTwitterOAuth2UserClient, hasTwitterOAuth2User } from './twitter-oauth2.mjs';
+import { validateVideoForPublishing } from './lib/video-publish-qa.mjs';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT = path.resolve(__dirname, '..');
+
+// API Configuration
+const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+const INSTAGRAM_IG_ID = process.env.INSTAGRAM_IG_ID;
+const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+const YOUTUBE_CLIENT_ID = process.env.YT_CLIENT_ID;
+const YOUTUBE_CLIENT_SECRET = process.env.YT_CLIENT_SECRET;
+const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
+const FACEBOOK_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
+const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
+const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
+const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
+
+// Configuration
+const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
+const PRODUCTS_FILE = path.join(PROJECT, 'data', 'products.ts');
+const SHEET_PRODUCTS_FILE = path.join(PROJECT, 'content', 'video-scripts', 'sheet-products.json');
+const POSTED_SOCIAL_FILE = path.join(PROJECT, 'social-posted-content.json');
+const WEBSITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.natureswaysoil.com';
+const ALL_PLATFORMS = ['instagram', 'twitter', 'youtube', 'facebook', 'pinterest'];
+const MAX_TWEET_LENGTH = 280;
+
+function fitTweetText(value, suffix = '') {
+  const normalizedSuffix = suffix.trim() ? `\n${suffix.trim()}` : '';
+  const available = MAX_TWEET_LENGTH - normalizedSuffix.length;
+  if (available <= 3) return normalizedSuffix.trim().slice(0, MAX_TWEET_LENGTH);
+  const text = String(value || '').trim();
+  const fitted = text.length <= available ? text : `${text.slice(0, available - 3).trimEnd()}...`;
+  return `${fitted}${normalizedSuffix}`;
+}
+
+function shouldFailSocialRun(successCount) {
+  return successCount === 0;
+}
+
+function requestedPlatforms(env = process.env) {
+  return String(env.ENABLE_PLATFORMS || '')
+    .split(/[,+|]/)
+    .map((platform) => platform.trim().toLowerCase())
+    .filter((platform) => ALL_PLATFORMS.includes(platform));
+}
+
+function configuredPlatforms(env = process.env) {
+  const configured = [];
+  if (env.INSTAGRAM_ACCESS_TOKEN && env.INSTAGRAM_IG_ID) configured.push('instagram');
+  if (hasTwitterOAuth2User(env) || (
+    env.TWITTER_API_KEY &&
+    env.TWITTER_API_SECRET &&
+    env.TWITTER_ACCESS_TOKEN &&
+    (env.TWITTER_ACCESS_TOKEN_SECRET || env.TWITTER_ACCESS_SECRET)
+  )) configured.push('twitter');
+  if (env.YT_CLIENT_ID && env.YT_CLIENT_SECRET && env.YT_REFRESH_TOKEN) configured.push('youtube');
+  if (env.FACEBOOK_PAGE_ID && (env.FACEBOOK_PAGE_ACCESS_TOKEN || env.FACEBOOK_ACCESS_TOKEN)) configured.push('facebook');
+  if (env.PINTEREST_ACCESS_TOKEN && env.PINTEREST_BOARD_ID) configured.push('pinterest');
+
+  const requested = requestedPlatforms(env);
+
+  return requested.length
+    ? configured.filter((platform) => requested.includes(platform))
+    : configured;
+}
+
+class SocialMediaAutoPoster {
+  constructor() {
+    this.postedContent = this.loadPostedContent();
+    this.warnRootLevelMp4Ignored();
+  }
+
+);
+      if (allowed.test(fileName)) {
+        return path.join(VIDEOS_DIR, fileName);
+      }
+      this.log(`Ignoring invalid configured video for ${product.id}: ${requested}`);
+    }
+    return path.join(VIDEOS_DIR, `${product.id}.mp4`);
+  }
+
+  hasLocalVideo(product) {
+    const videoPath = this.getVideoPath(product);
+    if (!fs.existsSync(videoPath)) {
+      return false;
+    }
+
+    try {
+      const realVideoPath = fs.realpathSync(videoPath);
+      const realVideosDir = fs.realpathSync(VIDEOS_DIR);
+      const canonicalPrefix = `${realVideosDir}${path.sep}`;
+
+      if (!realVideoPath.startsWith(canonicalPrefix)) {
+        this.log(`Ignoring non-canonical video path: ${realVideoPath}`);
+        return false;
+      }
+    } catch (error) {
+      this.log(`Warning: failed canonical path check for ${videoPath}: ${error.message}`);
+      return false;
+    }
+
+    return true;
+  }
+
+  assertPublishableVideo(product) {
+    const assessment = validateVideoForPublishing(this.getVideoPath(product));
+    this.log(
+      `Video QA passed for ${product.id}: ${assessment.width}x${assessment.height}, ` +
+      `${assessment.duration.toFixed(1)}s, audio=${assessment.hasAudio}, ` +
+      `${(assessment.fileSize / 1024 / 1024).toFixed(1)}MB`
+    );
+    return assessment;
+  }
+
+  warnRootLevelMp4Ignored() {
+    try {
+      const rootMp4s = fs
+        .readdirSync(PROJECT)
+        .filter((name) => /\.mp4$/i.test(name));
+
+      if (rootMp4s.length > 0) {
+        this.log('🛡️ Root-level MP4 files are ignored by automation:');
+        rootMp4s.forEach((name) => this.log(`   - ${name}`));
+        this.log('   Canonical source is public/videos/{PRODUCT_ID}.mp4 only.');
+      }
+    } catch (error) {
+      this.log(`Warning: unable to scan root-level MP4 guard: ${error.message}`);
+    }
+  }
+
+);
+      if (allowed.test(fileName)) {
+        const publicBase = (process.env.SOCIAL_VIDEO_BASE_URL || `${WEBSITE_BASE_URL}/videos`).replace(/\/$/, '');
+        return `${publicBase}/${fileName}`;
+      }
+    }
+    const publicBase = (process.env.SOCIAL_VIDEO_BASE_URL || `${WEBSITE_BASE_URL}/videos`).replace(/\/$/, '');
+    return `${publicBase}/${product.id}.mp4`;
   }
 
   getActivePlatforms() {
@@ -197,7 +539,8 @@ class SocialMediaAutoPoster {
               const description = p.description || '';
               const category = p.category || 'General';
               const keywords = Array.isArray(p.keywords) ? p.keywords : [];
-              return { id, name, description, category, keywords };
+              const video = typeof p.video === 'string' ? p.video : '';
+              return { id, name, description, category, keywords, video };
             })
             .filter((p) => p.id && p.name)
             .filter((p) => /^NWS_\d{3}$/.test(p.id));
