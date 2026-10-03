@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '18' }
+        with: { node-version: '20' }
 
       - name: Check GCP availability
         id: check-gcp
@@ -72,25 +72,23 @@ jobs:
         run: |
           node scripts/asin-from-sheet.mjs 1LU2ahpzMqLB5FLYqiyDbXOfjTxbdp8U8 1712974299 asins.json
 
-      - name: Install FFmpeg (fallback mode)
-        if: steps.check-gcp.outputs.available == 'false'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install FFmpeg
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
-          echo "✅ FFmpeg installed for video generation fallback"
 
-      - name: Generate videos
+      - name: Generate narrated production rotations
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          HEYGEN_API_KEY: ${{ steps.secrets.outputs.HEYGEN_API_KEY }}
-        run: |
-          if [ "${{ steps.check-gcp.outputs.available }}" = "false" ]; then
-            echo "🎬 Running in fallback mode - using FFmpeg for video generation"
-            echo "   Note: Videos will be generated using FFmpeg instead of HeyGen AI"
-          else
-            echo "🎬 Running with HeyGen AI video generation"
-          fi
-          node scripts/generate-product-videos.mjs
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          VIDEO_VARIATIONS_PER_PRODUCT: '1'
+        run: node scripts/create-five-product-video-rotation.mjs
+
+      - name: Run video QA tests
+        run: node --test scripts/tests/video-publish-qa.test.mjs scripts/tests/video-text.test.mjs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
