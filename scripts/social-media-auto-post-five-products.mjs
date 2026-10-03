@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Force social posting to use the same 5-product list as video generation.
- * Also disables Twitter/X for this run.
+ * Selects one current top product per run and posts its matching video rotation.
  */
 
 import fs from 'fs';
@@ -35,21 +35,23 @@ function pickVideo(productId) {
   return videos[dayNumber % videos.length];
 }
 
-function disableTwitter() {
-  for (const key of Object.keys(process.env)) {
-    if (key.startsWith('TWITTER_')) delete process.env[key];
-  }
-  process.env.DISABLE_TWITTER_POSTING = '1';
-  console.log('[Five Product Social] Twitter/X disabled for this run.');
-}
-
 function writeProductCache() {
   const topProducts = readJson(TOP_PRODUCTS_FILE).topProducts || [];
-  const products = topProducts
+  const orderedProducts = topProducts
     .slice()
     .sort((a, b) => (a.priority || 999) - (b.priority || 999))
-    .slice(0, 5)
-    .map((p) => {
+    .slice(0, 5);
+
+  if (orderedProducts.length !== 5) {
+    throw new Error(`Expected 5 top products but found ${orderedProducts.length}`);
+  }
+
+  const dayNumber = Math.floor(Date.now() / 86400000);
+  const selected = orderedProducts[dayNumber % orderedProducts.length];
+  process.env.PRODUCT_ID = selected.id;
+  process.env.SOCIAL_TOP5_LOCK = '1';
+
+  const products = orderedProducts.map((p) => {
       const videoFile = pickVideo(p.id);
       return {
         id: p.id,
@@ -64,10 +66,6 @@ function writeProductCache() {
       };
     });
 
-  if (products.length !== 5) {
-    throw new Error(`Expected 5 top products but found ${products.length}`);
-  }
-
   fs.mkdirSync(CACHE_DIR, { recursive: true });
   fs.writeFileSync(CACHE_FILE, JSON.stringify({
     source: 'config/top-products.json',
@@ -77,9 +75,11 @@ function writeProductCache() {
   }, null, 2));
 
   console.log(`[Five Product Social] Prepared ${products.length} products for social posting.`);
+  console.log(`[Five Product Social] Selected today: ${selected.id}`);
   for (const product of products) console.log(`[Five Product Social] ${product.id} -> ${product.video}`);
 }
 
-disableTwitter();
 writeProductCache();
-await import('./social-media-auto-post.mjs');
+const { SocialMediaAutoPoster } = await import('./social-media-auto-post.mjs');
+const poster = new SocialMediaAutoPoster();
+await poster.processNewVideos();
