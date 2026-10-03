@@ -546,6 +546,16 @@ class SocialMediaAutoPoster {
             .filter((p) => /^NWS_\d{3}$/.test(p.id));
 
           if (sheetProducts.length > 0) {
+            if (lockedProductId) {
+              const lockedProducts = sheetProducts.filter((p) => p.id === lockedProductId);
+              if (lockedProducts.length > 0) {
+                this.log(`PRODUCT_ID lock active in sheet cache: ${lockedProductId}`);
+                return lockedProducts;
+              }
+              if (process.env.SOCIAL_TOP5_LOCK === '1') {
+                throw new Error(`Locked product ${lockedProductId} is not available in the posting catalog`);
+              }
+            }
             this.log(`Using Google Sheets cache for product selection (${sheetProducts.length} products)`);
             return sheetProducts;
           }
