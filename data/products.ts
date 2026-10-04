@@ -254,7 +254,7 @@ export const allProducts: ProductData[] = [
     id: 'NWS_012',
     asin: 'B0F9W7B3NL',
     name: 'Liquid Bone Meal Fertilizer',
-    price: 19.99,
+    price: 29.99,
   image: '/images/products/NWS_012/main.jpg',
     description: 'Fast-absorbing liquid bone meal with 25% hydrolyzed bone meal, 5% calcium, and 10% phosphorus for immediate plant uptake and robust root development.',
     category: 'Fertilizer',
@@ -278,7 +278,7 @@ export const allProducts: ProductData[] = [
   videoPoster: '/videos/NWS_012.jpg',
     inStock: true,
     sizes: [
-      { name: '32 oz', price: 19.99, sku: 'B5-G9JD-1K10' },
+      { name: '32 oz', price: 29.99, sku: 'B5-G9JD-1K10' },
       { name: '1 Gallon', price: 39.99, sku: 'TY-Z0X8-ENHG' }
     ],
     usage: [
