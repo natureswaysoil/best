@@ -32,7 +32,9 @@ const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(PROJECT, 'public', 'videos');
 const PLAN_DIR = path.join(PROJECT, 'content', 'generated-videos');
-const TOP_PRODUCTS_FILE = path.join(PROJECT, 'config', 'top-products.json');
+const TOP_PRODUCTS_FILE = process.env.VIDEO_PRODUCT_CONFIG
+  ? path.resolve(PROJECT, process.env.VIDEO_PRODUCT_CONFIG)
+  : path.join(PROJECT, 'config', 'top-products.json');
 const SECRET_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || process.env.PROJECT_ID;
 let PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 const BUILD_ALL = process.argv.includes('--all');
@@ -137,7 +139,8 @@ function mediaSize(file) {
   return { width: width || 0, height: height || 0 };
 }
 function productSeeds() {
-  const topProducts = readJson(TOP_PRODUCTS_FILE, { topProducts: [] }).topProducts || [];
+  const productConfig = readJson(TOP_PRODUCTS_FILE, { topProducts: [], products: [] });
+  const topProducts = productConfig.topProducts || productConfig.products || [];
   return topProducts
     .map((product) => ({
       ...product,
@@ -182,7 +185,7 @@ function productScenes(product) {
 }
 function validateSeed(product) {
   const brollScenes = product.scenes.filter((scene) => !scene.product && !scene.endCard && scene.query);
-  if (brollScenes.length < 4) throw new Error(`${product.id} needs at least 4 Pexels b-roll scenes in config/top-products.json; found ${brollScenes.length}.`);
+  if (brollScenes.length < 4) throw new Error(`${product.id} needs at least 4 Pexels b-roll scenes in ${path.relative(PROJECT, TOP_PRODUCTS_FILE)}; found ${brollScenes.length}.`);
 }
 function score(file, words = []) {
   const name = path.basename(file).toLowerCase();
@@ -452,8 +455,8 @@ async function main() {
   requireTool('ffprobe');
   const allProducts = productSeeds();
   const selected = BUILD_ALL ? allProducts : allProducts.filter((p) => p.id === TARGET_PRODUCT_ID);
-  if (!selected.length) throw new Error(`No matching product for ${TARGET_PRODUCT_ID} in config/top-products.json`);
-  console.log(`Building ${selected.length} quality seed-style video(s) from config/top-products.json.`);
+  if (!selected.length) throw new Error(`No matching product for ${TARGET_PRODUCT_ID} in ${path.relative(PROJECT, TOP_PRODUCTS_FILE)}`);
+  console.log(`Building ${selected.length} quality seed-style video(s) from ${path.relative(PROJECT, TOP_PRODUCTS_FILE)}.`);
   for (const product of selected) await build(product);
 }
 main().catch((error) => { console.error(`❌ Quality seed video generation failed: ${error.message}`); process.exit(1); });
