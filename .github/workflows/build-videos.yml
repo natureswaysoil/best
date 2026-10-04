@@ -57,6 +57,10 @@ jobs:
         with:
           credentials_json: ${{ steps.prepare-gcp.outputs.credentials_json }}
 
+      - name: Set up Google Cloud SDK
+        if: steps.check-gcp.outputs.available == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Get HeyGen API Key from Secret Manager
         id: secrets
         if: steps.check-gcp.outputs.available == 'true'
@@ -80,15 +84,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Generate narrated production rotations
+      - name: Generate, validate, upload, and post one scheduled product
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           VIDEO_VARIATIONS_PER_PRODUCT: '1'
-        run: node scripts/create-five-product-video-rotation.mjs
+        run: node scripts/cloud-video-social-job.mjs
 
-      - name: Run video QA tests
-        run: node --test scripts/tests/video-publish-qa.test.mjs scripts/tests/video-text.test.mjs
+      - name: Run pipeline regression tests
+        run: node --test scripts/tests/video-publish-qa.test.mjs scripts/tests/video-text.test.mjs scripts/tests/social-platform-selection.test.mjs scripts/tests/social-top5-post.test.mjs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
