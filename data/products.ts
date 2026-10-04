@@ -279,7 +279,7 @@ export const allProducts: ProductData[] = [
     inStock: true,
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'B5-G9JD-1K10' },
-      { name: '1 Gallon', price: 39.99, sku: 'TY-Z0X8-ENHG' }
+      { name: '1 Gallon', price: 49.99, sku: 'TY-Z0X8-ENHG' }
     ],
     usage: [
       'Shake thoroughly to suspend the hydrolyzed bone meal particles.',
@@ -501,6 +501,8 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_022/main.svg',
       '/images/products/NWS_022/back.svg'
     ],
+    video: '/videos/NWS_022.mp4',
+    videoPoster: '/videos/NWS_022.jpg',
     inStock: true,
     sizes: [
       { name: '2.5 Gallon', price: 179.00, sku: 'NWS-HPLRS-25GAL' }
@@ -534,6 +536,8 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_023/main.svg',
       '/images/products/NWS_023/back.svg'
     ],
+    video: '/videos/NWS_023.mp4',
+    videoPoster: '/videos/NWS_023.jpg',
     inStock: true,
     sizes: [
       { name: '4 lb', price: 24.99, sku: 'NWS-LSR-4LB' },
