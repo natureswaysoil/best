@@ -47,9 +47,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_001/main.jpg',
       '/images/products/NWS_001/thumb.jpg'
     ],
-  video: '/videos/NWS_001.mp4',
+  video: '/videos/NWS_001-catalog-v1.mp4',
   videoWebm: '/videos/NWS_001.webm',
-  videoPoster: '/videos/NWS_001.jpg',
+  videoPoster: '/videos/NWS_001-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 29.99, sku: '3L-3MPJ-6BQM' }
@@ -85,9 +85,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_002/thumb.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_002.mp4',
+    video: '/videos/NWS_002-catalog-v1.mp4',
     videoWebm: '/videos/NWS_002.webm',
-    videoPoster: '/videos/NWS_002.jpg',
+    videoPoster: '/videos/NWS_002-catalog-v1.jpg',
     sizes: [
       { name: '4 Quarts', price: 29.99, sku: 'NWS-4q-ABC' }
     ],
@@ -122,9 +122,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_003/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_003.mp4',
+  video: '/videos/NWS_003-catalog-v1.mp4',
   videoWebm: '/videos/NWS_003.webm',
-  videoPoster: '/videos/NWS_003.jpg',
+  videoPoster: '/videos/NWS_003-catalog-v1.jpg',
     sizes: [
       { name: 'Quart', price: 29.99, sku: 'P5-NP0G-5SL7' }
     ],
@@ -159,9 +159,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_004/thumb.jpg'
     ],
     inStock: true,
-    video: '/videos/NWS_004.mp4',
+    video: '/videos/NWS_004-catalog-v1.mp4',
     videoWebm: '/videos/NWS_004.webm',
-    videoPoster: '/videos/NWS_004.jpg',
+    videoPoster: '/videos/NWS_004-catalog-v1.jpg',
     sizes: [
       { name: 'Quart', price: 29.99, sku: '9P-CSA1-NC45' }
     ],
@@ -195,9 +195,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_006/main.jpg',
       '/images/products/NWS_006/thumb.jpg'
     ],
-  video: '/videos/NWS_006.mp4',
+  video: '/videos/NWS_006-catalog-v1.mp4',
   videoWebm: '/videos/NWS_006.webm',
-  videoPoster: '/videos/NWS_006.jpg',
+  videoPoster: '/videos/NWS_006-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'XX-XBWB-DF03' },
@@ -235,9 +235,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_011/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_011.mp4',
+  video: '/videos/NWS_011-catalog-v1.mp4',
   videoWebm: '/videos/NWS_011.webm',
-  videoPoster: '/videos/NWS_011.jpg',
+  videoPoster: '/videos/NWS_011-catalog-v1.jpg',
     sizes: [
       { name: '32 oz', price: 19.99, sku: 'FP-AL1H-WYNQ' },
       { name: '1 Gallon', price: 39.99, sku: 'IT-ADBS-CXUC' },
@@ -273,13 +273,13 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_012/main.jpg',
       '/images/products/NWS_012/thumb.jpg'
     ],
-  video: '/videos/NWS_012.mp4',
+  video: '/videos/NWS_012-catalog-v1.mp4',
   videoWebm: '/videos/NWS_012.webm',
-  videoPoster: '/videos/NWS_012.jpg',
+  videoPoster: '/videos/NWS_012-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'B5-G9JD-1K10' },
-      { name: '1 Gallon', price: 39.99, sku: 'TY-Z0X8-ENHG' }
+      { name: '1 Gallon', price: 49.99, sku: 'TY-Z0X8-ENHG' }
     ],
     usage: [
       'Shake thoroughly to suspend the hydrolyzed bone meal particles.',
@@ -312,9 +312,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_013/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_013.mp4',
+  video: '/videos/NWS_013-catalog-v1.mp4',
   videoWebm: '/videos/NWS_013.webm',
-  videoPoster: '/videos/NWS_013.jpg',
+  videoPoster: '/videos/NWS_013-catalog-v1.jpg',
     sizes: [
       { name: '10 lb', price: 29.99, sku: 'WK-558E-QZUL' }
     ],
@@ -349,9 +349,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_014/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_014.mp4',
+  video: '/videos/NWS_014-catalog-v1.mp4',
   videoWebm: '/videos/NWS_014.webm',
-  videoPoster: '/videos/NWS_014.jpg',
+  videoPoster: '/videos/NWS_014-catalog-v1.jpg',
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'EG-PJ13-DA9T' },
       { name: '1 Gallon', price: 59.99, sku: 'T0-MB9Q-JIKC' }
@@ -386,9 +386,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_016/main.jpg',
       '/images/products/NWS_016/thumb.jpg'
     ],
-  video: '/videos/NWS_016.mp4',
+  video: '/videos/NWS_016-catalog-v1.mp4',
   videoWebm: '/videos/NWS_016.webm',
-  videoPoster: '/videos/NWS_016.jpg',
+  videoPoster: '/videos/NWS_016-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'FR-IJ8R-6LQK' }
@@ -423,9 +423,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_018/main.jpg',
       '/images/products/NWS_018/thumb.jpg'
     ],
-  video: '/videos/NWS_018.mp4',
+  video: '/videos/NWS_018-catalog-v1.mp4',
   videoWebm: '/videos/NWS_018.webm',
-  videoPoster: '/videos/NWS_018.jpg',
+  videoPoster: '/videos/NWS_018-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '1 Gallon', price: 19.99, sku: 'BH-NBDZ-1GAL' },
@@ -465,9 +465,9 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_021/thumb.jpg'
     ],
     inStock: true,
-  video: '/videos/NWS_021.mp4',
+  video: '/videos/NWS_021-catalog-v1.mp4',
   videoWebm: '/videos/NWS_021.webm',
-  videoPoster: '/videos/NWS_021.jpg',
+  videoPoster: '/videos/NWS_021-catalog-v1.jpg',
     sizes: [
       { name: '1 Gallon', price: 39.99, sku: 'VY-T7ZM-760R' },
       { name: '2.5 Gallon', price: 99.99, sku: 'N4-E00Z-BB9W' }
@@ -501,6 +501,8 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_022/main.svg',
       '/images/products/NWS_022/back.svg'
     ],
+    video: '/videos/NWS_022-catalog-v1.mp4',
+    videoPoster: '/videos/NWS_022-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '2.5 Gallon', price: 179.00, sku: 'NWS-HPLRS-25GAL' }
@@ -534,6 +536,8 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_023/main.svg',
       '/images/products/NWS_023/back.svg'
     ],
+    video: '/videos/NWS_023-catalog-v1.mp4',
+    videoPoster: '/videos/NWS_023-catalog-v1.jpg',
     inStock: true,
     sizes: [
       { name: '4 lb', price: 24.99, sku: 'NWS-LSR-4LB' },

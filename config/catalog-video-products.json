@@ -1,0 +1,270 @@
+{
+  "products": [
+    {
+      "id": "NWS_001",
+      "name": "Liquid Lawn Soil Conditioner - Humic Acid & Kelp",
+      "description": "Liquid soil conditioner for compacted lawns that supports water movement, nutrient availability and stronger grass roots.",
+      "category": "compacted lawn soil conditioner",
+      "keywords": [
+        "lawn",
+        "soil",
+        "humic",
+        "kelp",
+        "roots"
+      ],
+      "brollQueries": [
+        "compacted dry lawn soil close up",
+        "watering green lawn garden hose",
+        "grass roots healthy soil close up",
+        "lush green backyard lawn"
+      ]
+    },
+    {
+      "id": "NWS_002",
+      "name": "Horticultural Activated Charcoal - 4 Quarts",
+      "description": "Activated horticultural charcoal for soil conditioning, drainage and beneficial microbe habitat.",
+      "category": "horticultural charcoal biochar soil",
+      "keywords": [
+        "biochar",
+        "charcoal",
+        "soil",
+        "terrarium",
+        "drainage"
+      ],
+      "brollQueries": [
+        "horticultural charcoal soil close up",
+        "hands mixing potting soil garden",
+        "terrarium plants close up",
+        "healthy dark garden soil"
+      ]
+    },
+    {
+      "id": "NWS_003",
+      "name": "Organic Tomato Liquid Fertilizer",
+      "description": "Liquid tomato fertilizer for root establishment, flowering and fruit development.",
+      "category": "tomato vegetable fertilizer",
+      "keywords": [
+        "tomato",
+        "vegetable",
+        "fertilizer",
+        "flowers",
+        "roots"
+      ],
+      "brollQueries": [
+        "ripe tomatoes garden vine",
+        "tomato blossoms close up",
+        "watering vegetable garden",
+        "healthy tomato roots soil"
+      ]
+    },
+    {
+      "id": "NWS_004",
+      "name": "Soil Booster and Loosener",
+      "description": "Liquid soil booster that supports aeration, water penetration and root growth in compacted soil.",
+      "category": "soil loosener compacted soil",
+      "keywords": [
+        "soil",
+        "aeration",
+        "roots",
+        "garden",
+        "lawn"
+      ],
+      "brollQueries": [
+        "compacted clay soil close up",
+        "garden soil being loosened",
+        "watering dry garden soil",
+        "healthy plant roots dark soil"
+      ]
+    },
+    {
+      "id": "NWS_006",
+      "name": "Liquid Kelp Fertilizer",
+      "description": "Cold-processed seaweed concentrate for lawns, gardens and plants that supports roots, vigor and stress recovery.",
+      "category": "kelp seaweed plant fertilizer",
+      "keywords": [
+        "kelp",
+        "seaweed",
+        "plants",
+        "roots",
+        "garden"
+      ],
+      "brollQueries": [
+        "seaweed ocean coast close up",
+        "watering healthy garden plants",
+        "green plant roots soil",
+        "lush vegetable garden sunlight"
+      ]
+    },
+    {
+      "id": "NWS_011",
+      "name": "Liquid Humic & Fulvic Acid with Kelp",
+      "description": "Humic and fulvic acid soil conditioner with kelp for nutrient availability, soil structure and plant vigor.",
+      "category": "humic fulvic kelp soil conditioner",
+      "keywords": [
+        "humic",
+        "fulvic",
+        "kelp",
+        "soil",
+        "roots"
+      ],
+      "brollQueries": [
+        "rich dark garden soil hands",
+        "plant roots soil close up",
+        "watering lawn garden",
+        "healthy green plants garden"
+      ]
+    },
+    {
+      "id": "NWS_012",
+      "name": "Liquid Bone Meal Fertilizer",
+      "description": "Fast-absorbing liquid bone meal with calcium and phosphorus for roots, flowering and fruiting plants.",
+      "category": "bone meal phosphorus calcium fertilizer",
+      "keywords": [
+        "bone-meal",
+        "phosphorus",
+        "calcium",
+        "flowers",
+        "roots"
+      ],
+      "brollQueries": [
+        "flowering garden plants close up",
+        "plant roots healthy soil",
+        "fruit tree blossoms spring",
+        "watering vegetable garden roots"
+      ]
+    },
+    {
+      "id": "NWS_013",
+      "name": "Enhanced Living Compost with Fermented Duckweed",
+      "description": "Living compost blend with worm castings, activated biochar and aged compost for soil biology and root development.",
+      "category": "living compost worm castings biochar",
+      "keywords": [
+        "compost",
+        "worm-castings",
+        "biochar",
+        "soil",
+        "garden"
+      ],
+      "brollQueries": [
+        "finished compost dark soil close up",
+        "earthworms compost soil",
+        "biochar mixed into garden soil",
+        "healthy raised bed garden"
+      ]
+    },
+    {
+      "id": "NWS_014",
+      "name": "Dog Urine Neutralizer & Lawn Repair",
+      "description": "Pet-lawn treatment for dog urine spots and lawn recovery with no green dye cover-up.",
+      "category": "dog urine lawn repair",
+      "keywords": [
+        "dog",
+        "urine",
+        "lawn",
+        "pet",
+        "grass"
+      ],
+      "brollQueries": [
+        "dog sitting on green lawn backyard",
+        "brown grass spot lawn damage",
+        "watering lawn garden hose",
+        "happy dog running green grass"
+      ]
+    },
+    {
+      "id": "NWS_016",
+      "name": "Organic Hydroponic Fertilizer Concentrate",
+      "description": "Concentrated plant food for hydroponic and aquaponic growing systems.",
+      "category": "hydroponic aquaponic fertilizer",
+      "keywords": [
+        "hydroponic",
+        "aquaponic",
+        "indoor",
+        "plants",
+        "roots"
+      ],
+      "brollQueries": [
+        "hydroponic lettuce greenhouse",
+        "indoor hydroponic roots close up",
+        "greenhouse plants rows",
+        "pouring nutrient solution hydroponics"
+      ]
+    },
+    {
+      "id": "NWS_018",
+      "name": "Seaweed & Humic Acid Lawn Treatment",
+      "description": "Seaweed and humic acid lawn treatment for soil biology, nutrient uptake and greener turf.",
+      "category": "seaweed humic lawn treatment",
+      "keywords": [
+        "seaweed",
+        "humic",
+        "lawn",
+        "grass",
+        "soil"
+      ],
+      "brollQueries": [
+        "healthy green lawn close up",
+        "watering lawn sprinkler",
+        "grass roots soil close up",
+        "lush backyard grass sunlight"
+      ]
+    },
+    {
+      "id": "NWS_021",
+      "name": "Horse Safe Hay, Pasture & Lawn Fertilizer",
+      "description": "Liquid fertilizer for hay fields, pastures and lawns designed for forage growth and livestock areas.",
+      "category": "hay pasture lawn fertilizer",
+      "keywords": [
+        "hay",
+        "pasture",
+        "horse",
+        "livestock",
+        "grass"
+      ],
+      "brollQueries": [
+        "green pasture field rolling hills",
+        "horses grazing pasture",
+        "round hay bales field",
+        "tractor spraying pasture field"
+      ]
+    },
+    {
+      "id": "NWS_022",
+      "name": "Hay, Pasture & Lawn Recovery System with Liquid Biochar",
+      "description": "Concentrated recovery formula with liquid biochar, humic and fulvic acids, kelp, beneficial biology and yucca.",
+      "category": "pasture lawn recovery liquid biochar",
+      "keywords": [
+        "pasture",
+        "lawn",
+        "biochar",
+        "recovery",
+        "soil"
+      ],
+      "brollQueries": [
+        "dry stressed pasture field",
+        "green pasture recovery field",
+        "tractor spraying pasture",
+        "healthy grass roots soil"
+      ]
+    },
+    {
+      "id": "NWS_023",
+      "name": "Living Soil Revitalizer",
+      "description": "Worm castings and activated biochar blend with kelp, humic and fulvic acids and beneficial biology for gardens and containers.",
+      "category": "living soil worm castings biochar",
+      "keywords": [
+        "living-soil",
+        "worm-castings",
+        "biochar",
+        "garden",
+        "containers"
+      ],
+      "brollQueries": [
+        "worm castings dark soil close up",
+        "hands mixing soil raised bed",
+        "potted plants healthy roots",
+        "lush raised bed vegetable garden"
+      ]
+    }
+  ]
+}

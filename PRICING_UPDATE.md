@@ -30,7 +30,7 @@ Updated all product data with accurate pricing from the product spreadsheet. Pro
 
 ### NWS_012 - Liquid Bone Meal Fertilizer (Multiple Sizes)
 - **32 oz**: $29.99 (SKU: B5-G9JD-1K10) ← NWS_016
-- **1 Gallon**: $39.99 (SKU: TY-Z0X8-ENHG) ← NWS_023
+- **1 Gallon**: $49.99 (SKU: TY-Z0X8-ENHG) ← NWS_023
 
 ### NWS_013 - Enhanced Living Compost
 - **10 lb**: $29.99 (SKU: WK-558E-QZUL)
