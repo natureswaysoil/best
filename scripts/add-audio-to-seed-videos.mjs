@@ -25,7 +25,12 @@ const PROJECT = path.resolve(__dirname, '..');
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const PLAN_DIR = path.join(PROJECT, 'content', 'generated-videos');
 const SECRET_PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || process.env.PROJECT_ID;
-const PRODUCT_IDS = (process.env.PRODUCT_IDS || 'NWS_014,NWS_011,NWS_013,NWS_021,NWS_018').split(',').map((x) => x.trim()).filter(Boolean);
+const PRODUCT_IDS = (process.env.PRODUCT_IDS
+  ? process.env.PRODUCT_IDS.split(',')
+  : (JSON.parse(fs.readFileSync(path.join(PROJECT, 'config', 'top-products.json'), 'utf8')).topProducts || [])
+      .slice(0, 5)
+      .map((product) => product.id)
+).map((x) => String(x).trim()).filter(Boolean);
 const TTS_MODEL = process.env.OPENAI_TTS_MODEL || 'gpt-4o-mini-tts';
 const TTS_VOICE = process.env.OPENAI_TTS_VOICE || 'alloy';
 const FFMPEG_PRESET = process.env.FFMPEG_PRESET || 'veryfast';

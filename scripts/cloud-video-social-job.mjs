@@ -31,7 +31,6 @@ const DEFAULT_SITE_URL = 'https://www.natureswaysoil.com';
 const SECRET_NAMES = [
   'PEXELS_API_KEY',
   'OPENAI_API_KEY',
-  'OPENAI_API_KEY',
   'NEXT_PUBLIC_SITE_URL',
   'VIDEO_OUTPUT_BUCKET',
   'VIDEO_OUTPUT_PREFIX',
@@ -142,7 +141,8 @@ function uploadOutputsToCloudStorage() {
   const publicBase = (process.env.VIDEO_PUBLIC_BASE_URL || `https://storage.googleapis.com/${bucket}/${prefix}`).replace(/\/$/, '');
   process.env.VIDEO_PUBLIC_BASE_URL = publicBase;
   process.env.NEXT_PUBLIC_VIDEO_PUBLIC_BASE_URL = publicBase;
-  console.log(`[Cloud Video Job] Website /videos/* should rewrite to: ${publicBase}/*`);
+  process.env.SOCIAL_VIDEO_BASE_URL = publicBase;
+  console.log(`[Cloud Video Job] Social publishing will use uploaded assets from: ${publicBase}/*`);
 }
 
 function runSocialPoster() {
@@ -160,18 +160,7 @@ function main() {
   setWebsiteVideoEnvironment();
   console.log('[Cloud Video Job] Generating configured product video rotation(s)...');
   run('node', ['scripts/create-five-product-video-rotation.mjs']);
-  const topProducts = JSON.parse(
-    fs.readFileSync(path.join(PROJECT, 'config', 'top-products.json'), 'utf8')
-  ).topProducts || [];
-  const productIds = topProducts.slice(0, 5).map((product) => product.id).filter(Boolean);
-  console.log('[Cloud Video Job] Adding narration/audio before publishing...');
-  run('node', ['scripts/add-audio-to-seed-videos.mjs'], {
-    env: {
-      ...process.env,
-      PRODUCT_IDS: productIds.join(','),
-      REPLACE_ORIGINAL_AUDIO: '1'
-    }
-  });
+  console.log('[Cloud Video Job] Rotation generator already added narration and passed video QA.');
   uploadOutputsToCloudStorage();
   runSocialPoster();
   console.log('[Cloud Video Job] Done.');
