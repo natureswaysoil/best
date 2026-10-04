@@ -29,7 +29,7 @@ Updated all product data with accurate pricing from the product spreadsheet. Pro
 - **2.5 Gallon**: $69.99 (SKU: GA-TZ69-N9XK) ← NWS_021
 
 ### NWS_012 - Liquid Bone Meal Fertilizer (Multiple Sizes)
-- **32 oz**: $19.99 (SKU: B5-G9JD-1K10) ← NWS_016
+- **32 oz**: $29.99 (SKU: B5-G9JD-1K10) ← NWS_016
 - **1 Gallon**: $39.99 (SKU: TY-Z0X8-ENHG) ← NWS_023
 
 ### NWS_013 - Enhanced Living Compost
