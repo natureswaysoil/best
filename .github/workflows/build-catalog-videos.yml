@@ -1,0 +1,148 @@
+name: Build Full Product Video Catalog
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/build-catalog-videos.yml
+      - config/catalog-video-products.json
+      - scripts/create-quality-seed-videos.mjs
+      - scripts/add-audio-to-seed-videos.mjs
+      - scripts/lib/video-publish-qa.mjs
+      - scripts/lib/video-text.mjs
+
+concurrency:
+  group: catalog-product-videos
+  cancel-in-progress: false
+
+jobs:
+  build-catalog-videos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version
+          ffprobe -version
+
+      - name: Require Google Cloud configuration
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$GCP_SA_KEY" || { echo "Missing GCP_SA_KEY"; exit 1; }
+          test -n "$GCP_PROJECT_ID" || { echo "Missing GCP_PROJECT_ID"; exit 1; }
+
+      - name: Prepare Google credentials
+        id: prepare-gcp
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          set -euo pipefail
+          CREDS_PATH="$HOME/gcp-key.json"
+          if [[ "$GCP_SA_KEY" == \{* ]]; then
+            printf '%s\n' "$GCP_SA_KEY" > "$CREDS_PATH"
+          else
+            echo "$GCP_SA_KEY" | base64 -d > "$CREDS_PATH"
+          fi
+          {
+            echo "credentials_json<<EOF"
+            cat "$CREDS_PATH"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.prepare-gcp.outputs.credentials_json }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Generate product videos
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          VIDEO_PRODUCT_CONFIG: config/catalog-video-products.json
+          VIDEO_WIDTH: '1080'
+          VIDEO_HEIGHT: '1920'
+          VIDEO_FPS: '30'
+          FFMPEG_PRESET: medium
+          VIDEO_CRF: '18'
+        run: node scripts/create-quality-seed-videos.mjs --all
+
+      - name: Add narration
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          REPLACE_ORIGINAL_AUDIO: '1'
+        run: |
+          set -euo pipefail
+          PRODUCT_IDS="$(node -e "const c=require('./config/catalog-video-products.json'); process.stdout.write(c.products.map(p=>p.id).join(','))")"
+          echo "Narrating: $PRODUCT_IDS"
+          PRODUCT_IDS="$PRODUCT_IDS" node scripts/add-audio-to-seed-videos.mjs
+
+      - name: Enforce product video quality
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'fs';
+          import { validateVideoForPublishing } from './scripts/lib/video-publish-qa.mjs';
+
+          const config = JSON.parse(fs.readFileSync('./config/catalog-video-products.json', 'utf8'));
+          const results = [];
+          for (const product of config.products) {
+            const file = `public/videos/${product.id}.mp4`;
+            const result = validateVideoForPublishing(file);
+            results.push({ id: product.id, ...result });
+          }
+          console.log(JSON.stringify(results, null, 2));
+          NODE
+
+      - name: Upload catalog videos to Cloud Storage
+        env:
+          VIDEO_OUTPUT_BUCKET: natureswaysoil-videos
+          VIDEO_OUTPUT_PREFIX: seed-videos
+        run: |
+          set -euo pipefail
+          DEST="gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX"
+          node -e "const c=require('./config/catalog-video-products.json'); for (const p of c.products) console.log(p.id)" > /tmp/product-ids.txt
+          while IFS= read -r id; do
+            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id.mp4"
+            if [ -f "public/videos/$id.jpg" ]; then
+              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id.jpg"
+            fi
+            gcloud storage objects update "$DEST/$id.mp4" --cache-control="public, max-age=300, must-revalidate"
+            if [ -f "public/videos/$id.jpg" ]; then
+              gcloud storage objects update "$DEST/$id.jpg" --cache-control="public, max-age=300, must-revalidate"
+            fi
+          done < /tmp/product-ids.txt
+
+      - name: Upload QA artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-product-videos
+          path: |
+            public/videos/NWS_*.mp4
+            public/videos/NWS_*.jpg
+            content/generated-videos/*-quality-seed-plan.json
+          if-no-files-found: error
