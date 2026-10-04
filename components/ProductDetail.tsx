@@ -46,6 +46,11 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   };
 
   useEffect(() => {
+    setVideoFailed(false);
+    setIsVideoPlaying(false);
+  }, [product.id]);
+
+  useEffect(() => {
     if (videoRef.current && (product.video || product.videoWebm)) videoRef.current.play().catch(() => undefined);
   }, [product.video, product.videoWebm]);
 
