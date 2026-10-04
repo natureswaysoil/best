@@ -137,22 +137,35 @@ jobs:
             content/generated-videos/*-quality-seed-plan.json
           if-no-files-found: error
 
-      - name: Verify Cloud Storage write access
+      - name: Verify Cloud Storage overwrite access
         env:
           VIDEO_OUTPUT_BUCKET: natureswaysoil-videos
           VIDEO_OUTPUT_PREFIX: seed-videos
         run: |
           set -euo pipefail
           ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+          PROBE="gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/.upload-probe-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.txt"
           echo "Active Google Cloud account: $ACTIVE_ACCOUNT"
           echo "Target bucket: gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/"
-          : > /tmp/nws-upload-probe.txt
-          if ! gcloud storage cp /tmp/nws-upload-probe.txt "gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/.upload-probe-$GITHUB_RUN_ID.txt" --cache-control="no-store"; then
+          printf 'first\n' > /tmp/nws-upload-probe.txt
+
+          if ! gcloud storage cp /tmp/nws-upload-probe.txt "$PROBE" --cache-control="no-store"; then
             echo "::error::The authenticated account cannot create objects in gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/"
-            echo "::error::Grant Storage Object Creator on bucket $VIDEO_OUTPUT_BUCKET to: $ACTIVE_ACCOUNT"
-            echo "Required role: roles/storage.objectCreator"
+            echo "::error::Grant Storage Object User on bucket $VIDEO_OUTPUT_BUCKET to: $ACTIVE_ACCOUNT"
+            echo "Required role: roles/storage.objectUser"
             exit 1
           fi
+
+          printf 'second\n' > /tmp/nws-upload-probe.txt
+          if ! gcloud storage cp /tmp/nws-upload-probe.txt "$PROBE" --cache-control="no-store"; then
+            echo "::error::The authenticated account can create objects but cannot overwrite them."
+            echo "::error::Fixed catalog filenames require create + delete/update access on bucket $VIDEO_OUTPUT_BUCKET."
+            echo "::error::Grant Storage Object User on bucket $VIDEO_OUTPUT_BUCKET to: $ACTIVE_ACCOUNT"
+            echo "Required role: roles/storage.objectUser"
+            exit 1
+          fi
+
+          gcloud storage rm "$PROBE" || true
 
       - name: Upload catalog videos to Cloud Storage
         env:
