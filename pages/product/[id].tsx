@@ -119,10 +119,10 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     features: productData.features,
     images: imageOverride?.images ?? productData.images,
     image: imageOverride?.image ?? productData.image,
-    // If a local video exists, prefer that path (served from /videos/). Otherwise use any configured product.video.
-    ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
+    // Prefer configured catalog media so website videos can be versioned independently of social assets.
+    ...((productData.video && { video: productData.video }) || (hasLocalVideo && { video: localVideoPath })),
     ...(hasLocalWebm && { videoWebm: localWebmPath }),
-    ...((hasLocalPoster && { videoPoster: localPosterPath }) || (productData.videoPoster && { videoPoster: productData.videoPoster })),
+    ...((productData.videoPoster && { videoPoster: productData.videoPoster }) || (hasLocalPoster && { videoPoster: localPosterPath })),
     inStock: productData.inStock,
     category: productData.category,
     ...(productData.sizes && productData.sizes.length > 0 && { sizes: productData.sizes }),
