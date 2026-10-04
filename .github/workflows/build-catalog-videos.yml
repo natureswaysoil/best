@@ -127,6 +127,33 @@ jobs:
           console.log(JSON.stringify(results, null, 2));
           NODE
 
+      - name: Preserve generated catalog artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-product-videos
+          path: |
+            public/videos/NWS_*.mp4
+            public/videos/NWS_*.jpg
+            content/generated-videos/*-quality-seed-plan.json
+          if-no-files-found: error
+
+      - name: Verify Cloud Storage write access
+        env:
+          VIDEO_OUTPUT_BUCKET: natureswaysoil-videos
+          VIDEO_OUTPUT_PREFIX: seed-videos
+        run: |
+          set -euo pipefail
+          ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+          echo "Active Google Cloud account: $ACTIVE_ACCOUNT"
+          echo "Target bucket: gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/"
+          : > /tmp/nws-upload-probe.txt
+          if ! gcloud storage cp /tmp/nws-upload-probe.txt "gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/.upload-probe-$GITHUB_RUN_ID.txt" --cache-control="no-store"; then
+            echo "::error::The authenticated account cannot create objects in gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX/"
+            echo "::error::Grant Storage Object Creator on bucket $VIDEO_OUTPUT_BUCKET to: $ACTIVE_ACCOUNT"
+            echo "Required role: roles/storage.objectCreator"
+            exit 1
+          fi
+
       - name: Upload catalog videos to Cloud Storage
         env:
           VIDEO_OUTPUT_BUCKET: natureswaysoil-videos
@@ -136,22 +163,9 @@ jobs:
           DEST="gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX"
           node -e "const c=require('./config/catalog-video-products.json'); for (const p of c.products) console.log(p.id)" > /tmp/product-ids.txt
           while IFS= read -r id; do
-            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id-catalog-v2.mp4"
+            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id-catalog-v2.mp4" --cache-control="public, max-age=31536000, immutable"
             if [ -f "public/videos/$id.jpg" ]; then
-              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id-catalog-v2.jpg"
-            fi
-            gcloud storage objects update "$DEST/$id-catalog-v2.mp4" --cache-control="public, max-age=31536000, immutable"
-            if [ -f "public/videos/$id.jpg" ]; then
-              gcloud storage objects update "$DEST/$id-catalog-v2.jpg" --cache-control="public, max-age=31536000, immutable"
+              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id-catalog-v2.jpg" --cache-control="public, max-age=31536000, immutable"
             fi
           done < /tmp/product-ids.txt
 
-      - name: Upload QA artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: catalog-product-videos
-          path: |
-            public/videos/NWS_*.mp4
-            public/videos/NWS_*.jpg
-            content/generated-videos/*-quality-seed-plan.json
-          if-no-files-found: error
