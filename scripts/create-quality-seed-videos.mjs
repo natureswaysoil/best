@@ -32,6 +32,7 @@ const __dirname = path.dirname(__filename);
 const PROJECT = path.resolve(__dirname, '..');
 const OUT_DIR = path.join(PROJECT, 'public', 'videos');
 const PLAN_DIR = path.join(PROJECT, 'content', 'generated-videos');
+const PRODUCT_IMAGE_TMP_DIR = path.join(PROJECT, 'content', 'generated-videos', 'product-images');
 const TOP_PRODUCTS_FILE = process.env.VIDEO_PRODUCT_CONFIG
   ? path.resolve(PROJECT, process.env.VIDEO_PRODUCT_CONFIG)
   : path.join(PROJECT, 'config', 'top-products.json');
@@ -197,12 +198,35 @@ function score(file, words = []) {
   if (name.includes('label')) s += 18;
   return s;
 }
+function explicitProductImage(product) {
+  const configured = String(product.productImagePath || '').trim();
+  if (!configured) return null;
+
+  const source = path.join(PROJECT, 'public', configured.replace(/^\//, ''));
+  if (!fs.existsSync(source)) {
+    throw new Error(`Configured product image is missing for ${product.id}: ${configured}`);
+  }
+
+  if (/\.svg$/i.test(source)) {
+    ensureDir(PRODUCT_IMAGE_TMP_DIR);
+    const raster = path.join(PRODUCT_IMAGE_TMP_DIR, `${product.id}-product.png`);
+    run('ffmpeg', ['-y', '-hide_banner', '-loglevel', 'error', '-i', source, '-vf', 'scale=1600:-1', raster]);
+    if (!probeMedia(raster)) throw new Error(`Unable to rasterize configured SVG product image for ${product.id}`);
+    return raster;
+  }
+
+  if (!probeMedia(source)) {
+    throw new Error(`Configured product image is not usable for ${product.id}: ${configured}`);
+  }
+  return source;
+}
+
 function productImages(product) {
+  const explicit = explicitProductImage(product);
+  if (explicit) return [explicit];
   const roots = [
     path.join(PROJECT, 'public', 'images', 'products', product.id),
-    path.join(PROJECT, 'public', 'products', product.id),
-    path.join(PROJECT, 'public', 'images'),
-    path.join(PROJECT, 'public')
+    path.join(PROJECT, 'public', 'products', product.id)
   ];
   const seen = new Set();
   const files = [];
@@ -210,7 +234,7 @@ function productImages(product) {
   for (const root of roots) {
     for (const file of listRecursive(root, /\.(png|jpe?g|webp)$/i)) {
       const lower = file.toLowerCase();
-      const matched = lower.includes(product.id.toLowerCase()) || product.keywords.some((k) => lower.includes(String(k).toLowerCase()));
+      const matched = lower.includes(product.id.toLowerCase()) || root.toLowerCase().includes(product.id.toLowerCase());
       if (!matched || seen.has(file)) continue;
       seen.add(file);
       if (probeMedia(file)) files.push(file);

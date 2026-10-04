@@ -245,7 +245,8 @@
         "green pasture recovery field",
         "tractor spraying pasture",
         "healthy grass roots soil"
-      ]
+      ],
+      "productImagePath": "/images/products/NWS_022/main.svg"
     },
     {
       "id": "NWS_023",
@@ -264,7 +265,8 @@
         "hands mixing soil raised bed",
         "potted plants healthy roots",
         "lush raised bed vegetable garden"
-      ]
+      ],
+      "productImagePath": "/images/products/NWS_023/main.svg"
     }
   ]
 }

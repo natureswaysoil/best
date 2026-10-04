@@ -45,44 +45,53 @@ jobs:
           ffmpeg -version
           ffprobe -version
 
-      - name: Require Google Cloud configuration
+      - name: Check Google Cloud credentials
         env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
           set -euo pipefail
-          test -n "$GCP_SA_KEY" || { echo "Missing GCP_SA_KEY"; exit 1; }
-          test -n "$GCP_PROJECT_ID" || { echo "Missing GCP_PROJECT_ID"; exit 1; }
-
-      - name: Prepare Google credentials
-        id: prepare-gcp
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-        run: |
-          set -euo pipefail
-          CREDS_PATH="$HOME/gcp-key.json"
-          if [[ "$GCP_SA_KEY" == \{* ]]; then
-            printf '%s\n' "$GCP_SA_KEY" > "$CREDS_PATH"
-          else
-            echo "$GCP_SA_KEY" | base64 -d > "$CREDS_PATH"
-          fi
-          {
-            echo "credentials_json<<EOF"
-            cat "$CREDS_PATH"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          test -n "$GCP_SERVICE_ACCOUNT_JSON" || { echo "Missing GCP_SERVICE_ACCOUNT_JSON"; exit 1; }
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ steps.prepare-gcp.outputs.credentials_json }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Load required generation secrets
+        env:
+          REPOSITORY_PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          REPOSITORY_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          SECRET_PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-natureswaysoil-video}"
+
+          load_required_secret () {
+            local secret_name="$1"
+            local env_name="$2"
+            local repository_value="$3"
+            local value="$repository_value"
+
+            if [ -z "$value" ]; then
+              value="$(gcloud secrets versions access latest --secret="$secret_name" --project="$SECRET_PROJECT_ID")"
+            fi
+            test -n "$value" || { echo "Required secret $secret_name is empty"; exit 1; }
+            echo "::add-mask::$value"
+            {
+              echo "$env_name<<VIDEO_SECRET_EOF"
+              echo "$value"
+              echo "VIDEO_SECRET_EOF"
+            } >> "$GITHUB_ENV"
+          }
+
+          load_required_secret PEXELS_API_KEY PEXELS_API_KEY "$REPOSITORY_PEXELS_API_KEY"
+          load_required_secret OPENAI_API_KEY OPENAI_API_KEY "$REPOSITORY_OPENAI_API_KEY"
+
       - name: Generate product videos
         env:
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: natureswaysoil-video
           VIDEO_PRODUCT_CONFIG: config/catalog-video-products.json
           VIDEO_WIDTH: '1080'
           VIDEO_HEIGHT: '1920'
@@ -93,7 +102,7 @@ jobs:
 
       - name: Add narration
         env:
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: natureswaysoil-video
           REPLACE_ORIGINAL_AUDIO: '1'
         run: |
           set -euo pipefail
@@ -127,13 +136,13 @@ jobs:
           DEST="gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX"
           node -e "const c=require('./config/catalog-video-products.json'); for (const p of c.products) console.log(p.id)" > /tmp/product-ids.txt
           while IFS= read -r id; do
-            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id-catalog-v1.mp4"
+            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id-catalog-v2.mp4"
             if [ -f "public/videos/$id.jpg" ]; then
-              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id-catalog-v1.jpg"
+              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id-catalog-v2.jpg"
             fi
-            gcloud storage objects update "$DEST/$id-catalog-v1.mp4" --cache-control="public, max-age=31536000, immutable"
+            gcloud storage objects update "$DEST/$id-catalog-v2.mp4" --cache-control="public, max-age=31536000, immutable"
             if [ -f "public/videos/$id.jpg" ]; then
-              gcloud storage objects update "$DEST/$id-catalog-v1.jpg" --cache-control="public, max-age=31536000, immutable"
+              gcloud storage objects update "$DEST/$id-catalog-v2.jpg" --cache-control="public, max-age=31536000, immutable"
             fi
           done < /tmp/product-ids.txt
 
