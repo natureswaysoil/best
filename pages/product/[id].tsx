@@ -122,7 +122,7 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     // If a local video exists, prefer that path (served from /videos/). Otherwise use any configured product.video.
     ...((hasLocalVideo && { video: localVideoPath }) || (productData.video && { video: productData.video })),
     ...(hasLocalWebm && { videoWebm: localWebmPath }),
-    ...(hasLocalPoster && { videoPoster: localPosterPath }),
+    ...((hasLocalPoster && { videoPoster: localPosterPath }) || (productData.videoPoster && { videoPoster: productData.videoPoster })),
     inStock: productData.inStock,
     category: productData.category,
     ...(productData.sizes && productData.sizes.length > 0 && { sizes: productData.sizes }),
