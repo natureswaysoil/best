@@ -112,10 +112,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 pb-28 md:pb-10">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         <div className="lg:sticky lg:top-24">
-          {(product.video || product.videoWebm) ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-video">
+          {(product.video || product.videoWebm) ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-[9/16] max-w-md mx-auto">
             <video ref={videoRef} className="w-full h-full object-contain" poster={heroImage} muted={isVideoMuted} playsInline onPlay={() => setIsVideoPlaying(true)} onPause={() => setIsVideoPlaying(false)}>
-              {product.videoWebm && <source src={product.videoWebm} type="video/webm" />}
               {product.video && <source src={product.video} type="video/mp4" />}
+              {product.videoWebm && <source src={product.videoWebm} type="video/webm" />}
             </video>
             <div className="absolute bottom-3 left-3 right-3 flex justify-between">
               <button onClick={toggleVideo} aria-label={isVideoPlaying ? 'Pause video' : 'Play video'} className="bg-black/65 text-white p-3 rounded-full">{isVideoPlaying ? <Pause className="w-5 h-5"/> : <Play className="w-5 h-5"/>}</button>
