@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Mail } from 'lucide-react';
+import { Menu, X, Mail, ShoppingCart } from 'lucide-react';
 
 interface HeaderProps {
   transparent?: boolean;
@@ -10,19 +10,15 @@ export default function Header({ transparent = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Home', href: '/' },
     { name: 'Shop', href: '/shop' },
-    { name: 'Cart', href: '/cart' },
     { name: 'Solutions', href: '/solutions' },
     { name: 'Soil Advisor', href: '/soil-advisor' },
-    { name: 'Lawn Recovery', href: '/homeowners-landscapers-government' },
+    { name: 'Lawn & Pasture', href: '/homeowners-landscapers-government' },
     { name: 'Government', href: '/government' },
-    { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
-    { name: 'Contact', href: '/contact' },
   ];
 
-  const highlightedLinks = new Set(['Government', 'Lawn Recovery', 'Solutions']);
+  const highlightedLinks = new Set(['Solutions', 'Lawn & Pasture']);
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -79,14 +75,20 @@ export default function Header({ transparent = false }: HeaderProps) {
             ))}
             <Link
               href="/contact"
-              className={`flex items-center space-x-1 font-medium transition-colors duration-200 ${
-                transparent 
-                  ? 'text-white hover:text-nature-green-200' 
-                  : 'text-gray-700 hover:text-nature-green-600'
+              className={`font-medium transition-colors duration-200 ${
+                transparent ? 'text-white hover:text-nature-green-200' : 'text-gray-700 hover:text-nature-green-600'
               }`}
             >
-              <Mail className="w-5 h-5" />
-              <span>Email Us</span>
+              Contact
+            </Link>
+            <Link
+              href="/cart"
+              aria-label="View cart"
+              className={`inline-flex items-center justify-center rounded-full p-2 transition-colors ${
+                transparent ? 'border border-white/40 text-white hover:bg-white/10' : 'bg-nature-green-50 text-nature-green-700 hover:bg-nature-green-100'
+              }`}
+            >
+              <ShoppingCart className="w-5 h-5" />
             </Link>
           </div>
 
@@ -129,14 +131,21 @@ export default function Header({ transparent = false }: HeaderProps) {
               <Link
                 href="/contact"
                 onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center space-x-1 font-medium py-2 transition-colors duration-200 ${
-                  transparent 
-                    ? 'text-white hover:text-nature-green-200' 
-                    : 'text-gray-700 hover:text-nature-green-600'
+                className={`font-medium py-2 transition-colors duration-200 ${
+                  transparent ? 'text-white hover:text-nature-green-200' : 'text-gray-700 hover:text-nature-green-600'
                 }`}
               >
-                <Mail className="w-5 h-5" />
-                <span>Email Us</span>
+                Contact
+              </Link>
+              <Link
+                href="/cart"
+                onClick={() => setIsMenuOpen(false)}
+                className={`flex items-center gap-2 font-medium py-2 transition-colors duration-200 ${
+                  transparent ? 'text-white hover:text-nature-green-200' : 'text-gray-700 hover:text-nature-green-600'
+                }`}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                <span>Cart</span>
               </Link>
             </div>
           </div>
