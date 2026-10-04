@@ -20,6 +20,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [added, setAdded] = useState(false);
@@ -112,8 +113,8 @@ export default function ProductDetail({ product }: ProductDetailProps) {
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 pb-28 md:pb-10">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         <div className="lg:sticky lg:top-24">
-          {(product.video || product.videoWebm) ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-[9/16] max-w-md mx-auto">
-            <video ref={videoRef} className="w-full h-full object-contain" poster={heroImage} muted={isVideoMuted} playsInline onPlay={() => setIsVideoPlaying(true)} onPause={() => setIsVideoPlaying(false)}>
+          {(product.video || product.videoWebm) && !videoFailed ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-[9/16] max-w-md mx-auto">
+            <video ref={videoRef} className="w-full h-full object-contain" poster={heroImage} muted={isVideoMuted} playsInline onError={() => setVideoFailed(true)} onPlay={() => setIsVideoPlaying(true)} onPause={() => setIsVideoPlaying(false)}>
               {product.video && <source src={product.video} type="video/mp4" />}
               {product.videoWebm && <source src={product.videoWebm} type="video/webm" />}
             </video>
@@ -121,7 +122,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               <button onClick={toggleVideo} aria-label={isVideoPlaying ? 'Pause video' : 'Play video'} className="bg-black/65 text-white p-3 rounded-full">{isVideoPlaying ? <Pause className="w-5 h-5"/> : <Play className="w-5 h-5"/>}</button>
               <button onClick={toggleMute} aria-label={isVideoMuted ? 'Unmute video' : 'Mute video'} className="bg-black/65 text-white p-3 rounded-full">{isVideoMuted ? <VolumeX className="w-5 h-5"/> : <Volume2 className="w-5 h-5"/>}</button>
             </div>
-          </div> : <div className="relative aspect-square bg-white rounded-2xl border overflow-hidden"><Image src={heroImage} alt={product.name} fill className="object-contain p-4" sizes="(max-width:1024px) 100vw, 50vw" /></div>}
+          </div> : <div className="relative aspect-square bg-white rounded-2xl border overflow-hidden"><Image src={galleryImages[0] || product.image} alt={product.name} fill unoptimized={(galleryImages[0] || product.image).endsWith('.svg')} className="object-contain p-4" sizes="(max-width:1024px) 100vw, 50vw" /></div>}
           <div className="grid grid-cols-3 gap-3 mt-4 text-center text-xs text-gray-700">
             <div className="border rounded-xl p-3"><Truck className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>Free shipping over $50</div>
             <div className="border rounded-xl p-3"><Shield className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>30-day guarantee</div>
