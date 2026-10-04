@@ -127,13 +127,13 @@ jobs:
           DEST="gs://$VIDEO_OUTPUT_BUCKET/$VIDEO_OUTPUT_PREFIX"
           node -e "const c=require('./config/catalog-video-products.json'); for (const p of c.products) console.log(p.id)" > /tmp/product-ids.txt
           while IFS= read -r id; do
-            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id.mp4"
+            gcloud storage cp "public/videos/$id.mp4" "$DEST/$id-catalog-v1.mp4"
             if [ -f "public/videos/$id.jpg" ]; then
-              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id.jpg"
+              gcloud storage cp "public/videos/$id.jpg" "$DEST/$id-catalog-v1.jpg"
             fi
-            gcloud storage objects update "$DEST/$id.mp4" --cache-control="public, max-age=300, must-revalidate"
+            gcloud storage objects update "$DEST/$id-catalog-v1.mp4" --cache-control="public, max-age=31536000, immutable"
             if [ -f "public/videos/$id.jpg" ]; then
-              gcloud storage objects update "$DEST/$id.jpg" --cache-control="public, max-age=300, must-revalidate"
+              gcloud storage objects update "$DEST/$id-catalog-v1.jpg" --cache-control="public, max-age=31536000, immutable"
             fi
           done < /tmp/product-ids.txt
 
