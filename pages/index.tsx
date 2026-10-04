@@ -88,7 +88,7 @@ export default function Home({ featuredProducts }: HomeProps) {
             {featuredProducts.map((product, index) => (
               <article key={product.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl transition-shadow">
                 <Link href={`/product/${product.id}`} className="block relative aspect-square bg-white">
-                  <Image src={product.image} alt={product.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-contain p-5" />
+                  <Image src={product.image} alt={product.name} fill unoptimized={product.image.endsWith('.svg')} sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-contain p-5" />
                   {index === 0 && <span className="absolute top-4 left-4 bg-nature-green-700 text-white text-xs font-bold px-3 py-1.5 rounded-full">START HERE</span>}
                 </Link>
                 <div className="p-6">
