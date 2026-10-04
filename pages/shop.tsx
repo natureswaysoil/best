@@ -189,6 +189,7 @@ export default function Shop({ products, categories }: ShopProps) {
                     src={product.image}
                     alt={product.name}
                     fill
+                    unoptimized={product.image.endsWith('.svg')}
                     sizes={viewMode === 'grid' ? '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw' : '192px'}
                     className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
                   />
