@@ -1,8 +1,9 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
-import { Grid, List, Search } from 'lucide-react';
+import { BadgeCheck, Grid, List, Search, ShieldCheck, Truck } from 'lucide-react';
 import Layout from '../components/Layout';
 import { allProducts } from '../data/products';
 import QuickAddButton from '../components/QuickAddButton';
@@ -100,8 +101,14 @@ export default function Shop({ products, categories }: ShopProps) {
             </p>
           </div>
 
+          <div className="grid sm:grid-cols-3 gap-3 mb-8">
+            <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><Truck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">Free shipping over $50</div><div className="text-sm text-gray-500">Build a complete soil or lawn solution.</div></div></div>
+            <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">30-day guarantee</div><div className="text-sm text-gray-500">Straightforward returns and support.</div></div></div>
+            <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">Family-farm formulas</div><div className="text-sm text-gray-500">Practical products with clear directions.</div></div></div>
+          </div>
+
           {/* Filters and Search */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-4">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               {/* Search */}
               <div className="relative flex-1 max-w-md">
@@ -162,6 +169,11 @@ export default function Shop({ products, categories }: ShopProps) {
             </div>
           </div>
 
+          <div className="mb-6 flex items-center justify-between text-sm text-gray-600">
+            <span>{filteredProducts.length} product{filteredProducts.length === 1 ? '' : 's'}</span>
+            <span>Prices shown before any checkout promotion.</span>
+          </div>
+
           {/* Products Grid/List */}
           <div className={viewMode === 'grid' 
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
@@ -173,10 +185,12 @@ export default function Shop({ products, categories }: ShopProps) {
                 : "bg-white rounded-2xl shadow-sm hover:shadow-lg transition-shadow overflow-hidden flex gap-6 p-6"
               }>
                 <div className={viewMode === 'grid' ? "relative aspect-square overflow-hidden bg-white border border-gray-200" : "w-48 aspect-square overflow-hidden rounded-xl flex-shrink-0 bg-white border border-gray-200"}>
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                    fill
+                    sizes={viewMode === 'grid' ? '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw' : '192px'}
+                    className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
                   />
                   {product.originalPrice && (
                     <div className="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-medium">
