@@ -8,7 +8,7 @@ for voice, offers, and claim rules. Live product data lives in `data/products.ts
 - **`data/products.ts` is canonical** for product names, sizes, prices, SKUs and Amazon ASINs, because it drives the storefront and checkout.
 - `config/top-products.json` is canonical only for marketing fields it alone has: priority order, `funnelUrl`, `cta`, `keywords`, b-roll queries.
 - When the two files disagree on a shared field (price, size, ASIN or Amazon URL), use the `data/products.ts` value **and flag the conflict** at the top of the report. Never pick silently.
-- Known conflict: NWS_014 has ASIN `B0FG38PQQX` in `data/products.ts` but links to `B0FG38YYJ5` in `config/top-products.json`. Until the owner confirms which listing is live, don't put an Amazon link or ASIN for NWS_014 in final copy; use `[AMAZON LINK – confirm]`.
+- NWS_014 (dog urine neutralizer) Amazon listing confirmed by the owner on 2026-10-07: ASIN `B0FG38YYJ5` (https://www.amazon.com/dp/B0FG38YYJ5). The older `B0FG38PQQX` is not the live listing; never use it.
 
 ## Business
 - **Brand:** Nature's Way Soil — family farm making natural fertilizers, soil amendments, biochar and living compost.
@@ -24,7 +24,7 @@ for voice, offers, and claim rules. Live product data lives in `data/products.ts
 
 ## Core offers
 - Save **15% when you buy direct** at checkout (vs. Amazon).
-- **30-day guarantee**.
+- **30-day returns** on unused products in original packaging (the policy in `pages/terms.tsx`; see Claim rules for wording).
 - Multiple sizes (32 oz → 2.5 gal) on most liquids; bundles on the dog-urine line.
 
 ## Voice
@@ -35,7 +35,7 @@ real bottles, natural light — no fake before/afters, no neon-green grass, no r
 ## Claim rules (hard — every agent must follow)
 - No instant green-up claims. Results are "over time" as soil and roots recover.
 - No **outcome** guarantees: no "cure", "guaranteed fix", "guaranteed green lawn", "100% repair". Use "helps", "supports", "works at the soil level".
-- The **30-day guarantee is store policy and may be stated**, as policy: "30-day guarantee" / "Backed by our 30-day guarantee". Don't add terms the policy doesn't state (e.g. "money back, no questions asked") or tie it to a result ("guaranteed to fix your lawn in 30 days").
+- **Return policy wording.** The actual policy (`pages/terms.tsx`, "Returns and Refunds") is: 30-day returns for **unused products in original packaging**; the customer pays return shipping unless the product is defective; some products may not be eligible. Describe it only that way, e.g. "30-day returns on unused products" or "Unopened? Return it within 30 days (see Terms)". Do **not** call it a "guarantee", "satisfaction guarantee" or "money-back guarantee", don't say "no questions asked" or "risk-free", and never tie it to results. If a page already says more than this, flag it as a mismatch with the Terms; don't repeat it.
 - No pesticide, herbicide, or medical claims.
 - Pet-safe / kid-safe only with "when used as directed".
 - Don't say "organic certified" or "OMRI listed" unless the specific product page says so.
