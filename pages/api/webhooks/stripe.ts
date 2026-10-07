@@ -5,6 +5,7 @@ import { getServiceSupabase } from '../../../lib/supabase';
 import { sendOrderConfirmation } from '../../../lib/resend';
 
 import { sendPaymentIntentOrderNotification } from '../../../lib/paymentIntentOrder';
+import { autoPostStripePayment } from '../../../lib/quickbooks-stripe-auto';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16',
 });
@@ -216,10 +217,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const session = event.data.object as Stripe.Checkout.Session;
       await processCheckoutSessionCompleted(session.id);
     } else if (event.type === 'payment_intent.succeeded') {
-      await sendPaymentIntentOrderNotification(
-        event.data.object as Stripe.PaymentIntent,
-        event.id,
-      );
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      // No-op unless QUICKBOOKS_AUTO_POST=true; never throws.
+      await autoPostStripePayment(stripe, paymentIntent);
+      await sendPaymentIntentOrderNotification(paymentIntent, event.id);
     }
   } catch (err) {
     console.error('Webhook processing error:', err);
