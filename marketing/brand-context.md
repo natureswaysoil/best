@@ -8,7 +8,7 @@ for voice, offers, and claim rules. Live product data lives in `data/products.ts
 - **`data/products.ts` is canonical** for product names, sizes, prices, SKUs and Amazon ASINs, because it drives the storefront and checkout.
 - `config/top-products.json` is canonical only for marketing fields it alone has: priority order, `funnelUrl`, `cta`, `keywords`, b-roll queries.
 - When the two files disagree on a shared field (price, size, ASIN or Amazon URL), use the `data/products.ts` value **and flag the conflict** at the top of the report. Never pick silently.
-- Known conflict: NWS_014 has ASIN `B0FG38PQQX` in `data/products.ts` but links to `B0FG38YYJ5` in `config/top-products.json`. Until the owner confirms which listing is live, don't put an Amazon link or ASIN for NWS_014 in final copy; use `[AMAZON LINK – confirm]`.
+- NWS_014 (dog urine neutralizer) Amazon listing confirmed by the owner on 2026-10-07: ASIN `B0FG38YYJ5` (https://www.amazon.com/dp/B0FG38YYJ5). The older `B0FG38PQQX` is not the live listing; never use it.
 
 ## Business
 - **Brand:** Nature's Way Soil — family farm making natural fertilizers, soil amendments, biochar and living compost.

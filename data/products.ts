@@ -327,7 +327,7 @@ export const allProducts: ProductData[] = [
   },
   {
     id: 'NWS_014',
-    asin: 'B0FG38PQQX',
+    asin: 'B0FG38YYJ5',
     name: 'Dog Urine Neutralizer & Lawn Repair',
     price: 29.99,
   image: '/images/products/NWS_014/main.jpg',
