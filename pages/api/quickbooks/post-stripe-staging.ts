@@ -5,6 +5,7 @@ import {
   REQUIRED_STRIPE_ACCOUNTS,
   STRIPE_ACCOUNT_NUMBERS,
   getAccountsByNumber,
+  postStagingRowExclusively,
   postStripeStagingRow,
 } from '../../../lib/quickbooks-stripe-posting';
 
@@ -41,7 +42,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const results: any[] = [];
   for (const row of rows || []) {
-    results.push(await postStripeStagingRow(connection.realm_id, row, accountMap, confirm));
+    // Confirmed posts take the same per-row claim as the Stripe webhook so the
+    // two paths can never post one charge twice. Previews don't write.
+    results.push(confirm
+      ? await postStagingRowExclusively(connection.realm_id, row.id, accountMap)
+      : await postStripeStagingRow(connection.realm_id, row, accountMap, false));
   }
 
   return res.status(200).json({

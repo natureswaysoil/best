@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { qboRequest } from './quickbooks';
 import { getServiceSupabase } from './supabase';
 
@@ -18,6 +19,7 @@ export type StripeStagingRow = {
   net_amount: number | string | null;
   status: string;
   metadata: any;
+  notes?: string | null;
 };
 
 export type StripePostResult = {
@@ -171,4 +173,100 @@ export async function postStripeStagingRow(
     .eq('id', row.id);
 
   return { id: row.id, externalId: row.external_id, action: 'posted', qboTxnId: je.Id };
+}
+
+// ---------------------------------------------------------------------------
+// Per-row posting lock.
+//
+// The manual endpoint and the Stripe webhook can both try to post the same
+// staging row. Before either one checks QuickBooks or creates an entry it must
+// win this claim: an atomic compare-and-swap on the row's `notes` column (the
+// table's status check constraint has no "posting" value). Only the claim owner
+// posts. A claim left behind by a crashed run expires after LOCK_TTL_MS.
+// ---------------------------------------------------------------------------
+
+const LOCK_PREFIX = 'AUTO_POST_LOCK:';
+const LOCK_TTL_MS = 10 * 60 * 1000;
+const STAGING_COLUMNS = 'id,external_id,txn_date,description,gross_amount,fee_amount,net_amount,status,metadata,notes';
+
+type ParsedLock = { lockedAt: number; original: string | null };
+
+// Lock format: AUTO_POST_LOCK:<uuid>:<epoch ms>|<original notes>
+function parseLock(notes: string | null): ParsedLock | null {
+  if (!notes || !notes.startsWith(LOCK_PREFIX)) return null;
+  const bar = notes.indexOf('|');
+  const head = bar === -1 ? notes : notes.slice(0, bar);
+  const lockedAt = Number(head.split(':')[2]);
+  const original = bar === -1 ? '' : notes.slice(bar + 1);
+  return { lockedAt: Number.isFinite(lockedAt) ? lockedAt : 0, original: original || null };
+}
+
+export type StagingClaim = {
+  row: StripeStagingRow;
+  /** Release the claim, restoring the row's original notes or replacing them with `note`. */
+  release: (note?: string | null) => Promise<void>;
+};
+
+export async function claimStagingRow(rowId: string): Promise<StagingClaim | null> {
+  const supabase = getServiceSupabase();
+  const { data: current, error } = await supabase
+    .from('accounting_import_staging')
+    .select(STAGING_COLUMNS)
+    .eq('id', rowId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!current || current.status !== 'auto_ready') return null;
+
+  const existingLock = parseLock(current.notes);
+  if (existingLock && Date.now() - existingLock.lockedAt < LOCK_TTL_MS) return null;
+
+  const original = existingLock ? existingLock.original : (current.notes as string | null);
+  const lock = LOCK_PREFIX + crypto.randomUUID() + ':' + Date.now() + '|' + (original || '');
+
+  let claim = supabase
+    .from('accounting_import_staging')
+    .update({ notes: lock, updated_at: new Date().toISOString() })
+    .eq('id', rowId)
+    .eq('status', 'auto_ready');
+  claim = current.notes === null ? claim.is('notes', null) : claim.eq('notes', current.notes);
+  const { data: won, error: claimError } = await claim.select(STAGING_COLUMNS);
+  if (claimError) throw claimError;
+  if (!won || !won.length) return null;
+
+  return {
+    row: won[0] as StripeStagingRow,
+    release: async (note?: string | null) => {
+      await supabase
+        .from('accounting_import_staging')
+        .update({ notes: note === undefined ? original : note, updated_at: new Date().toISOString() })
+        .eq('id', rowId)
+        .eq('notes', lock);
+    },
+  };
+}
+
+/**
+ * Post one staging row while holding its claim. Returns `in_progress` when
+ * another run holds the claim or the row is no longer ready to post.
+ */
+export async function postStagingRowExclusively(
+  realmId: string,
+  rowId: string,
+  accountMap: Record<string, any>,
+): Promise<StripePostResult> {
+  const claim = await claimStagingRow(rowId);
+  if (!claim) return { id: rowId, externalId: '', action: 'in_progress_or_not_ready' };
+
+  try {
+    const result = await postStripeStagingRow(realmId, claim.row, accountMap, true);
+    if (result.action === 'posted' || result.action === 'skipped_existing') {
+      await claim.release();
+    } else {
+      await claim.release('Auto-post held: ' + result.action);
+    }
+    return result;
+  } catch (error: any) {
+    await claim.release('Posting failed: ' + String(error?.message || error).slice(0, 500));
+    throw error;
+  }
 }
