@@ -262,7 +262,7 @@ export default function HomeGardenFertilizer() {
             </h2>
             <p className="text-xl text-gray-600 mb-8">
               Start with our best-selling Natural Liquid Fertilizer and see the living-soil difference
-              in your garden within two weeks — guaranteed.
+              in your garden.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/shop" className="btn-primary">

@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 // Flexible product type for components
 type ProductInfo = {
@@ -363,18 +364,18 @@ export const HelpfulContact = ({ className = '' }: { className?: string }) => (
   </div>
 );
 
-// Gentle guarantee - reassuring, not pushy
+// Return policy note - must match pages/terms.tsx and pages/returns.tsx
 export const GentleGuarantee = ({ className = '' }: { className?: string }) => (
   <div className={`bg-gray-50 border border-gray-200 rounded-lg p-4 ${className}`}>
     <div className="flex items-start gap-3">
       <span className="text-2xl">🤝</span>
       <div>
-        <h4 className="font-medium text-gray-800 mb-1">Our Promise</h4>
+        <h4 className="font-medium text-gray-800 mb-1">30-Day Returns</h4>
         <p className="text-sm text-gray-700 leading-relaxed">
-          We stand behind our products because we use them on our own farm. 
-          If you're not seeing the results you expected, reach out and we'll 
-          make it right - whether that's a refund, exchange, or just some 
-          friendly growing advice.
+          We use these products on our own farm. Unused products in their original
+          packaging can be returned within 30 days of delivery. If something isn't
+          working the way you hoped, email us for free growing advice.{' '}
+          <Link href="/returns" className="underline">See our return policy</Link>.
         </p>
       </div>
     </div>

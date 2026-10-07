@@ -130,7 +130,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           </div> : <div className="relative aspect-square bg-white rounded-2xl border overflow-hidden"><Image src={galleryImages[0] || product.image} alt={product.name} fill unoptimized={(galleryImages[0] || product.image).endsWith('.svg')} className="object-contain p-4" sizes="(max-width:1024px) 100vw, 50vw" /></div>}
           <div className="grid grid-cols-3 gap-3 mt-4 text-center text-xs text-gray-700">
             <div className="border rounded-xl p-3"><Truck className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>Free shipping over $50</div>
-            <div className="border rounded-xl p-3"><Shield className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>30-day guarantee</div>
+            <div className="border rounded-xl p-3"><Shield className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>30-day returns</div>
             <div className="border rounded-xl p-3"><Leaf className="w-5 h-5 mx-auto text-nature-green-700 mb-1"/>Clear use directions</div>
           </div>
         </div>

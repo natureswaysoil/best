@@ -103,7 +103,7 @@ export default function Shop({ products, categories }: ShopProps) {
 
           <div className="grid sm:grid-cols-3 gap-3 mb-8">
             <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><Truck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">Free shipping over $50</div><div className="text-sm text-gray-500">Build a complete soil or lawn solution.</div></div></div>
-            <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">30-day guarantee</div><div className="text-sm text-gray-500">Straightforward returns and support.</div></div></div>
+            <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">30-day returns</div><div className="text-sm text-gray-500">On unused products in original packaging.</div></div></div>
             <div className="rounded-xl border bg-white p-4 flex items-center gap-3"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none" /><div><div className="font-semibold text-gray-900">Family-farm formulas</div><div className="text-sm text-gray-500">Practical products with clear directions.</div></div></div>
           </div>
 
