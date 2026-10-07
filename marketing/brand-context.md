@@ -4,6 +4,12 @@ Every marketing agent reads this file first. Keep it current: it is the single s
 for voice, offers, and claim rules. Live product data lives in `data/products.ts` and
 `config/top-products.json`; prefer those over anything copied here.
 
+### Product data precedence
+- **`data/products.ts` is canonical** for product names, sizes, prices, SKUs and Amazon ASINs, because it drives the storefront and checkout.
+- `config/top-products.json` is canonical only for marketing fields it alone has: priority order, `funnelUrl`, `cta`, `keywords`, b-roll queries.
+- When the two files disagree on a shared field (price, size, ASIN or Amazon URL), use the `data/products.ts` value **and flag the conflict** at the top of the report. Never pick silently.
+- Known conflict: NWS_014 has ASIN `B0FG38PQQX` in `data/products.ts` but links to `B0FG38YYJ5` in `config/top-products.json`. Until the owner confirms which listing is live, don't put an Amazon link or ASIN for NWS_014 in final copy; use `[AMAZON LINK – confirm]`.
+
 ## Business
 - **Brand:** Nature's Way Soil — family farm making natural fertilizers, soil amendments, biochar and living compost.
 - **Site:** https://www.natureswaysoil.com (Next.js, Stripe checkout). Also sold on Amazon.
@@ -28,7 +34,8 @@ real bottles, natural light — no fake before/afters, no neon-green grass, no r
 
 ## Claim rules (hard — every agent must follow)
 - No instant green-up claims. Results are "over time" as soil and roots recover.
-- No "cure", "guaranteed fix", "100% repair" language. Use "helps", "supports", "works at the soil level".
+- No **outcome** guarantees: no "cure", "guaranteed fix", "guaranteed green lawn", "100% repair". Use "helps", "supports", "works at the soil level".
+- The **30-day guarantee is store policy and may be stated**, as policy: "30-day guarantee" / "Backed by our 30-day guarantee". Don't add terms the policy doesn't state (e.g. "money back, no questions asked") or tie it to a result ("guaranteed to fix your lawn in 30 days").
 - No pesticide, herbicide, or medical claims.
 - Pet-safe / kid-safe only with "when used as directed".
 - Don't say "organic certified" or "OMRI listed" unless the specific product page says so.
