@@ -24,7 +24,7 @@ for voice, offers, and claim rules. Live product data lives in `data/products.ts
 
 ## Core offers
 - Save **15% when you buy direct** at checkout (vs. Amazon).
-- **30-day guarantee**.
+- **30-day returns** on unused products in original packaging (the policy in `pages/terms.tsx`; see Claim rules for wording).
 - Multiple sizes (32 oz → 2.5 gal) on most liquids; bundles on the dog-urine line.
 
 ## Voice
@@ -35,7 +35,7 @@ real bottles, natural light — no fake before/afters, no neon-green grass, no r
 ## Claim rules (hard — every agent must follow)
 - No instant green-up claims. Results are "over time" as soil and roots recover.
 - No **outcome** guarantees: no "cure", "guaranteed fix", "guaranteed green lawn", "100% repair". Use "helps", "supports", "works at the soil level".
-- The **30-day guarantee is store policy and may be stated**, as policy: "30-day guarantee" / "Backed by our 30-day guarantee". Don't add terms the policy doesn't state (e.g. "money back, no questions asked") or tie it to a result ("guaranteed to fix your lawn in 30 days").
+- **Return policy wording.** The actual policy (`pages/terms.tsx`, "Returns and Refunds") is: 30-day returns for **unused products in original packaging**; the customer pays return shipping unless the product is defective; some products may not be eligible. Describe it only that way, e.g. "30-day returns on unused products" or "Unopened? Return it within 30 days (see Terms)". Do **not** call it a "guarantee", "satisfaction guarantee" or "money-back guarantee", don't say "no questions asked" or "risk-free", and never tie it to results. If a page already says more than this, flag it as a mismatch with the Terms; don't repeat it.
 - No pesticide, herbicide, or medical claims.
 - Pet-safe / kid-safe only with "when used as directed".
 - Don't say "organic certified" or "OMRI listed" unless the specific product page says so.
