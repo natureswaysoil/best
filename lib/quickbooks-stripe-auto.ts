@@ -1,13 +1,11 @@
-import crypto from 'crypto';
 import type Stripe from 'stripe';
 import { getLatestConnection } from './quickbooks';
 import { getServiceSupabase } from './supabase';
 import {
   REQUIRED_STRIPE_ACCOUNTS,
   STRIPE_ACCOUNT_NUMBERS,
-  StripeStagingRow,
   getAccountsByNumber,
-  postStripeStagingRow,
+  postStagingRowExclusively,
 } from './quickbooks-stripe-posting';
 
 // Automatic QuickBooks posting for website (Stripe) sales.
@@ -20,7 +18,6 @@ import {
 // manual handling instead of being posted.
 
 const SOURCE = 'stripe_charge';
-const LOCK_PREFIX = 'AUTO_POST_LOCK:';
 
 export function quickBooksAutoPostEnabled() {
   return process.env.QUICKBOOKS_AUTO_POST === 'true';
@@ -117,6 +114,78 @@ async function buildStagingRow(stripe: Stripe, paymentIntent: Stripe.PaymentInte
   };
 }
 
+function chargeIdOf(paymentIntent: Stripe.PaymentIntent) {
+  const ref = paymentIntent.latest_charge;
+  return typeof ref === 'string' ? ref : ref?.id || null;
+}
+
+// Used when the Stripe lookups fail: record the sale from the payment itself so
+// it still shows up for review instead of being lost.
+function fallbackStagingRow(paymentIntent: Stripe.PaymentIntent, chargeId: string, reason: string): StagingInsert {
+  const md = paymentIntent.metadata || {};
+  const grossCents = paymentIntent.amount_received || paymentIntent.amount;
+  const productName = md.product_name || md.productName || paymentIntent.description || 'Website order';
+  return {
+    source: SOURCE,
+    external_id: chargeId,
+    txn_date: businessDate(paymentIntent.created),
+    description: String(productName).slice(0, 500),
+    gross_amount: dollars(grossCents),
+    fee_amount: 0,
+    net_amount: dollars(grossCents),
+    suggested_account_number: '4000',
+    status: 'review',
+    confidence: 0.3,
+    notes: ('Auto-post held: Stripe lookup failed (' + reason + ')').slice(0, 1000),
+    metadata: { payment_intent: paymentIntent.id, product_name: productName, staged_by: 'stripe_webhook_fallback' },
+  };
+}
+
+/**
+ * Write the payment to accounting_import_staging (never overwriting an existing
+ * row). Throws only if the row can't be saved; the hourly reconciliation job
+ * picks those payments up again.
+ */
+async function stageStripePayment(stripe: Stripe, paymentIntent: Stripe.PaymentIntent) {
+  const chargeId = chargeIdOf(paymentIntent);
+  if (!chargeId) return null;
+
+  let staged: StagingInsert | null;
+  try {
+    staged = await buildStagingRow(stripe, paymentIntent);
+  } catch (error: any) {
+    staged = fallbackStagingRow(paymentIntent, chargeId, String(error?.message || error).slice(0, 300));
+  }
+  if (!staged) return null;
+
+  const supabase = getServiceSupabase();
+  const { error: insertError } = await supabase
+    .from('accounting_import_staging')
+    .upsert(staged, { onConflict: 'source,external_id', ignoreDuplicates: true });
+  if (insertError) throw insertError;
+
+  const { data: row, error: readError } = await supabase
+    .from('accounting_import_staging')
+    .select('id,status,notes')
+    .eq('source', SOURCE)
+    .eq('external_id', staged.external_id)
+    .maybeSingle();
+  if (readError) throw readError;
+  return row ? { id: row.id as string, status: row.status as string, externalId: staged.external_id, notes: row.notes as string | null } : null;
+}
+
+async function postIfReady(rowId: string) {
+  const connection = await getLatestConnection();
+  if (!connection) return { action: 'not_connected' };
+
+  const accountMap = await getAccountsByNumber(connection.realm_id, STRIPE_ACCOUNT_NUMBERS);
+  const missing = REQUIRED_STRIPE_ACCOUNTS.filter((n) => !accountMap[n]);
+  if (missing.length) return { action: 'missing_accounts', missing };
+
+  // Same claim as the manual endpoint: only the claim owner checks and posts.
+  return postStagingRowExclusively(connection.realm_id, rowId, accountMap);
+}
+
 /**
  * Stage a successful Stripe payment and post it to QuickBooks when it is safe to.
  * Never throws: accounting problems must not break order processing.
@@ -125,66 +194,65 @@ export async function autoPostStripePayment(stripe: Stripe, paymentIntent: Strip
   if (!quickBooksAutoPostEnabled()) return { action: 'disabled' };
 
   try {
-    const staged = await buildStagingRow(stripe, paymentIntent);
+    const staged = await stageStripePayment(stripe, paymentIntent);
     if (!staged) return { action: 'no_charge' };
-
-    const supabase = getServiceSupabase();
-
-    // ignoreDuplicates leaves rows that already exist (e.g. already posted) untouched.
-    const { error: insertError } = await supabase
-      .from('accounting_import_staging')
-      .upsert(staged, { onConflict: 'source,external_id', ignoreDuplicates: true });
-    if (insertError) throw insertError;
-
-    // Claim the row so concurrent webhook deliveries can't post it twice.
-    const lock = LOCK_PREFIX + crypto.randomUUID();
-    const { data: claimed, error: claimError } = await supabase
-      .from('accounting_import_staging')
-      .update({ notes: lock, updated_at: new Date().toISOString() })
-      .eq('source', SOURCE)
-      .eq('external_id', staged.external_id)
-      .eq('status', 'auto_ready')
-      .is('notes', null)
-      .select('id,external_id,txn_date,description,gross_amount,fee_amount,net_amount,status,metadata');
-    if (claimError) throw claimError;
-
-    const row = (claimed || [])[0] as StripeStagingRow | undefined;
-    if (!row) return { action: 'not_posted', externalId: staged.external_id, reason: staged.notes || 'already handled' };
-
-    const releaseWithNote = (note: string | null) => supabase
-      .from('accounting_import_staging')
-      .update({ notes: note, updated_at: new Date().toISOString() })
-      .eq('id', row.id)
-      .eq('notes', lock);
-
-    try {
-      const connection = await getLatestConnection();
-      if (!connection) {
-        await releaseWithNote('Auto-post skipped: QuickBooks is not connected');
-        return { action: 'not_connected', externalId: row.external_id };
-      }
-
-      const accountMap = await getAccountsByNumber(connection.realm_id, STRIPE_ACCOUNT_NUMBERS);
-      const missing = REQUIRED_STRIPE_ACCOUNTS.filter((n) => !accountMap[n]);
-      if (missing.length) {
-        await releaseWithNote('Auto-post skipped: missing QuickBooks accounts ' + missing.join(', '));
-        return { action: 'missing_accounts', externalId: row.external_id, missing };
-      }
-
-      const result = await postStripeStagingRow(connection.realm_id, row, accountMap, true);
-      if (result.action === 'posted' || result.action === 'skipped_existing') {
-        await releaseWithNote(null);
-      } else {
-        await releaseWithNote('Auto-post held: ' + result.action);
-      }
-      console.info('QuickBooks auto-post', result);
-      return result;
-    } catch (error: any) {
-      await releaseWithNote('Auto-post failed: ' + String(error?.message || error).slice(0, 500));
-      throw error;
+    if (staged.status !== 'auto_ready') {
+      return { action: 'not_posted', externalId: staged.externalId, reason: staged.notes || staged.status };
     }
+
+    const result = await postIfReady(staged.id);
+    console.info('QuickBooks auto-post', staged.externalId, result);
+    return result;
   } catch (error) {
     console.error('QuickBooks auto-post failed for payment', paymentIntent.id, error);
     return { action: 'error', paymentIntent: paymentIntent.id };
   }
+}
+
+/**
+ * Safety net for anything the webhook missed (Supabase or QuickBooks down,
+ * a webhook that never arrived). Looks at successful payments from the last
+ * `days` days: stages any that have no staging row and retries posting rows
+ * still marked auto_ready. Idempotent, so it is safe to run on a schedule.
+ */
+export async function reconcileRecentStripePayments(stripe: Stripe, days = 3, maxPayments = 200) {
+  if (!quickBooksAutoPostEnabled()) return { action: 'disabled' };
+
+  const since = Math.floor(Date.now() / 1000) - days * 86400;
+  const summary = { checked: 0, staged: 0, posted: 0, held: 0, errors: [] as string[] };
+
+  for await (const paymentIntent of stripe.paymentIntents.list({ created: { gte: since }, limit: 100 })) {
+    if (summary.checked >= maxPayments) break;
+    if (paymentIntent.status !== 'succeeded') continue;
+    summary.checked += 1;
+
+    try {
+      const chargeId = chargeIdOf(paymentIntent);
+      if (!chargeId) continue;
+
+      const { data: existing, error } = await getServiceSupabase()
+        .from('accounting_import_staging')
+        .select('id,status')
+        .eq('source', SOURCE)
+        .eq('external_id', chargeId)
+        .maybeSingle();
+      if (error) throw error;
+      if (existing && existing.status !== 'auto_ready') continue;
+
+      const staged = existing ? { id: existing.id as string, status: existing.status as string } : await stageStripePayment(stripe, paymentIntent);
+      if (!existing && staged) summary.staged += 1;
+      if (!staged || staged.status !== 'auto_ready') { if (staged) summary.held += 1; continue; }
+
+      const result: any = await postIfReady(staged.id);
+      if (result.action === 'posted') summary.posted += 1;
+      else if (result.action === 'not_connected' || result.action === 'missing_accounts') {
+        summary.errors.push(result.action);
+        break; // nothing else can post either
+      }
+    } catch (error: any) {
+      summary.errors.push(paymentIntent.id + ': ' + String(error?.message || error).slice(0, 200));
+    }
+  }
+
+  return summary;
 }
