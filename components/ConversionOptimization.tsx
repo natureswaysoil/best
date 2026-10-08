@@ -228,23 +228,6 @@ export const EnhancedCTAButton = ({
   );
 };
 
-// Money-back guarantee
-export const MoneyBackGuarantee = ({ className = '' }: { className?: string }) => (
-  <div className={`guarantee-section bg-yellow-50 border border-yellow-200 rounded-lg p-4 ${className}`}>
-    <div className="flex items-center gap-3">
-      <div className="w-12 h-12 bg-yellow-200 rounded-full flex items-center justify-center flex-shrink-0">
-        <span className="text-2xl">🛡️</span>
-      </div>
-      <div>
-        <h4 className="font-bold text-yellow-800 mb-1">60-Day Money-Back Guarantee</h4>
-        <p className="text-yellow-700 text-sm">
-          Not seeing results? We'll refund every penny. No questions asked.
-        </p>
-      </div>
-    </div>
-  </div>
-);
-
 // Exit intent popup (would be triggered by exit intent detection)
 export const ExitIntentOffer = ({ 
   isVisible, 

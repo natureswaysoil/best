@@ -112,7 +112,7 @@ export default function Home({ featuredProducts }: HomeProps) {
           <div className="rounded-2xl border p-6"><Tag className="w-7 h-7 text-amber-700 mb-3"/><h3 className="font-bold text-lg mb-2">15% checkout coupon</h3><p className="text-gray-600">Apply the coupon in the promotion-code box before payment.</p></div>
           <div className="rounded-2xl border p-6"><BadgeCheck className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">Practical product guidance</h3><p className="text-gray-600">Clear application directions and product-specific use information.</p></div>
           <div className="rounded-2xl border p-6"><Truck className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">Free shipping over $50</h3><p className="text-gray-600">Build a complete solution and unlock free shipping on qualifying orders.</p></div>
-          <div className="rounded-2xl border p-6"><Shield className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">30-day guarantee</h3><p className="text-gray-600">Shop with a clear return-and-support promise.</p></div>
+          <div className="rounded-2xl border p-6"><Shield className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">30-day returns</h3><p className="text-gray-600">Unused products in original packaging can be returned within 30 days.</p></div>
         </div>
       </section>
 
