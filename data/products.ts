@@ -331,18 +331,17 @@ export const allProducts: ProductData[] = [
     name: 'Dog Urine Neutralizer & Lawn Repair',
     price: 29.99,
   image: '/images/products/NWS_014/main.jpg',
-    description: 'Professional-strength dog urine neutralizer that eliminates yellow spots caused by pet urine burn. Pet-safe formula that neutralizes salts and revives grass.',
+    description: 'Enzyme and humic-acid lawn treatment for yellow spots caused by dog urine. Works at the soil level to help grass recover over time. Not a dye, no green colorants. Pet-safe when used as directed.',
     category: 'Lawn Care',
     tags: ['dog-urine', 'lawn-repair', 'pet-safe', 'yellow-spots', 'odor-control'],
     features: [
-      'Eliminates yellow spots from pet urine',
-      'Neutralizes harmful salts instantly',
-      'Eliminates odors naturally',
-      'Revives damaged grass quickly',
-      '100% safe for dogs, cats, and pets',
-      'No waiting period - pets can walk immediately',
-      'Professional-strength formula',
-      'Essential for pet owners'
+      'Helps lawns recover from dog urine spots over time',
+      'Works at the soil level with enzymes, humic and fulvic acids',
+      'Helps neutralize urine odor in treated areas',
+      'Not a dye: no green colorants or cosmetic cover-up',
+      'Pet-safe when used as directed',
+      'Keep pets off treated areas until dry or watered in',
+      'Made in small batches in the USA by a family farm'
     ],
     images: [
       '/images/products/NWS_014/main.jpg',

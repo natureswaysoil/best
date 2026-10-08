@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { resolveCheckoutItem } from '../../lib/checkoutCatalog';
+import { getFirstOrderCoupon } from '../../lib/firstOrderCoupon';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -32,6 +33,7 @@ interface CheckoutRequestBody {
   successPath?: string;
   cancelPath?: string;
   checkoutMode?: 'hosted' | 'embedded';
+  couponCode?: string;
   attribution?: { source?: string; medium?: string; campaign?: string; content?: string };
 }
 
@@ -69,11 +71,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       successPath,
       cancelPath,
       checkoutMode = 'hosted',
+      couponCode: rawCouponCode,
       attribution,
     } = req.body as CheckoutRequestBody;
 
     if (!productId) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const couponCode = typeof rawCouponCode === 'string' ? rawCouponCode.trim().toUpperCase() : '';
+    if (couponCode && couponCode !== 'SAVE15') {
+      return res.status(400).json({ error: 'Invalid coupon code' });
     }
 
     const catalogItem = resolveCheckoutItem(productId, sku, sizeName);
@@ -113,6 +121,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       unit_amount_cents: toMetadataValue(unitAmount),
       subtotal_cents: toMetadataValue(subtotalCents),
       shipping_cents: toMetadataValue(shippingCents),
+      discount_cents: toMetadataValue(couponCode === 'SAVE15' ? Math.round(subtotalCents * 0.15) : 0),
+      coupon_code: toMetadataValue(couponCode),
       source: 'natureswaysoil.com',
       utm_source: toMetadataValue(attribution?.source),
       utm_medium: toMetadataValue(attribution?.medium),
@@ -157,13 +167,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Stripe rejects a session that sets both discounts and allow_promotion_codes.
+    const coupon = couponCode === 'SAVE15' ? await getFirstOrderCoupon(stripeClient) : null;
+
     const commonSessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
       payment_method_types: ['card', 'link'],
       billing_address_collection: 'auto',
       customer_creation: 'if_required',
       line_items: lineItems,
-      allow_promotion_codes: true,
+      allow_promotion_codes: coupon ? undefined : true,
+      discounts: coupon ? [{ coupon: coupon.id }] : undefined,
       shipping_address_collection: {
         allowed_countries: ['US'],
       },

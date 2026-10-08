@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle, Star, Shield, Droplets, Sprout } from 'lucide-react';
+import { CheckCircle, Shield, Droplets, Sprout } from 'lucide-react';
 import Layout from '../components/Layout';
 import { trackCheckoutStart, trackProductCtaClick } from '../lib/ga4';
 
@@ -32,6 +32,16 @@ const dogProducts = {
     sku: 'NWS-DUN-32OZ-1GAL-BUNDLE',
   },
 };
+
+const ingredients = [
+  'Purified water',
+  'Hydrogen peroxide 3%',
+  'Protease and amylase enzymes',
+  'Natural odor neutralizer',
+  'Humic and fulvic acids',
+  'Citric acid',
+  'Xanthan stabilizer',
+];
 
 const guideLink = process.env.NEXT_PUBLIC_LAWN_RECOVERY_GUIDE_URL || '/guide?src=dog-urine-landing';
 
@@ -87,7 +97,7 @@ function CheckoutButton({ product, children, secondary = false }: { product: Che
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...product, attribution }),
+        body: JSON.stringify({ ...product, attribution, couponCode: 'SAVE15', cancelPath: '/dog-urine-lawn-repair' }),
       });
 
       const data = await response.json();
@@ -115,6 +125,7 @@ function CheckoutButton({ product, children, secondary = false }: { product: Che
       >
         {loading ? 'Opening secure checkout…' : children}
       </button>
+      <span className="mt-2 text-xs opacity-80">15% off when you buy direct, applied at checkout · 30-day returns on unused products (<Link href="/terms" className="underline">see Terms</Link>)</span>
       {error && <span className="mt-2 text-sm font-semibold text-red-700">{error}</span>}
     </span>
   );
@@ -288,7 +299,7 @@ export default function DogUrineLawnRepair() {
           <div className="max-w-7xl mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Order Direct and Save on Lawn Recovery</h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Social traffic should come here first, not Amazon. Ordering direct helps support our small business and gives you access to bundles and lawn recovery resources.
+              Buy direct and save 15% on your first order, applied automatically at checkout. Ordering here supports our family farm and gives you access to bundles and lawn recovery resources.
             </p>
             <div className="mx-auto grid max-w-4xl grid-cols-1 md:grid-cols-2 gap-8 mt-10 text-left">
               {[
@@ -336,32 +347,22 @@ export default function DogUrineLawnRepair() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-black text-gray-900 mb-4">Built by a Soil-Focused Small Business</h2>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                Nature&apos;s Way Soil is a family-run farm business. We make this formula in small batches in the USA to work on the
+                soil under the spot, not to paint the grass green.
+              </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  quote: 'I wanted a product that focused on the lawn and soil, not just covering the spot. This was exactly what I needed.',
-                  author: 'Verified customer',
-                },
-                {
-                  quote: 'The directions were simple, and I liked that it was made by a small soil-focused company.',
-                  author: 'Verified customer',
-                },
-                {
-                  quote: 'The sprayer and refill bundle made sense for our yard because our dogs use the same area every day.',
-                  author: 'Verified customer',
-                },
-              ].map((review) => (
-                <div key={review.quote} className="bg-gray-50 rounded-2xl p-8 shadow-sm border border-gray-100">
-                  <div className="flex mb-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-gray-700 mb-6 italic leading-relaxed">&quot;{review.quote}&quot;</p>
-                  <p className="font-bold text-gray-900">{review.author}</p>
-                </div>
-              ))}
+            <div className="mx-auto max-w-3xl rounded-2xl bg-gray-50 p-8 shadow-sm border border-gray-100">
+              <h3 className="text-xl font-black text-gray-900 mb-4">What&apos;s in the bottle</h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {ingredients.map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-gray-700">
+                    <CheckCircle className="w-5 h-5 text-nature-green-600 flex-none mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 text-sm text-gray-600">No green dyes or colorants. Pet-safe when used as directed.</p>
             </div>
           </div>
         </section>
