@@ -77,8 +77,16 @@ async function main() {
 
   console.log(`[Video Rotation] Building ${VARIATIONS_PER_PRODUCT} video file(s) for each of ${selected.length} products.`);
 
+  let built = 0;
   for (const product of selected) {
+    const image = String(product.productImagePath || '').replace(/^\//, '');
+    if (image && !fs.existsSync(path.join(PROJECT, 'public', image))) {
+      // One product with a missing image used to fail the whole daily job.
+      console.log(`[Video Rotation] Skipping ${product.id}: product image not found at public/${image}`);
+      continue;
+    }
     cleanOldRotationFiles(product.id);
+    built++;
 
     for (let variation = 1; variation <= VARIATIONS_PER_PRODUCT; variation++) {
       console.log(`[Video Rotation] ${product.id} variation ${variation}/${VARIATIONS_PER_PRODUCT}`);
@@ -106,7 +114,8 @@ async function main() {
     }
   }
 
-  console.log('[Video Rotation] Done. Rotation files are ready in public/videos.');
+  if (!built) throw new Error('No product had a usable image; nothing was built.');
+  console.log(`[Video Rotation] Done. Built ${built} of ${selected.length} product(s) in public/videos.`);
 }
 
 main().catch((error) => {

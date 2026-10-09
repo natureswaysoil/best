@@ -51,12 +51,17 @@ function prepareScheduledProduct() {
     .sort((a, b) => (a.priority || 999) - (b.priority || 999))
     .slice(0, 5);
 
-  if (orderedProducts.length !== 5) {
-    throw new Error(`Expected 5 top products but found ${orderedProducts.length}`);
+  // Rotate only through products whose video was actually built this run
+  // (products without a product image are skipped by the rotation builder).
+  const builtProducts = orderedProducts.filter(
+    (p) => listRotationVideos(p.id).length || fs.existsSync(path.join(VIDEOS_DIR, `${p.id}.mp4`))
+  );
+  if (!builtProducts.length) {
+    throw new Error('No top product has a generated video to post');
   }
 
   const dayNumber = Math.floor(Date.now() / 86400000);
-  const selected = orderedProducts[dayNumber % orderedProducts.length];
+  const selected = builtProducts[dayNumber % builtProducts.length];
   const videoFile = pickVideo(selected.id, dayNumber);
   promoteSelectedVideo(selected.id, videoFile);
 
