@@ -90,6 +90,28 @@ export function pickProductForPost(post, catalog, topProductIds = []) {
   return scored.find((s) => s.product.id === DEFAULT_PRODUCT_ID)?.product || scored[0]?.product || null;
 }
 
+export function choosePost(posts, state, slug, maxAgeDays = 14, now = Date.now()) {
+  if (slug) {
+    const post = posts.find(p => p.slug === slug);
+    if (!post) throw new Error(`No blog post with slug "${slug}"`);
+    return post;
+  }
+  const pending = posts.filter(p => ['rendered', 'partial', 'failed'].includes(state.posts[p.slug]?.status));
+  if (pending.length) return pending.sort((a, b) => Date.parse(a.publishedAt) - Date.parse(b.publishedAt))[0];
+  const cutoff = now - maxAgeDays * 86400000;
+  return posts.filter(p => !state.posts[p.slug] && Date.parse(p.publishedAt) >= cutoff)
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))[0];
+}
+
+export function assertPostResult(result, platform) {
+  if (!result || result.skipped || result.success === false || result.error) {
+    throw new Error(`${platform} did not confirm a successful post`);
+  }
+  const id = result.id || result.postId || result.videoId || result.tweetId || result.pinId || result.publish_id || result.publishId;
+  if (!id) throw new Error(`${platform} did not return a post or video ID`);
+  return result;
+}
+
 export function blogUrl(post, platform) {
   const params = new URLSearchParams({
     utm_source: platform,
@@ -181,7 +203,7 @@ export function saveState(state) {
 
 export async function urlIsReachable(url) {
   try {
-    const res = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    const res = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(30000) });
     return res.ok;
   } catch {
     return false;

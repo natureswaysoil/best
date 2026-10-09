@@ -36,3 +36,32 @@ TikTok notes:
 ## Run by hand
 
 GitHub → Actions → **Blog to Social Video** → Run workflow. Optionally enter a slug, for example to re-run a `held` post after editing it.
+
+
+## Recovery and verification
+
+The `video` repository owns scheduled product posting. The `best` product
+workflow is a manual fallback; this blog workflow only posts blog videos.
+
+Each confirmed platform ID is saved immediately. Interrupted and partial jobs
+resume their existing render from Cloud Storage and skip completed platforms.
+TikTok processing IDs are retained and checked again instead of uploaded again.
+Any enabled platform failure makes the job fail visibly. A green Vercel build
+is not evidence of a social post: verify the platform IDs and Actions job logs.
+
+The Google credential secret is `GCP_SERVICE_ACCOUNT_JSON`. If bucket writes
+fail, an administrator must grant `roles/storage.objectUser` to
+`natureswaysoil-video@appspot.gserviceaccount.com` on the
+`natureswaysoil-videos` bucket. This allows reading, creating, updating, and
+replacing pipeline assets and state; it does not grant project-wide admin.
+The catalog workflow checks those permissions before spending time rendering.
+
+```bash
+gcloud storage buckets add-iam-policy-binding gs://natureswaysoil-videos \
+  --member=serviceAccount:natureswaysoil-video@appspot.gserviceaccount.com \
+  --role=roles/storage.objectUser
+```
+
+The `seed-videos/blog/` output must be publicly reachable for platforms that
+fetch it by URL. Do not expose credentials or private state files. Verify the
+video URL before treating a publish result as successful.

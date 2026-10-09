@@ -21,6 +21,7 @@ async function tiktokJson(url, accessToken, body) {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json; charset=UTF-8' },
     body: JSON.stringify(body || {}),
+    signal: AbortSignal.timeout(30000),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || (data.error && data.error.code && data.error.code !== 'ok')) {
@@ -34,6 +35,7 @@ async function accessToken(env = process.env) {
   const res = await fetch(`${API}/v2/oauth/token/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    signal: AbortSignal.timeout(30000),
     body: new URLSearchParams({
       client_key: env.TIKTOK_CLIENT_KEY,
       client_secret: env.TIKTOK_CLIENT_SECRET,
@@ -58,8 +60,7 @@ async function accessToken(env = process.env) {
 function choosePrivacy(options) {
   const wanted = process.env.TIKTOK_PRIVACY_LEVEL || 'PUBLIC_TO_EVERYONE';
   if (options.includes(wanted)) return wanted;
-  // Apps that have not passed TikTok's audit may only post privately.
-  return options[0];
+  throw new Error(`TikTok cannot publish with requested privacy ${wanted}; app/account approval is required`);
 }
 
 export async function postVideoToTikTok({ videoPath, caption }) {
@@ -87,15 +88,21 @@ export async function postVideoToTikTok({ videoPath, caption }) {
     method: 'PUT',
     headers: { 'Content-Type': 'video/mp4', 'Content-Length': String(size), 'Content-Range': `bytes 0-${size - 1}/${size}` },
     body: fs.readFileSync(videoPath),
+    signal: AbortSignal.timeout(120000),
   });
   if (!upload.ok) throw new Error(`TikTok upload failed: HTTP ${upload.status}`);
 
-  for (let i = 0; i < 30; i++) {
-    await new Promise((r) => setTimeout(r, 10000));
-    const status = await tiktokJson(`${API}/v2/post/publish/status/fetch/`, token, { publish_id: init.publish_id });
-    if (status.status === 'PUBLISH_COMPLETE') return { publishId: init.publish_id, privacy };
+  return checkTikTokPublish({ publishId: init.publish_id, privacy }, token);
+}
+
+export async function checkTikTokPublish(result, existingToken) {
+  const token = existingToken || await accessToken();
+  const attempts = Number(process.env.TIKTOK_POLL_ATTEMPTS || 30);
+  for (let i = 0; i < attempts; i++) {
+    const status = await tiktokJson(`${API}/v2/post/publish/status/fetch/`, token, { publish_id: result.publishId });
+    if (status.status === 'PUBLISH_COMPLETE') return { ...result, pending: false };
     if (status.status === 'FAILED') throw new Error(`TikTok publish failed: ${status.fail_reason || 'unknown reason'}`);
+    if (i + 1 < attempts) await new Promise(r => setTimeout(r, 10000));
   }
-  // Still processing on TikTok's side; the upload itself succeeded.
-  return { publishId: init.publish_id, privacy, pending: true };
+  return { ...result, pending: true };
 }

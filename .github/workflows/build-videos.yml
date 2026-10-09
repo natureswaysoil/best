@@ -1,13 +1,18 @@
-name: Build and Post Product Videos
+name: Manual Build and Post Product Videos
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 7 * * 1-5'
+  # Scheduled product publishing belongs to natureswaysoil/video.
+  # This workflow is an explicit manual fallback, avoiding duplicate posts.
+
+concurrency:
+  group: manual-product-video-posting
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write
@@ -19,7 +24,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies

@@ -19,11 +19,11 @@
 import fs from 'fs';
 import path from 'path';
 import {
-  PROJECT, SITE_URL, blogUrl, bucketConfig, capture, hydrateSecrets, loadBlogPosts, loadCatalog,
+  PROJECT, SITE_URL, assertPostResult, choosePost, bucketConfig, capture, hydrateSecrets, loadBlogPosts, loadCatalog,
   loadState, pickProductForPost, readJson, run, saveState, urlIsReachable, videoIdForPost,
 } from './lib.mjs';
 import { ClaimViolationError, writeScript } from './script-writer.mjs';
-import { TIKTOK_SECRET_NAMES, hasTikTokCredentials, postVideoToTikTok } from './tiktok.mjs';
+import { TIKTOK_SECRET_NAMES, checkTikTokPublish, hasTikTokCredentials, postVideoToTikTok } from './tiktok.mjs';
 
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const WORK_DIR = path.join(PROJECT, 'content', 'generated-videos', 'blog');
@@ -48,30 +48,39 @@ function setOutput(key, value) {
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
 }
 
-function choosePost(posts, state, slug) {
-  if (slug) {
-    const post = posts.find((p) => p.slug === slug);
-    if (!post) throw new Error(`No blog post with slug "${slug}" in data/blog.ts`);
-    return post;
-  }
-  const cutoff = Date.now() - MAX_AGE_DAYS * 86400000;
-  return posts
-    .filter((p) => !state.posts[p.slug])
-    .filter((p) => Date.parse(p.publishedAt) >= cutoff)
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))[0];
-}
-
 async function render() {
   hydrateSecrets(SECRET_NAMES);
   const state = loadState();
   const posts = await loadBlogPosts();
-  const post = choosePost(posts, state, arg('slug'));
+  const post = choosePost(posts, state, arg('slug'), MAX_AGE_DAYS);
   if (!post) {
     console.log(`[Blog Social] No unhandled blog post from the last ${MAX_AGE_DAYS} days.`);
     setOutput('has_post', 'false');
     return;
   }
   console.log(`[Blog Social] Post: ${post.title} (${post.slug})`);
+  const existing = state.posts[post.slug];
+  if (existing?.status === 'posted') {
+    console.log('[Blog Social] Already posted; skipping.');
+    setOutput('has_post', 'false');
+    return;
+  }
+  if (existing?.manifest) {
+    const manifest = existing.manifest;
+    const { blogDir } = bucketConfig();
+    fs.mkdirSync(VIDEOS_DIR, { recursive: true });
+    for (const extension of ['mp4', ...(manifest.posterUrl?.endsWith(`${manifest.videoId}.jpg`) ? ['jpg'] : [])]) {
+      const source = `${blogDir}/${manifest.videoId}.${extension}`;
+      const result = capture('gcloud', ['storage', 'cp', source, path.join(VIDEOS_DIR, `${manifest.videoId}.${extension}`)], { timeout: 600000 });
+      if (!result.ok) throw new Error(`Could not resume rendered asset ${source}: ${result.stderr.slice(0, 300)}`);
+    }
+    fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2));
+    setOutput('has_post', 'true');
+    setOutput('slug', post.slug);
+    console.log('[Blog Social] Resuming previously rendered video; successful platforms will be skipped.');
+    return;
+  }
+
 
   const catalog = await loadCatalog();
   const topIds = (readJson(path.join(PROJECT, 'config', 'top-products.json'), {}).topProducts || []).map((p) => p.id);
@@ -143,7 +152,7 @@ async function render() {
     renderedAt: new Date().toISOString(),
   };
   fs.writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2));
-  state.posts[post.slug] = { status: 'rendered', videoId: id, videoUrl: manifest.videoUrl, at: manifest.renderedAt };
+  state.posts[post.slug] = { status: 'rendered', videoId: id, videoUrl: manifest.videoUrl, at: manifest.renderedAt, manifest };
   saveState(state);
 
   setOutput('has_post', 'true');
@@ -224,7 +233,7 @@ async function post() {
   const results = { ...already };
   const errors = {};
   for (const platform of platforms) {
-    if (already[platform]) {
+    if (already[platform] && !already[platform].pending) {
       console.log(`[Blog Social] Already posted to ${platform}; skipping.`);
       continue;
     }
@@ -233,17 +242,24 @@ async function post() {
       continue;
     }
     try {
-      results[platform] = { ...(await methods[platform]()), at: new Date().toISOString() };
-      console.log(`[Blog Social] ✅ ${platform}`);
+      results[platform] = { ...assertPostResult(platform === 'tiktok' && already.tiktok?.pending ? await checkTikTokPublish(already.tiktok) : await methods[platform](), platform), at: new Date().toISOString() };
+      // Save each confirmed post immediately, so retries after interruption do not repost it.
+      state.posts[manifest.slug] = { ...entry, status: 'partial', manifest, videoId: manifest.videoId, videoUrl: manifest.videoUrl, platforms: { ...results }, at: new Date().toISOString() };
+      saveState(state);
+      if (results[platform].pending) {
+        errors[platform] = 'Accepted by platform; publication is still pending';
+        console.log(`[Blog Social] ${platform} pending; retaining publish ID for status checks.`);
+      } else console.log(`[Blog Social] ✅ ${platform}`);
     } catch (error) {
       errors[platform] = error.message;
       console.log(`[Blog Social] ❌ ${platform}: ${error.message}`);
     }
   }
 
-  const posted = Object.keys(results);
+  const posted = Object.keys(results).filter(platform => !results[platform].pending);
   state.posts[manifest.slug] = {
     ...entry,
+    manifest,
     status: posted.length ? (Object.keys(errors).length ? 'partial' : 'posted') : 'failed',
     videoId: manifest.videoId,
     videoUrl: manifest.videoUrl,
@@ -253,6 +269,7 @@ async function post() {
   };
   saveState(state);
 
+  if (Object.keys(errors).length) throw new Error(`Social publishing incomplete: ${JSON.stringify(errors)}`);
   if (!posted.length) throw new Error(`Nothing was posted: ${JSON.stringify(errors)}`);
   console.log(`[Blog Social] Posted to ${posted.join(', ')}${Object.keys(errors).length ? `; failed: ${Object.keys(errors).join(', ')}` : ''}.`);
 }

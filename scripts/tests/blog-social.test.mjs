@@ -85,3 +85,48 @@ test('writeScript retries once on a claim violation, then holds the post', async
     if (savedKey === undefined) delete process.env.OPENAI_API_KEY; else process.env.OPENAI_API_KEY = savedKey;
   }
 });
+
+
+test('retry selection resumes failed/partial/rendered posts before new posts', async () => {
+  const { choosePost } = await import('../blog-social/lib.mjs');
+  const posts = [
+    { slug: 'older', publishedAt: '2026-10-08' },
+    { slug: 'newer', publishedAt: '2026-10-09' },
+  ];
+  for (const status of ['rendered', 'partial', 'failed']) {
+    assert.equal(choosePost(posts, { posts: { older: { status } } }, '', 14, Date.parse('2026-10-10')).slug, 'older');
+  }
+  assert.equal(choosePost(posts, { posts: { older: { status: 'posted' } } }, '', 14, Date.parse('2026-10-10')).slug, 'newer');
+});
+
+test('posting results require IDs and reject skipped/failed responses', async () => {
+  const { assertPostResult } = await import('../blog-social/lib.mjs');
+  for (const bad of [undefined, {}, { skipped: true, id: 'x' }, { success: false, id: 'x' }]) {
+    assert.throws(() => assertPostResult(bad, 'test'));
+  }
+  for (const key of ['postId', 'videoId', 'tweetId', 'pinId', 'publishId']) {
+    assert.equal(assertPostResult({ [key]: 'confirmed' }, 'test')[key], 'confirmed');
+  }
+});
+
+test('TikTok pending status is checked without starting another upload', async () => {
+  const { checkTikTokPublish } = await import('../blog-social/tiktok.mjs');
+  const savedFetch = globalThis.fetch;
+  const savedAttempts = process.env.TIKTOK_POLL_ATTEMPTS;
+  process.env.TIKTOK_POLL_ATTEMPTS = '1';
+  try {
+    const paths = [];
+    globalThis.fetch = async url => {
+      paths.push(url);
+      return { ok: true, json: async () => ({ data: { status: 'PROCESSING_UPLOAD' } }) };
+    };
+    const result = await checkTikTokPublish({ publishId: 'same-upload' }, 'test-token');
+    assert.equal(result.pending, true);
+    assert(paths.every(url => url.endsWith('/status/fetch/')));
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: { status: 'PUBLISH_COMPLETE' } }) });
+    assert.equal((await checkTikTokPublish(result, 'test-token')).pending, false);
+  } finally {
+    globalThis.fetch = savedFetch;
+    if (savedAttempts === undefined) delete process.env.TIKTOK_POLL_ATTEMPTS; else process.env.TIKTOK_POLL_ATTEMPTS = savedAttempts;
+  }
+});
