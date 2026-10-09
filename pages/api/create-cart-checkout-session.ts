@@ -1,28 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { allProducts } from '../../data/products';
+import { getFirstOrderCoupon } from '../../lib/firstOrderCoupon';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
 type RequestedItem = { productId?:string; sku?:string; quantity?:number };
-const FIRST_ORDER_COUPON_ID = 'nws-first-order-15';
-
-async function getFirstOrderCoupon() {
-  try {
-    return await stripe.coupons.retrieve(FIRST_ORDER_COUPON_ID);
-  } catch (error) {
-    if (error instanceof Stripe.errors.StripeError && error.code === 'resource_missing') {
-      return stripe.coupons.create({
-        id: FIRST_ORDER_COUPON_ID,
-        percent_off: 15,
-        duration: 'once',
-        name: '15% off first direct website order',
-        metadata: { public_code: 'SAVE15', source: 'natureswaysoil.com' },
-      });
-    }
-    throw error;
-  }
-}
-
 function path(value:unknown, fallback:string) {
   return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : fallback;
 }
@@ -55,7 +37,7 @@ export default async function handler(req:NextApiRequest,res:NextApiResponse) {
   const lineItems:Stripe.Checkout.SessionCreateParams.LineItem[] = normalized.map(({product,size,quantity,price})=>({ price_data:{currency:'usd',unit_amount:Math.round(price*100),product_data:{name:size?.name?`${product.name} – ${size.name}`:product.name,metadata:{productId:product.id,sizeName:size?.name||'',sku:size?.sku||product.id}}},quantity }));
 
   try {
-    const coupon = couponCode === 'SAVE15' ? await getFirstOrderCoupon() : null;
+    const coupon = couponCode === 'SAVE15' ? await getFirstOrderCoupon(stripe) : null;
     const session=await stripe.checkout.sessions.create({mode:'payment',payment_method_types:['card','link'],line_items:lineItems,shipping_options:shipping?[{shipping_rate_data:{type:'fixed_amount',fixed_amount:{amount:shipping,currency:'usd'},display_name:'Standard Shipping'}}]:undefined,billing_address_collection:'auto',shipping_address_collection:{allowed_countries:['US']},phone_number_collection:{enabled:true},allow_promotion_codes:coupon ? undefined : true,discounts:coupon ? [{coupon:coupon.id}] : undefined,metadata,payment_intent_data:{metadata},success_url:`${origin}${successPath}`,cancel_url:`${origin}${cancelPath}`});
     return res.status(200).json({url:session.url});
   } catch(error) { console.error('[cart-checkout]',error); return res.status(500).json({error:'Unable to start secure checkout'}); }
