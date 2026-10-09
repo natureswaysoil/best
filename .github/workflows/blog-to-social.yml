@@ -1,0 +1,132 @@
+name: Blog to Social Video
+
+# After a new blog post is published: write a claim-checked short video script,
+# render the video, then post it to Instagram, Facebook, YouTube, X, Pinterest
+# and TikTok with a tracked link back to the post.
+#
+# Approval: the "post" job runs in the `blog-social` environment. Add yourself
+# as a required reviewer under Settings -> Environments -> blog-social and
+# every video waits for your approval (GitHub emails you and shows the render
+# artifact). Remove the reviewer to post fully automatically.
+
+on:
+  workflow_run:
+    workflows: ['Auto-Generate Blog Content']
+    types: [completed]
+  schedule:
+    # Fallback pass for posts added by hand; skips anything already handled.
+    - cron: '30 15 * * *'
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Blog slug to turn into a video (blank = newest unhandled post)'
+        required: false
+        default: ''
+
+concurrency:
+  group: blog-to-social
+  cancel-in-progress: false
+
+jobs:
+  render:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    outputs:
+      has_post: ${{ steps.render.outputs.has_post }}
+      slug: ${{ steps.render.outputs.slug }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Check required GitHub secret
+        env:
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+        run: |
+          test -n "$GCP_SERVICE_ACCOUNT_JSON" || { echo "Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"; exit 1; }
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Tests
+        run: node --test scripts/tests/blog-social.test.mjs scripts/tests/video-publish-qa.test.mjs scripts/tests/social-platform-selection.test.mjs
+
+      - name: Write script and render video
+        id: render
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ steps.auth.outputs.project_id }}
+          SLUG: ${{ inputs.slug }}
+        run: |
+          if [ -n "$SLUG" ]; then
+            node scripts/blog-social/job.mjs render --slug "$SLUG"
+          else
+            node scripts/blog-social/job.mjs render
+          fi
+
+      - name: Upload render for review
+        if: steps.render.outputs.has_post == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-social-render
+          path: |
+            blog-social-manifest.json
+            public/videos/BLOG-*.mp4
+            public/videos/BLOG-*.jpg
+          if-no-files-found: error
+          retention-days: 14
+
+  post:
+    needs: render
+    if: needs.render.outputs.has_post == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: blog-social
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install FFmpeg (video checks)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: blog-social-render
+
+      - name: Post to social platforms
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: node scripts/blog-social/job.mjs post --manifest blog-social-manifest.json

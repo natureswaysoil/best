@@ -142,6 +142,10 @@ class SocialMediaAutoPoster {
     return `${WEBSITE_BASE_URL}/videos/${product.id}.mp4`;
   }
 
+  getImageUrl(product) {
+    return `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+  }
+
   getActivePlatforms() {
     return configuredPlatforms(process.env);
   }
@@ -360,7 +364,7 @@ class SocialMediaAutoPoster {
 
       const content = this.generateSocialContent(product, 'instagram');
       
-      const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+      const imageUrl = this.getImageUrl(product);
       const videoUrl = this.getPublicVideoUrl(product);
       const shouldTryVideo = this.hasLocalVideo(product) && process.env.SOCIAL_FORCE_IMAGE_ONLY !== '1';
 
@@ -940,7 +944,7 @@ class SocialMediaAutoPoster {
       const facebookPageToken = await this.resolveFacebookPageAccessToken();
 
       const content = this.generateSocialContent(product, 'facebook');
-      const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+      const imageUrl = this.getImageUrl(product);
       const videoUrl = this.getPublicVideoUrl(product);
       const shouldTryVideo = this.hasLocalVideo(product) && process.env.SOCIAL_FORCE_IMAGE_ONLY !== '1';
 
@@ -1046,7 +1050,7 @@ class SocialMediaAutoPoster {
       }
 
       const content = this.generateSocialContent(product, 'pinterest');
-      const imageUrl = `${WEBSITE_BASE_URL}/images/products/${product.id}/main.jpg`;
+      const imageUrl = this.getImageUrl(product);
 
       const requestedBase = (process.env.PINTEREST_API_BASE_URL || '').trim();
       const testMode = process.env.PINTEREST_TEST_MODE === '1';

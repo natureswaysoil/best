@@ -1,13 +1,18 @@
-name: Build and Post Product Videos
+name: Manual Build and Post Product Videos
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 7 * * 1-5'
+  # Scheduled product publishing belongs to natureswaysoil/video.
+  # This workflow is an explicit manual fallback, avoiding duplicate posts.
+
+concurrency:
+  group: manual-product-video-posting
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write
@@ -19,7 +24,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Install dependencies
@@ -31,37 +36,19 @@ jobs:
           sudo apt-get install -y ffmpeg
           ffprobe -version
 
+      # Same credential secret as the other Google Cloud workflows; the old
+      # GCP_SA_KEY/GCP_PROJECT_ID pair is no longer set.
       - name: Require Google Cloud configuration
         env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_SERVICE_ACCOUNT_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
         run: |
-          set -euo pipefail
-          test -n "$GCP_SA_KEY" || { echo "Missing GCP_SA_KEY"; exit 1; }
-          test -n "$GCP_PROJECT_ID" || { echo "Missing GCP_PROJECT_ID"; exit 1; }
-
-      - name: Prepare Google credentials
-        id: prepare-gcp
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-        run: |
-          set -euo pipefail
-          CREDS_PATH="$HOME/gcp-key.json"
-          if [[ "$GCP_SA_KEY" == \{* ]]; then
-            printf '%s\n' "$GCP_SA_KEY" > "$CREDS_PATH"
-          else
-            echo "$GCP_SA_KEY" | base64 -d > "$CREDS_PATH"
-          fi
-          {
-            echo "credentials_json<<EOF"
-            cat "$CREDS_PATH"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          test -n "$GCP_SERVICE_ACCOUNT_JSON" || { echo "Missing GitHub secret: GCP_SERVICE_ACCOUNT_JSON"; exit 1; }
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ steps.prepare-gcp.outputs.credentials_json }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -71,7 +58,7 @@ jobs:
 
       - name: Generate, validate, upload, and post scheduled product
         env:
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID || steps.auth.outputs.project_id }}
           VIDEO_VARIATIONS_PER_PRODUCT: '1'
         run: node scripts/cloud-video-social-job.mjs
 
