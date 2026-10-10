@@ -44,3 +44,32 @@ test('Amazon connector audit is request-only without integration credentials', a
     assert.equal(headers['X-Robots-Tag'], 'noindex, nofollow');
   }
 });
+
+
+test('Accounting snapshot is request-only without integration credentials', async (t) => {
+  const names = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'QUICKBOOKS_ADMIN_SECRET', 'VERCEL_ENV'];
+  const saved = names.map(name => [name, process.env[name]]);
+  for (const name of names) delete process.env[name];
+  t.after(() => {
+    for (const [name, value] of saved) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+  const page = require('../../pages/quickbooks-one-time-accounting-snapshot.tsx');
+  assert.equal(page.getStaticProps, undefined);
+  assert.equal(typeof page.getServerSideProps, 'function');
+  for (const configuredSecret of [undefined, 'test-admin-secret']) {
+    if (configuredSecret === undefined) delete process.env.QUICKBOOKS_ADMIN_SECRET;
+    else process.env.QUICKBOOKS_ADMIN_SECRET = configuredSecret;
+    const headers = {};
+    const result = await page.getServerSideProps({
+      req: { headers: configuredSecret ? { 'x-quickbooks-admin-secret': 'wrong-secret' } : {} },
+      query: {},
+      res: { setHeader: (name, value) => { headers[name] = value; } },
+    });
+    assert.deepEqual(result, { notFound: true });
+    assert.equal(headers['Cache-Control'], 'private, no-store');
+    assert.equal(headers['X-Robots-Tag'], 'noindex, nofollow');
+  }
+});
