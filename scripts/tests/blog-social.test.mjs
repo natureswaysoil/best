@@ -1,10 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { collectScriptText, findClaimViolations } from '../blog-social/claims.mjs';
 import { blogUrl, bucketConfig, loadState, pickProductForPost, videoIdForPost } from '../blog-social/lib.mjs';
 import { validateScriptShape, withLinks } from '../blog-social/script-writer.mjs';
+
+test('render retries use the current branch and posting uses the rendered commit', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/blog-to-social.yml', import.meta.url), 'utf8');
+  const [render, post] = workflow.split('\n  post:\n');
+  assert.match(render, /source_sha: \$\{\{ steps\.checkout\.outputs\.commit \}\}/);
+  assert.match(render, /uses: actions\/checkout@v4\s+id: checkout\s+with:\s+#[^\n]*\n\s+ref: \$\{\{ github\.ref \}\}/);
+  assert.match(post, /uses: actions\/checkout@v4\s+with:\s+ref: \$\{\{ needs\.render\.outputs\.source_sha \}\}/);
+  assert.doesNotMatch(workflow, /ref: \$\{\{ github\.sha \}\}/);
+});
 
 test('loadState initializes only missing state and preserves read failures and saved posts', (t) => {
   const { stateUri } = bucketConfig();
