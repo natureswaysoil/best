@@ -1,0 +1,45 @@
+name: Verify Catalog Video Delivery
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '29 13 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-catalog-delivery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check all 14 public catalog video and poster URLs
+        env:
+          VIDEO_BASE_URL: https://storage.googleapis.com/natureswaysoil-videos/seed-videos
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const { products } = JSON.parse(fs.readFileSync('config/catalog-video-products.json', 'utf8'));
+          const base = process.env.VIDEO_BASE_URL.replace(/\/$/, '');
+          if (products.length !== 14) throw new Error('Expected 14 catalog entries');
+          let failures = 0;
+          for (const product of products) {
+            for (const ext of ['mp4','jpg']) {
+              const url = `${base}/${product.id}-catalog-v2.${ext}`;
+              try {
+                const res = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-1023' }, signal: AbortSignal.timeout(12000) });
+                const type = (res.headers.get('content-type') || '').toLowerCase();
+                const expected = ext === 'mp4' ? 'video/' : 'image/';
+                if (![200,206].includes(res.status) || !type.startsWith(expected)) {
+                  console.error(`FAIL ${product.id} ${ext}: HTTP ${res.status}, type=${type}`);
+                  failures++;
+                } else console.log(`PASS ${product.id} ${ext}: HTTP ${res.status} ${type}`);
+                await res.body?.cancel();
+              } catch (err) { console.error(`FAIL ${product.id} ${ext}: ${err.message}`); failures++; }
+            }
+          }
+          if (failures) throw new Error(`${failures} catalog media files not publicly deliverable; publication is blocked`);
+          console.log('All 28 catalog media URLs are publicly deliverable; manual content review and channel approvals are still required.');
+          NODE
