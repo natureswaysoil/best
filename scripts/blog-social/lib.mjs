@@ -184,7 +184,7 @@ export function loadState() {
   const { stateUri } = bucketConfig();
   const res = capture('gcloud', ['storage', 'cat', stateUri]);
   if (!res.ok) {
-    if (/not found|No URLs matched|404/i.test(res.stderr)) return { posts: {} };
+    if (/not found|No URLs matched|URLs matched no objects or files|404/i.test(res.stderr)) return { posts: {} };
     throw new Error(`Could not read ${stateUri}: ${res.stderr.slice(0, 300)}`);
   }
   try {

@@ -1,8 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
 import { collectScriptText, findClaimViolations } from '../blog-social/claims.mjs';
-import { blogUrl, pickProductForPost, videoIdForPost } from '../blog-social/lib.mjs';
+import { blogUrl, bucketConfig, loadState, pickProductForPost, videoIdForPost } from '../blog-social/lib.mjs';
 import { validateScriptShape, withLinks } from '../blog-social/script-writer.mjs';
+
+test('loadState initializes only missing state and preserves read failures and saved posts', (t) => {
+  const { stateUri } = bucketConfig();
+  let response;
+  const spawn = t.mock.method(childProcess, 'spawnSync', (command, args) => {
+    assert.equal(command, 'gcloud');
+    assert.deepEqual(args, ['storage', 'cat', stateUri]);
+    return response;
+  });
+  syncBuiltinESMExports();
+  try {
+    for (const stderr of [
+      `ERROR: (gcloud.storage.cat) The following URLs matched no objects or files:\n${stateUri}`,
+      'No URLs matched',
+      '404 Not Found',
+    ]) {
+      response = { status: 1, stdout: '', stderr };
+      assert.deepEqual(loadState(), { posts: {} });
+    }
+    for (const stderr of ['403 Permission denied', 'Connection timed out', '503 Service Unavailable']) {
+      response = { status: 1, stdout: '', stderr };
+      assert.throws(() => loadState(), /Could not read/);
+    }
+    response = { status: 0, stdout: '{invalid json}', stderr: '' };
+    assert.throws(() => loadState(), /not valid JSON/);
+    const saved = { posts: { spring: { status: 'posted', platforms: { youtube: { videoId: 'confirmed' } } } } };
+    response = { status: 0, stdout: JSON.stringify(saved), stderr: '' };
+    assert.deepEqual(loadState(), saved);
+  } finally {
+    spawn.mock.restore();
+    syncBuiltinESMExports();
+  }
+});
 
 test('claim check flags banned phrases', () => {
   const text = 'Instantly greener grass, guaranteed! Eliminates yellow spots. 100% safe. OMRI listed.';
