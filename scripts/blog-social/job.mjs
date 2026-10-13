@@ -24,6 +24,7 @@ import {
 } from './lib.mjs';
 import { ClaimViolationError, writeScript } from './script-writer.mjs';
 import { TIKTOK_SECRET_NAMES, checkTikTokPublish, hasTikTokCredentials, postVideoToTikTok } from './tiktok.mjs';
+import { PINTEREST_REFRESH_SECRET_NAMES } from '../pinterest-oauth2.mjs';
 
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
 const WORK_DIR = path.join(PROJECT, 'content', 'generated-videos', 'blog');
@@ -35,6 +36,7 @@ const SECRET_NAMES = [
   'VIDEO_OUTPUT_BUCKET', 'VIDEO_OUTPUT_PREFIX', 'VIDEO_PUBLIC_BASE_URL',
   'INSTAGRAM_ACCESS_TOKEN', 'INSTAGRAM_IG_ID', 'FACEBOOK_PAGE_ID', 'FACEBOOK_ACCESS_TOKEN', 'FACEBOOK_PAGE_ACCESS_TOKEN',
   'PINTEREST_ACCESS_TOKEN', 'PINTEREST_BOARD_ID', 'TWITTER_CLIENT_ID', 'TWITTER_CLIENT_SECRET', 'TWITTER_REFRESH_TOKEN',
+  ...PINTEREST_REFRESH_SECRET_NAMES,
   'YT_CLIENT_ID', 'YT_CLIENT_SECRET', 'YT_REFRESH_TOKEN',
   ...TIKTOK_SECRET_NAMES,
 ];
@@ -171,7 +173,7 @@ async function post() {
 
   hydrateSecrets(SECRET_NAMES);
   // The shared poster reads credentials when imported, so import after hydrating.
-  const { SocialMediaAutoPoster, configuredPlatforms } = await import('../social-media-auto-post.mjs');
+  const { SocialMediaAutoPoster, configuredPlatforms, requestedPlatforms } = await import('../social-media-auto-post.mjs');
 
   const state = loadState();
   const entry = state.posts[manifest.slug] || {};
@@ -217,7 +219,8 @@ async function post() {
   poster.assertPublishableVideo(product);
 
   const platforms = configuredPlatforms(process.env);
-  if (hasTikTokCredentials()) platforms.push('tiktok');
+  const requested = requestedPlatforms(process.env);
+  if (hasTikTokCredentials() && (!requested.length || requested.includes('tiktok'))) platforms.push('tiktok');
   console.log(`[Blog Social] Platforms: ${platforms.join(', ') || 'none configured'}`);
   if (!platforms.length) throw new Error('No social platforms are configured.');
 

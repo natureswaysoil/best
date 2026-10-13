@@ -22,6 +22,10 @@ on:
         description: 'Blog slug to turn into a video (blank = newest unhandled post)'
         required: false
         default: ''
+      platforms:
+        description: 'Comma-separated platforms (blank = BLOG_SOCIAL_PLATFORMS variable or all configured)'
+        required: false
+        default: ''
 
 concurrency:
   group: blog-to-social
@@ -66,7 +70,7 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
 
       - name: Tests
-        run: node --test scripts/tests/blog-social.test.mjs scripts/tests/video-publish-qa.test.mjs scripts/tests/social-platform-selection.test.mjs
+        run: node --test scripts/tests/blog-social.test.mjs scripts/tests/video-publish-qa.test.mjs scripts/tests/social-platform-selection.test.mjs scripts/tests/pinterest-oauth2.test.mjs
 
       - name: Write script and render video
         id: render
@@ -129,4 +133,5 @@ jobs:
       - name: Post to social platforms
         env:
           GOOGLE_CLOUD_PROJECT: ${{ steps.auth.outputs.project_id }}
+          ENABLE_PLATFORMS: ${{ inputs.platforms || vars.BLOG_SOCIAL_PLATFORMS }}
         run: node scripts/blog-social/job.mjs post --manifest blog-social-manifest.json

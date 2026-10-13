@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import { createHmac } from 'crypto';
 import { buildForcedSocialContent } from './social-caption-overrides.mjs';
 import { createTwitterOAuth2UserClient, hasTwitterOAuth2User } from './twitter-oauth2.mjs';
+import { refreshPinterestAccessToken } from './pinterest-oauth2.mjs';
 import { validateVideoForPublishing } from './lib/video-publish-qa.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,8 +28,6 @@ const YOUTUBE_REFRESH_TOKEN = process.env.YT_REFRESH_TOKEN;
 const FACEBOOK_PAGE_ID = process.env.FACEBOOK_PAGE_ID;
 const FACEBOOK_ACCESS_TOKEN = process.env.FACEBOOK_ACCESS_TOKEN;
 const FACEBOOK_PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
-const PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
-const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
 
 // Configuration
 const VIDEOS_DIR = path.join(PROJECT, 'public', 'videos');
@@ -56,7 +55,7 @@ function requestedPlatforms(env = process.env) {
   return String(env.ENABLE_PLATFORMS || '')
     .split(/[,+|]/)
     .map((platform) => platform.trim().toLowerCase())
-    .filter((platform) => ALL_PLATFORMS.includes(platform));
+    .filter((platform) => [...ALL_PLATFORMS, 'tiktok'].includes(platform));
 }
 
 function configuredPlatforms(env = process.env) {
@@ -597,6 +596,9 @@ class SocialMediaAutoPoster {
       return this.postedContent.twitter[product.id];
 
     } catch (error) {
+      if (error.code === 402 || /Twitter posting failed: 402\b/.test(error.message)) {
+        error = new Error('Twitter API payment required (HTTP 402): check credits and billing in the X developer console, or explicitly exclude twitter with ENABLE_PLATFORMS until access is restored.');
+      }
       this.log(`❌ Twitter posting failed for ${product.name}: ${error.message}`);
       throw error;
     }
@@ -1040,6 +1042,8 @@ class SocialMediaAutoPoster {
   // Pinterest Methods
   async postToPinterest(product) {
     try {
+      let PINTEREST_ACCESS_TOKEN = process.env.PINTEREST_ACCESS_TOKEN;
+      const PINTEREST_BOARD_ID = process.env.PINTEREST_BOARD_ID;
       if (!PINTEREST_ACCESS_TOKEN || !PINTEREST_BOARD_ID) {
         throw new Error('Pinterest credentials not configured (need PINTEREST_ACCESS_TOKEN, PINTEREST_BOARD_ID)');
       }
@@ -1079,6 +1083,11 @@ class SocialMediaAutoPoster {
 
       let apiBase = initialBase;
       let response = await createPin(apiBase);
+      if (response.status === 401 && apiBase === productionBase) {
+        PINTEREST_ACCESS_TOKEN = await refreshPinterestAccessToken();
+        this.log('Pinterest authorization refreshed; retrying pin creation once.');
+        response = await createPin(apiBase);
+      }
       let errText = response.ok ? '' : await response.text();
 
       if (!response.ok) {
