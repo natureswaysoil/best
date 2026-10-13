@@ -37,10 +37,13 @@ jobs:
     outputs:
       has_post: ${{ steps.render.outputs.has_post }}
       slug: ${{ steps.render.outputs.slug }}
+      source_sha: ${{ steps.checkout.outputs.commit }}
     steps:
       - uses: actions/checkout@v4
+        id: checkout
         with:
-          ref: ${{ github.sha }}
+          # Retries must pick up fixes merged after the original run.
+          ref: ${{ github.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -103,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ needs.render.outputs.source_sha }}
 
       - uses: actions/setup-node@v4
         with:
