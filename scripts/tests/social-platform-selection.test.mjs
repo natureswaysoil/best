@@ -38,6 +38,12 @@ test('TikTok-only selection does not enable other configured platforms', () => {
   assert.deepEqual(configuredPlatforms(env), []);
 });
 
+test('unknown platform selection does not fall back to posting everywhere', () => {
+  const env = { ENABLE_PLATFORMS: 'unknown', PINTEREST_ACCESS_TOKEN: 'test-pin', PINTEREST_BOARD_ID: 'test-board' };
+  assert.deepEqual(requestedPlatforms(env), ['unknown']);
+  assert.deepEqual(configuredPlatforms(env), []);
+});
+
 function mockPoster() {
   return Object.assign(Object.create(SocialMediaAutoPoster.prototype), {
     postedContent: { pinterest: {}, twitter: {} },

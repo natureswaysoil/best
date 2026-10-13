@@ -55,7 +55,7 @@ function requestedPlatforms(env = process.env) {
   return String(env.ENABLE_PLATFORMS || '')
     .split(/[,+|]/)
     .map((platform) => platform.trim().toLowerCase())
-    .filter((platform) => [...ALL_PLATFORMS, 'tiktok'].includes(platform));
+    .filter(Boolean);
 }
 
 function configuredPlatforms(env = process.env) {

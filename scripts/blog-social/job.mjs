@@ -19,7 +19,7 @@
 import fs from 'fs';
 import path from 'path';
 import {
-  PROJECT, SITE_URL, assertPostResult, choosePost, bucketConfig, capture, hydrateSecrets, loadBlogPosts, loadCatalog,
+  PROJECT, SITE_URL, assertPlatformsConfigured, assertPostResult, choosePost, bucketConfig, capture, hydrateSecrets, loadBlogPosts, loadCatalog,
   loadState, pickProductForPost, readJson, run, saveState, urlIsReachable, videoIdForPost,
 } from './lib.mjs';
 import { ClaimViolationError, writeScript } from './script-writer.mjs';
@@ -221,6 +221,7 @@ async function post() {
   const platforms = configuredPlatforms(process.env);
   const requested = requestedPlatforms(process.env);
   if (hasTikTokCredentials() && (!requested.length || requested.includes('tiktok'))) platforms.push('tiktok');
+  assertPlatformsConfigured(requested, platforms);
   console.log(`[Blog Social] Platforms: ${platforms.join(', ') || 'none configured'}`);
   if (!platforms.length) throw new Error('No social platforms are configured.');
 

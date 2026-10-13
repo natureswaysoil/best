@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
 import { syncBuiltinESMExports } from 'node:module';
 import { collectScriptText, findClaimViolations } from '../blog-social/claims.mjs';
-import { blogUrl, bucketConfig, loadState, pickProductForPost, videoIdForPost } from '../blog-social/lib.mjs';
+import { assertPlatformsConfigured, blogUrl, bucketConfig, loadState, pickProductForPost, videoIdForPost } from '../blog-social/lib.mjs';
 import { validateScriptShape, withLinks } from '../blog-social/script-writer.mjs';
 
 test('loadState initializes only missing state and preserves read failures and saved posts', (t) => {
@@ -142,6 +142,13 @@ test('posting results require IDs and reject skipped/failed responses', async ()
   for (const key of ['postId', 'videoId', 'tweetId', 'pinId', 'publishId']) {
     assert.equal(assertPostResult({ [key]: 'confirmed' }, 'test')[key], 'confirmed');
   }
+});
+
+test('explicitly requested platforms cannot be silently omitted for missing credentials', () => {
+  assert.doesNotThrow(() => assertPlatformsConfigured([], ['youtube']));
+  assert.doesNotThrow(() => assertPlatformsConfigured(['youtube', 'tiktok'], ['youtube', 'tiktok']));
+  assert.throws(() => assertPlatformsConfigured(['youtube', 'tiktok'], ['youtube']), /lack credentials: tiktok/);
+  assert.throws(() => assertPlatformsConfigured(['pinterest'], []), /lack credentials: pinterest/);
 });
 
 test('TikTok pending status is checked without starting another upload', async () => {
