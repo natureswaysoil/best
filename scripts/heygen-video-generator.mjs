@@ -128,8 +128,8 @@ function buildVisualPrompt(product) {
 export class HeyGenVideoGenerator {
   constructor(apiKey) {
     this.apiKey = apiKey || process.env.HEYGEN_API_KEY;
-    this.baseUrl = 'https://api.heygen.com/v2';
-    this.baseUrlV1 = 'https://api.heygen.com/v1';
+    this.baseUrl = 'https://api.heygen.com/v3';
+    this.baseUrlV1 = null;
     this.cachedAvatarId = null;
     this.cachedVoiceId = null;
     this.requestTimeoutMs = Number(process.env.HEYGEN_REQUEST_TIMEOUT_MS || 30000);
@@ -207,7 +207,7 @@ export class HeyGenVideoGenerator {
       this.log(`Creating video: ${title}`);
 
       if (!voiceId) {
-        throw new Error('HeyGen voice_id is required for v2/video/generate. Resolve a valid voice before creating video.');
+        throw new Error('HeyGen voice_id is required for avatar video generation. Resolve a valid voice before creating video.');
       }
 
       const usePlainBrandBackground = process.env.HEYGEN_FORCE_COLOR_BACKGROUND === '1';
@@ -221,32 +221,22 @@ export class HeyGenVideoGenerator {
             };
 
       const videoData = {
-        video_inputs: [
-          {
-            character: {
-              type: 'avatar',
-              avatar_id: avatarId,
-              avatar_style: 'normal',
-              scale: 0.82,
-              offset: { x: -0.28, y: 0.04 },
-            },
-            voice: {
-              type: 'text',
-              input_text: script,
-              voice_id: voiceId,
-              speed: 1.03,
-            },
-            background: backgroundData,
-          }
-        ],
-        dimension: { width: 1280, height: 720 },
+        type: 'avatar',
+        avatar_id: avatarId,
+        script,
+        voice_id: voiceId,
+        voice_settings: { speed: 1.03 },
+        resolution: '1080p',
         aspect_ratio: '16:9',
-        test: process.env.HEYGEN_TEST_MODE === '1',
-        caption: true,
-        callback_id: `nws_${Date.now()}`,
+        caption: { file_format: 'srt', style: 'default' },
+        output_format: 'mp4',
+        title,
+        // v3 backgrounds accept a color value or a real image URL.
+        ...(usePlainBrandBackground ? { background: { value: background } } :
+          productImage ? { background: { url: productImage } } : {}),
       };
 
-      const response = await this.fetchWithRetry(`${this.baseUrl}/video/generate`, {
+      const response = await this.fetchWithRetry(`${this.baseUrl}/videos`, {
         method: 'POST',
         headers: {
           'X-Api-Key': this.apiKey,
@@ -276,41 +266,16 @@ export class HeyGenVideoGenerator {
 
   async getVideoStatus(videoId) {
     try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/video/${videoId}`, {
+      const response = await this.fetchWithRetry(`${this.baseUrl}/videos/${encodeURIComponent(videoId)}`, {
         headers: { 'X-Api-Key': this.apiKey }
-      }, {
-        label: 'video-status-v2',
-        retries: this.maxRetries,
-        timeoutMs: this.requestTimeoutMs,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        return {
-          status: result.data.status,
-          progress: result.data.progress || 0,
-          videoUrl: result.data.video_url,
-          thumbnailUrl: result.data.thumbnail_url,
-          duration: result.data.duration,
-          error: result.data.error,
-        };
-      }
-
-      const fallback = await this.fetchWithRetry(`${this.baseUrlV1}/video_status.get?video_id=${encodeURIComponent(videoId)}`, {
-        headers: { 'X-Api-Key': this.apiKey }
-      }, {
-        label: 'video-status-v1',
-        retries: this.maxRetries,
-        timeoutMs: this.requestTimeoutMs,
-      });
-      if (!fallback.ok) throw new Error(`Status check failed: ${response.status}/${fallback.status}`);
-
-      const fallbackResult = await fallback.json();
-      const data = fallbackResult?.data || {};
+      }, { label: 'video-status-v3', retries: this.maxRetries, timeoutMs: this.requestTimeoutMs });
+      if (!response.ok) throw new Error(`Status check failed: HTTP ${response.status}`);
+      const result = await response.json();
+      const data = result.data || result;
       return {
         status: data.status,
         progress: data.progress || 0,
-        videoUrl: data.video_url,
+        videoUrl: data.video_url || data.url,
         thumbnailUrl: data.thumbnail_url,
         duration: data.duration,
         error: data.error,
@@ -378,7 +343,7 @@ export class HeyGenVideoGenerator {
       });
       if (!response.ok) throw new Error(`Failed to fetch avatars: ${response.status}`);
       const result = await response.json();
-      return result.data.avatars || [];
+      return result.data?.avatars || result.data?.groups || result.data?.items || [];
     } catch (error) {
       this.log(`Failed to get avatars: ${error.message}`);
       throw error;
@@ -386,35 +351,12 @@ export class HeyGenVideoGenerator {
   }
 
   async getVoices() {
-    try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/voices`, {
-        headers: { 'X-Api-Key': this.apiKey }
-      }, {
-        label: 'get-voices-v2',
-        retries: this.maxRetries,
-        timeoutMs: this.requestTimeoutMs,
-      });
-      if (response.ok) {
-        const result = await response.json();
-        if (Array.isArray(result?.data?.voices) && result.data.voices.length > 0) return result.data.voices;
-      }
-
-      const fallbackResponse = await this.fetchWithRetry(`${this.baseUrlV1}/voice.list`, {
-        headers: { 'X-Api-Key': this.apiKey }
-      }, {
-        label: 'get-voices-v1',
-        retries: this.maxRetries,
-        timeoutMs: this.requestTimeoutMs,
-      });
-      if (!fallbackResponse.ok) throw new Error(`Failed to fetch voices: ${fallbackResponse.status}`);
-      const fallbackResult = await fallbackResponse.json();
-      if (Array.isArray(fallbackResult?.data?.voices) && fallbackResult.data.voices.length > 0) return fallbackResult.data.voices;
-      if (Array.isArray(fallbackResult?.data?.list) && fallbackResult.data.list.length > 0) return fallbackResult.data.list;
-      return [];
-    } catch (error) {
-      this.log(`Failed to get voices: ${error.message}`);
-      throw error;
-    }
+    const response = await this.fetchWithRetry(`${this.baseUrl}/voices`, {
+      headers: { 'X-Api-Key': this.apiKey }
+    }, { label: 'get-voices-v3', retries: this.maxRetries, timeoutMs: this.requestTimeoutMs });
+    if (!response.ok) throw new Error(`Failed to fetch voices: HTTP ${response.status}`);
+    const result = await response.json();
+    return result.data?.voices || result.data?.items || [];
   }
 
   async resolveAvatarId(preferredAvatarId = DEFAULT_HEYGEN_AVATAR_ID) {
