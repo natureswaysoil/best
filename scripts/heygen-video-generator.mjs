@@ -334,7 +334,7 @@ export class HeyGenVideoGenerator {
 
   async getAvatars() {
     try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/avatars`, {
+      const response = await this.fetchWithRetry(`${this.baseUrl}/avatars/looks`, {
         headers: { 'X-Api-Key': this.apiKey }
       }, {
         label: 'get-avatars',
@@ -343,7 +343,7 @@ export class HeyGenVideoGenerator {
       });
       if (!response.ok) throw new Error(`Failed to fetch avatars: ${response.status}`);
       const result = await response.json();
-      return result.data?.avatars || result.data?.groups || result.data?.items || [];
+      return result.data?.looks || result.data?.avatars || result.data?.items || [];
     } catch (error) {
       this.log(`Failed to get avatars: ${error.message}`);
       throw error;
@@ -369,7 +369,7 @@ export class HeyGenVideoGenerator {
     const preferred = avatars.find((a) => a.avatar_id === preferredAvatarId || a.id === preferredAvatarId);
     const defaultAvatar = avatars.find((a) => a.avatar_id === DEFAULT_HEYGEN_AVATAR_ID || a.id === DEFAULT_HEYGEN_AVATAR_ID);
     const fallback = preferred || defaultAvatar || avatars[0];
-    const avatarId = fallback.avatar_id || fallback.id;
+    const avatarId = fallback.avatar_id || fallback.look_id || fallback.id;
     if (!avatarId) throw new Error('Unable to resolve HeyGen avatar ID');
 
     this.cachedAvatarId = avatarId;
