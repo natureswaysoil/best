@@ -285,90 +285,11 @@ export class HeyGenMarketingVideoGenerator extends BaseHeyGenVideoGenerator {
     });
   }
 
-  // Override createVideo to emit 5 scenes with Pexels b-roll backgrounds
-  // and avatar pinned to the lower-right corner.
-  async createVideo({
-    script,
-    title,
-    avatarId,
-    voiceId,
-    background = '#0d3b2a',
-    productImage = null,
-    product = null,
-  }) {
-    if (!voiceId) {
-      throw new Error('HeyGen voice_id is required for v2/video/generate.');
-    }
-
-    this.log(`Creating 5-scene marketing video: ${title}`);
-
-    const ctx = getMarketingContext(product || {});
-    const farm = isPastureOrFarm(product || {});
-    const sceneQueries = farm ? SCENE_QUERIES_FARM : SCENE_QUERIES_GARDEN;
-    const customBroll = Array.isArray(ctx.brollScenes) ? ctx.brollScenes.filter(Boolean) : [];
-    const sceneScripts = splitScriptIntoFiveScenes(script, ctx);
-
-    const video_inputs = [];
-    for (let i = 0; i < 5; i++) {
-      const queries = [];
-      if (customBroll[i]) queries.push(customBroll[i]);
-      queries.push(...sceneQueries[i]);
-
-      const bgUrl = await fetchPexelsBackground(queries);
-      const sceneBackground = bgUrl
-        ? { type: 'video', url: bgUrl, play_style: 'fit_to_scene' }
-        : (i === 0 && productImage)
-          ? { type: 'image', url: productImage, fit: 'cover' }
-          : { type: 'color', value: background };
-
-      video_inputs.push({
-        character: {
-          type: 'avatar',
-          avatar_id: avatarId,
-          avatar_style: 'normal',
-          scale: 0.32,
-          offset: { x: 0.33, y: 0.33 },
-        },
-        voice: {
-          type: 'text',
-          input_text: sceneScripts[i],
-          voice_id: voiceId,
-          speed: 1.03,
-        },
-        background: sceneBackground,
-      });
-    }
-
-    const videoData = {
-      video_inputs,
-      dimension: { width: 1920, height: 1080 },
-      aspect_ratio: '16:9',
-      test: process.env.HEYGEN_TEST_MODE === '1',
-      caption: true,
-      callback_id: `nws_mkt_${Date.now()}`,
-    };
-
-    const response = await this.fetchWithRetry(`${this.baseUrl}/video/generate`, {
-      method: 'POST',
-      headers: {
-        'X-Api-Key': this.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(videoData),
-    }, {
-      label: 'create-video-marketing-5scene',
-      retries: this.maxRetries,
-      timeoutMs: this.requestTimeoutMs,
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`HeyGen API error (5-scene): ${response.status} - ${error}`);
-    }
-
-    const result = await response.json();
-    this.log(`5-scene video creation initiated - Video ID: ${result.data.video_id}`);
-    return { videoId: result.data.video_id, status: 'processing', title };
+  // v3 uses a single avatar-video request. Preserve the marketing script
+  // and product image rather than sending unsupported v2 video_inputs.
+  async createVideo({ script, title, avatarId, voiceId, background = '#0d3b2a', productImage = null, product = null }) {
+    if (!voiceId) throw new Error('HeyGen voice_id is required for v3 video generation.');
+    return super.createVideo({ script, title, avatarId, voiceId, background, productImage, product });
   }
 }
 
