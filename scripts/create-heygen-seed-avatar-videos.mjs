@@ -138,48 +138,16 @@ async function createAvatarVideo(generator, product) {
   console.log(`Using HeyGen avatar: ${avatarId}`);
   console.log(`Using HeyGen voice: ${voiceId}`);
 
-  const videoData = {
-    video_inputs: [
-      {
-        character: {
-          type: 'avatar',
-          avatar_id: avatarId,
-          avatar_style: 'normal',
-          scale: 0.82,
-          offset: { x: -0.28, y: 0.04 }
-        },
-        voice: {
-          type: 'text',
-          input_text: script,
-          voice_id: voiceId,
-          speed: 1.03
-        },
-        background: backgroundFor(product)
-      }
-    ],
-    dimension: { width: 1280, height: 720 },
-    aspect_ratio: '16:9',
-    test: process.env.HEYGEN_TEST_MODE === '1',
-    caption: true,
-    callback_id: `nws_seed_${product.id}_${Date.now()}`
-  };
-
-  const response = await generator.fetchWithRetry(`${generator.baseUrl}/video/generate`, {
-    method: 'POST',
-    headers: {
-      'X-Api-Key': generator.apiKey,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(videoData)
-  }, { label: `seed-avatar-${product.id}`, timeoutMs: generator.requestTimeoutMs, retries: generator.maxRetries });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => '');
-    throw new Error(`HeyGen create failed for ${product.id}: HTTP ${response.status} ${body}`);
-  }
-
-  const result = await response.json();
-  const videoId = result.data.video_id;
+  const created = await generator.createVideo({
+    script,
+    title,
+    avatarId,
+    voiceId,
+    productImage: product.image || null,
+    background: '#0d3b2a',
+    product,
+  });
+  const videoId = created.videoId;
   console.log(`HeyGen video started: ${videoId}`);
   const complete = await generator.waitForCompletion(videoId, MAX_WAIT_MS);
   const outFile = path.join(OUT_DIR, `${product.id}-${AVATAR_SUFFIX}.mp4`);
