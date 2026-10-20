@@ -25,7 +25,7 @@ async def generate_tts(api_key, text, out_path):
     headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
     payload = {"voice_id": VOICE_ID, "text": text, "speed": 0.95}
     async with aiohttp.ClientSession() as session:
-        async with session.post("https://api.heygen.com/v1/audio/text_to_speech", headers=headers, json=payload) as r:
+        async with session.post("https://api.heygen.com/v3/voices/speech", headers=headers, json=payload) as r:
             data = await r.json()
             if not data.get("data", {}).get("audio_url"):
                 raise RuntimeError(f"TTS failed: {data}")

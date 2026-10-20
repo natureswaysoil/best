@@ -77,7 +77,7 @@ async function checkHeyGenReachability(apiKey, timeoutMs = 8000) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch('https://api.heygen.com/v2/avatars', {
+    const response = await fetch('https://api.heygen.com/v3/users/me', {
       method: 'GET',
       headers: {
         'X-Api-Key': apiKey,
