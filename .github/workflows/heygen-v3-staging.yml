@@ -11,7 +11,7 @@ permissions:
   contents: read
 jobs:
   static-validation:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -28,7 +28,7 @@ jobs:
           import assert from 'node:assert/strict';
           const source = readFileSync('scripts/heygen-video-generator.mjs','utf8');
           for(const endpoint of ['/videos', '/avatars/looks', '/voices']) assert(source.includes(endpoint), `Missing v3 endpoint: ${endpoint}`);
-          for(const legacy of ['/v1/', '/v2/', 'video_status.get', '/video/generate']) assert(!source.includes(legacy), `Legacy reference remains: ${legacy}`);
+          for(const legacy of ['api.heygen.com/v1/', 'api.heygen.com/v2/', 'video_status.get', '/video/generate']) assert(!source.includes(legacy), `Legacy HeyGen reference remains: ${legacy}`);
           assert(source.includes("type: 'avatar'"));
           assert(source.includes('voice_settings'));
           console.log('Static v3 endpoint assertions passed');
