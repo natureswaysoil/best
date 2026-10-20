@@ -7,12 +7,18 @@ permissions:
   contents: read
 jobs:
   render-once:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
+      - name: Download migration branch without broken submodule checkout
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 "https://codeload.github.com/${GITHUB_REPOSITORY}/tar.gz/refs/heads/${GITHUB_REF_NAME}" -o /tmp/repo.tar.gz
+          tar -xzf /tmp/repo.tar.gz --strip-components=1
+          test -f scripts/verify-heygen-v3.mjs
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
