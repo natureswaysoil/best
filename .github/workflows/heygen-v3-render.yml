@@ -13,10 +13,10 @@ jobs:
       - name: Download migration branch without broken submodule checkout
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 "https://codeload.github.com/${GITHUB_REPOSITORY}/tar.gz/refs/heads/${GITHUB_REF_NAME}" -o /tmp/repo.tar.gz
+          curl --fail --location --retry 3 "https://codeload.github.com/${GITHUB_REPOSITORY}/tar.gz/${GITHUB_COMMIT_SHA}" -o /tmp/repo.tar.gz
           tar -xzf /tmp/repo.tar.gz --strip-components=1
           test -f scripts/verify-heygen-v3.mjs
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
