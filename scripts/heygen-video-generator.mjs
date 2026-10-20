@@ -366,8 +366,8 @@ export class HeyGenVideoGenerator {
     const avatars = await this.getAvatars();
     if (!avatars.length) throw new Error('No HeyGen avatars available for this account');
 
-    const preferred = avatars.find((a) => a.avatar_id === preferredAvatarId || a.id === preferredAvatarId);
-    const defaultAvatar = avatars.find((a) => a.avatar_id === DEFAULT_HEYGEN_AVATAR_ID || a.id === DEFAULT_HEYGEN_AVATAR_ID);
+    const preferred = avatars.find((a) => a.avatar_id === preferredAvatarId || a.look_id === preferredAvatarId || a.id === preferredAvatarId);
+    const defaultAvatar = avatars.find((a) => a.avatar_id === DEFAULT_HEYGEN_AVATAR_ID || a.look_id === DEFAULT_HEYGEN_AVATAR_ID || a.id === DEFAULT_HEYGEN_AVATAR_ID);
     const fallback = preferred || defaultAvatar || avatars[0];
     const avatarId = fallback.avatar_id || fallback.look_id || fallback.id;
     if (!avatarId) throw new Error('Unable to resolve HeyGen avatar ID');
