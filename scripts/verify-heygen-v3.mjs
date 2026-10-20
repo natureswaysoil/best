@@ -1,59 +1,43 @@
 #!/usr/bin/env node
-// One-video HeyGen v3 release gate; no social publishing.
+// Authenticate and exercise the actual shared v3 HeyGen client, without social publishing.
+import { HeyGenVideoGenerator } from './heygen-video-generator.mjs';
+
 const key = process.env.HEYGEN_API_KEY;
-if (!key) throw new Error('Missing GitHub Actions secret HEYGEN_API_KEY');
-const base = 'https://api.heygen.com';
-const headers = { 'X-Api-Key': key, 'Content-Type': 'application/json' };
-async function req(method, route, body) {
-  const response = await fetch(base + route, {
-    method, headers, ...(body ? { body: JSON.stringify(body) } : {}),
-    signal: AbortSignal.timeout(45000)
-  });
-  const json = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(route + ' returned HTTP ' + response.status + ': ' + (json.error?.message || json.message || 'unspecified'));
-  return json.data || json;
-}
-const first = x => Array.isArray(x) ? x : x?.items || x?.looks || x?.voices || x?.data || [];
-const user = await req('GET', '/v3/users/me');
-console.log('PASS: authenticated v3 user');
-const looks = await req('GET', '/v3/avatars/looks');
-const voices = await req('GET', '/v3/voices');
-const lookList = first(looks);
-const voiceList = first(voices);
-const preferredAvatar = process.env.HEYGEN_AVATAR_ID;
-const preferredVoice = process.env.HEYGEN_VOICE_ID;
-const avatarId = preferredAvatar || lookList[0]?.avatar_id || lookList[0]?.look_id || lookList[0]?.id;
-const voiceId = preferredVoice || voiceList[0]?.voice_id || voiceList[0]?.id;
-if (!avatarId || !voiceId) throw new Error('No avatar look or voice available. Set HEYGEN_AVATAR_ID and HEYGEN_VOICE_ID as Actions variables.');
-console.log('PASS: v3 avatar-look and voice discovery');
-const payload = {
-  type: 'avatar', avatar_id: avatarId, voice_id: voiceId,
+if (!key) throw new Error('Missing HEYGEN_API_KEY GitHub Actions secret');
+const client = new HeyGenVideoGenerator(key);
+const response = await client.fetchWithRetry('https://api.heygen.com/v3/users/me', {
+  headers: { 'X-Api-Key': key },
+}, { label: 'v3-authentication' });
+if (!response.ok) throw new Error('HeyGen v3 authentication returned HTTP ' + response.status);
+console.log('PASS: HeyGen v3 authentication');
+
+const avatarId = await client.resolveAvatarId(process.env.HEYGEN_AVATAR_ID || undefined);
+const voiceId = await client.resolveVoiceId(process.env.HEYGEN_VOICE_ID || undefined);
+if (!avatarId || !voiceId) throw new Error('Could not resolve avatar look and voice IDs');
+console.log('PASS: shared-client avatar look and voice resolution');
+
+const created = await client.createVideo({
+  script: "Hello from Nature's Way Soil. This is an unpublished verification of the upgraded HeyGen video system.",
   title: 'Nature Way Soil v3 staging verification',
-  script: 'Hello from Nature\'s Way Soil. This is a short test of our upgraded HeyGen video system.',
-  voice_settings: { speed: 1 },
-  aspect_ratio: '16:9', resolution: '720p',
-  background: { value: '#0d3b2a' },
-  output_format: 'mp4'
-};
-const created = await req('POST', '/v3/videos', payload);
-const id = created.video_id || created.id;
-if (!id) throw new Error('Create returned no video ID');
-console.log('PASS: v3 create accepted, video ID: ' + id);
-const until = Date.now() + 20*60*1000;
-let url;
-while (Date.now() < until) {
-  await new Promise(r => setTimeout(r, 15000));
-  const d = await req('GET', '/v3/videos/' + encodeURIComponent(id));
-  const status = String(d.status || '').toLowerCase();
-  if (['failed','error','cancelled'].includes(status)) throw new Error('Render failed: ' + (d.error?.message || d.error_message || status));
-  if (['completed','success'].includes(status)) { url = d.video_url || d.url; break; }
+  avatarId,
+  voiceId,
+  background: '#0d3b2a',
+  productImage: process.env.HEYGEN_TEST_PRODUCT_IMAGE_URL || null,
+  product: { name: "Nature's Way Soil", category: 'organic garden soil products' },
+});
+if (!created.videoId) throw new Error('Shared client did not return a video ID');
+console.log('PASS: v3 shared-client creation, ID: ' + created.videoId);
+
+const completed = await client.waitForCompletion(created.videoId, 20 * 60 * 1000);
+const videoUrl = completed.videoUrl;
+if (!videoUrl) throw new Error('Completed render has no video URL');
+const url = new URL(videoUrl);
+if (url.protocol !== 'https:') throw new Error('Unexpected video URL protocol');
+const downloaded = await fetch(url, { signal: AbortSignal.timeout(120000) });
+if (!downloaded.ok) throw new Error('Video download returned HTTP ' + downloaded.status);
+const buffer = Buffer.from(await downloaded.arrayBuffer());
+if (buffer.length < 10000 || buffer.toString('ascii', 4, 8) !== 'ftyp') {
+  throw new Error('Video response is not a valid-size MP4');
 }
-if (!url) throw new Error('Render did not finish with a downloadable URL within 20 minutes');
-const u = new URL(url);
-if (u.protocol !== 'https:') throw new Error('Unsafe download URL');
-const res = await fetch(url, {signal: AbortSignal.timeout(120000)});
-if (!res.ok) throw new Error('MP4 download failed HTTP ' + res.status);
-const buf = Buffer.from(await res.arrayBuffer());
-if (buf.length < 10000 || buf.toString('ascii',4,8)!=='ftyp') throw new Error('Download is not a valid-size MP4');
-console.log('PASS: v3 render and MP4 download (' + buf.length + ' bytes).');
+console.log('PASS: shared-client v3 render and MP4 download (' + buffer.length + ' bytes)');
 console.log('RELEASE_GATE=PASS');
