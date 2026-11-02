@@ -16,7 +16,7 @@ interface Product {
   category: string;
 }
 
-interface HomeProps { featuredProducts: Product[] }
+interface HomeProps { featuredProducts: Product[]; boneMealSizes: Array<{ name: string; price: number }> }
 
 const problems = [
   { title: 'Dog urine spots or lawn odor?', text: 'Start with the lawn-repair system built for pet areas.', href: '/dog-urine-lawn-repair', cta: 'Fix pet lawn problems', icon: Dog },
@@ -35,7 +35,7 @@ function productAction(name: string) {
   return 'See Product';
 }
 
-export default function Home({ featuredProducts }: HomeProps) {
+export default function Home({ featuredProducts, boneMealSizes }: HomeProps) {
   return <>
     <SEO
       title="Nature's Way Soil | Lawn, Soil, Garden & Pasture Solutions"
@@ -70,6 +70,30 @@ export default function Home({ featuredProducts }: HomeProps) {
                 <span className="font-semibold text-nature-green-700 flex items-center gap-2">{cta}<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 bg-gradient-to-br from-amber-50 via-white to-nature-green-50 border-b" aria-labelledby="bone-meal-spotlight">
+        <div className="max-w-6xl mx-auto container-padding grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <Link href="/product/NWS_012" className="relative block aspect-square max-w-md w-full mx-auto bg-white rounded-3xl border shadow-sm overflow-hidden">
+            <Image src="/images/products/NWS_012/main.jpg" alt="Nature's Way Soil Liquid Bone Meal Fertilizer label" fill sizes="(max-width: 768px) 100vw, 448px" className="object-contain p-6" />
+            <span className="absolute top-4 left-4 bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full tracking-wide">HARD TO FIND</span>
+          </Link>
+          <div>
+            <p className="text-sm font-bold tracking-widest text-amber-700 uppercase mb-3">Spotlight</p>
+            <h2 id="bone-meal-spotlight" className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Liquid Bone Meal Fertilizer</h2>
+            <p className="text-lg text-gray-700 mb-5">Most bone meal is sold as a dry powder that takes time to break down. Ours is <strong>liquid</strong>, which few sellers offer. Mix it with water and pour it right into the root zone.</p>
+            <ul className="space-y-2 mb-6 text-gray-700">
+              <li className="flex gap-2"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none mt-0.5" />25% hydrolyzed bone meal with 10% phosphorus and 5% calcium</li>
+              <li className="flex gap-2"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none mt-0.5" />Supports root development, flowering and fruit set</li>
+              <li className="flex gap-2"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none mt-0.5" />For vegetables, flowers, fruit trees and shrubs: 3 oz per gallon of water</li>
+            </ul>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/product/NWS_012" className="btn-primary inline-flex items-center">Shop Liquid Bone Meal<ArrowRight className="w-4 h-4 ml-2" /></Link>
+              {boneMealSizes.length > 0 && <span className="text-gray-700">{boneMealSizes.map((size, i) => <span key={size.name}>{i > 0 && ' · '}{i === 0 ? <span className="text-2xl font-bold text-gray-900">${size.price.toFixed(2)}</span> : `$${size.price.toFixed(2)}`} {size.name}</span>)}</span>}
+            </div>
+            <p className="mt-3 text-sm font-semibold text-amber-800">15% off your first order with code SAVE15</p>
           </div>
         </div>
       </section>
@@ -148,5 +172,8 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
     description: p.description,
     category: p.category
   }));
-  return { props: { featuredProducts } };
+  const boneMeal = allProducts.find(p => p.id === 'NWS_012');
+  const boneMealSizes = (boneMeal?.sizes?.length ? boneMeal.sizes : boneMeal ? [{ name: 'Standard', price: boneMeal.price }] : [])
+    .map(({ name, price }) => ({ name, price }));
+  return { props: { featuredProducts, boneMealSizes } };
 };
