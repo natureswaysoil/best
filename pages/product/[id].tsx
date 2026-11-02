@@ -97,7 +97,8 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     image: imageOverride?.image ?? productData.image,
     // Prefer configured catalog media so website videos can be versioned independently of social assets.
     ...((productData.video && { video: productData.video }) || (hasLocalVideo && { video: localVideoPath })),
-    ...(hasLocalWebm && { videoWebm: localWebmPath }),
+    // Only fall back to a local .webm when no catalog video is configured, so an updated video isn't paired with an old one.
+    ...(!productData.video && hasLocalWebm && { videoWebm: localWebmPath }),
     ...((productData.videoPoster && { videoPoster: productData.videoPoster }) || (hasLocalPoster && { videoPoster: localPosterPath })),
     inStock: productData.inStock,
     category: productData.category,

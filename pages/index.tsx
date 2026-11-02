@@ -76,10 +76,19 @@ export default function Home({ featuredProducts, boneMealSizes }: HomeProps) {
 
       <section className="py-12 md:py-16 bg-gradient-to-br from-amber-50 via-white to-nature-green-50 border-b" aria-labelledby="bone-meal-spotlight">
         <div className="max-w-6xl mx-auto container-padding grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-          <Link href="/product/NWS_012" className="relative block aspect-square max-w-md w-full mx-auto bg-white rounded-3xl border shadow-sm overflow-hidden">
-            <Image src="/images/products/NWS_012/main.jpg" alt="Nature's Way Soil Liquid Bone Meal Fertilizer label" fill sizes="(max-width: 768px) 100vw, 448px" className="object-contain p-6" />
-            <span className="absolute top-4 left-4 bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full tracking-wide">HARD TO FIND</span>
-          </Link>
+          <div className="relative w-full max-w-[18rem] md:max-w-xs mx-auto">
+            <video
+              className="w-full aspect-[9/16] rounded-3xl border shadow-lg bg-black object-cover"
+              src="/media/NWS_012-liquid-bone-meal.mp4"
+              poster="/media/NWS_012-liquid-bone-meal.jpg"
+              controls
+              muted
+              playsInline
+              preload="metadata"
+              aria-label="Liquid Bone Meal Fertilizer product video"
+            />
+            <span className="absolute top-4 left-4 bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full tracking-wide pointer-events-none">HARD TO FIND</span>
+          </div>
           <div>
             <p className="text-sm font-bold tracking-widest text-amber-700 uppercase mb-3">Spotlight</p>
             <h2 id="bone-meal-spotlight" className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Liquid Bone Meal Fertilizer</h2>
