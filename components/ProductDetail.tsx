@@ -95,7 +95,8 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       fireAddToCartEvents();
       const payload = { ...cartPayload(), productImage: heroImage };
       window.sessionStorage.setItem('nws-checkout-selection', JSON.stringify(payload));
-      await router.push('/checkout');
+      // Pre-apply the first-order code so shoppers never have to hunt for it.
+      await router.push('/checkout?coupon=SAVE15');
     } catch (error) {
       console.error('Unable to prepare checkout', error);
       alert('Unable to prepare checkout. Please reach out to support.');
@@ -115,10 +116,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   };
 
   return <Layout>
-    <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 pb-28 md:pb-10">
+    <div className="max-w-7xl mx-auto px-4 py-6 md:py-10 pb-28 lg:pb-10">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
         <div className="lg:sticky lg:top-24">
-          {(product.video || product.videoWebm) && !videoFailed ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-[9/16] max-w-md mx-auto">
+          {(product.video || product.videoWebm) && !videoFailed ? <div className="relative bg-black rounded-2xl overflow-hidden border aspect-[9/16] w-full max-w-[min(28rem,24vh)] lg:max-w-md mx-auto">
             <video ref={videoRef} className="w-full h-full object-contain" poster={heroImage} muted={isVideoMuted} playsInline onError={() => setVideoFailed(true)} onPlay={() => setIsVideoPlaying(true)} onPause={() => setIsVideoPlaying(false)}>
               {product.video && <source src={product.video} type="video/mp4" />}
               {product.videoWebm && <source src={product.videoWebm} type="video/webm" />}
@@ -145,7 +146,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             {product.originalPrice && <span className="text-lg text-gray-400 line-through mb-1">${product.originalPrice.toFixed(2)}</span>}
           </div>
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <div className="font-bold">Save 15% at checkout</div>
+            <div className="font-bold">15% off your first order: code <span className="font-mono tracking-wider">SAVE15</span>, applied automatically</div>
             <div>Estimated savings on this selection: ${estimatedCouponSavings.toFixed(2)} · Approx. after coupon: ${estimatedAfterCoupon.toFixed(2)}</div>
           </div>
 
@@ -174,7 +175,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <button onClick={handleBuyNow} disabled={!product.inStock || isSubmitting} className="w-full py-4 rounded-xl font-bold text-lg bg-nature-green-700 hover:bg-nature-green-800 text-white disabled:opacity-50">
               {!product.inStock ? 'Out of Stock' : isSubmitting ? 'Opening Secure Checkout…' : `Buy Now — $${totalPrice.toFixed(2)}`}
             </button>
-            <p className="text-center text-sm text-gray-500">Secure checkout · Apply your 15% coupon at checkout · No account required</p>
+            <p className="text-center text-sm text-gray-500">Secure checkout · SAVE15 applied automatically · No account required</p>
           </div>
 
           <div className="bg-gray-50 border rounded-2xl p-5 mb-8">
@@ -192,9 +193,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       </div>
     </div>
 
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl px-4 py-3 flex items-center gap-3">
-      <div className="flex-1 min-w-0"><div className="text-xs text-gray-500 truncate">15% coupon at checkout · {selectedSize}</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
-      <button onClick={handleAddToCart} disabled={!product.inStock} className="bg-nature-green-700 text-white font-bold px-5 py-3 rounded-xl">Add to Cart</button>
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl px-4 py-3 flex items-center gap-3">
+      <div className="flex-1 min-w-0"><div className="text-xs text-gray-500 truncate">{selectedSize} · SAVE15 applied at checkout</div><div className="font-bold text-lg">${totalPrice.toFixed(2)}</div></div>
+      <button onClick={handleAddToCart} disabled={!product.inStock} className="border-2 border-nature-green-700 text-nature-green-800 font-bold px-4 py-3 rounded-xl disabled:opacity-50">{added ? 'Added ✓' : 'Add to Cart'}</button>
+      <button onClick={handleBuyNow} disabled={!product.inStock || isSubmitting} className="bg-nature-green-700 text-white font-bold px-4 py-3 rounded-xl disabled:opacity-50">{isSubmitting ? '…' : 'Buy Now'}</button>
     </div>
   </Layout>;
 }

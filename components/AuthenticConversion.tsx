@@ -143,6 +143,26 @@ export const HonestValue = ({ product }: { product: ProductInfo }) => {
 // (e.g. broadcast/drench pasture products lumped into the general 'Fertilizer'
 // category, which otherwise defaults to container/houseplant copy below).
 const productGuidanceOverrides: Record<string, { whenToUse: string[]; bestFor: string[]; seasonalTips: string[] }> = {
+  NWS_014: {
+    whenToUse: [
+      'Yellow or brown spots where pets regularly go',
+      'Lawn areas with lingering urine odor',
+      'Thin or patchy turf in high-traffic pet areas',
+      'Ongoing maintenance in dog runs and favorite potty spots'
+    ],
+    bestFor: [
+      'Homeowners with dogs who want a non-dye, soil-level approach',
+      'Fresh spots treated soon after they appear',
+      'Older burn spots that need repeated treatment and patience',
+      'Yards where kids and pets play (use as directed)'
+    ],
+    seasonalTips: [
+      'Spring: Treat spots as grass greens up so recovering areas fill in during active growth',
+      'Summer: Apply in the cooler morning or evening and keep treated spots watered',
+      'Fall: A good time to treat old spots and overseed bare areas',
+      'Winter: Grass recovers slowly while dormant; keep treating odor-prone areas as needed'
+    ]
+  },
   NWS_022: {
     whenToUse: [
       'Pastures and hay fields showing thin stands, slow green-up, or poor regrowth after cutting/grazing',
@@ -236,6 +256,25 @@ export const PracticalGuidance = ({ product }: { product: ProductInfo }) => {
         'Fall: Best time to add - breaks down over winter',
         'Winter: Can be applied but won\'t be active until spring'
       ];
+    } else if (category === 'Lawn Care') {
+      baseGuidance.whenToUse = [
+        'Thin, pale, or slow-growing lawn areas',
+        'Lawns recovering from heat, drought, or heavy traffic',
+        'Compacted turf that needs root-zone support',
+        'Regular feeding during the active growing season'
+      ];
+      baseGuidance.bestFor = [
+        'Homeowners who want a natural, soil-first lawn program',
+        'Lawns where kids and pets play (use as directed)',
+        'Pairing with overseeding and good watering habits',
+        'Building soil health alongside routine lawn care'
+      ];
+      baseGuidance.seasonalTips = [
+        'Spring: Apply as grass greens up to support new root growth',
+        'Summer: Apply in the cooler morning or evening and water in',
+        'Fall: Feed to support roots heading into dormancy',
+        'Winter: Hold off while the lawn is dormant'
+      ];
     } else if (category === 'Soil Amendment') {
       baseGuidance.whenToUse = [
         'Poor drainage or water retention issues',
@@ -255,9 +294,11 @@ export const PracticalGuidance = ({ product }: { product: ProductInfo }) => {
   };
 
   const guidance = getGuidance(product);
+  if (!guidance.whenToUse.length && !guidance.bestFor.length && !guidance.seasonalTips.length) return null;
 
   return (
     <div className="space-y-4">
+      {guidance.whenToUse.length > 0 && (
       <div className="bg-yellow-50 rounded-lg p-4">
         <h4 className="font-medium text-yellow-800 mb-3 flex items-center">
           <span className="mr-2">🎯</span>
@@ -272,7 +313,9 @@ export const PracticalGuidance = ({ product }: { product: ProductInfo }) => {
           ))}
         </ul>
       </div>
+      )}
 
+      {guidance.bestFor.length > 0 && (
       <div className="bg-green-50 rounded-lg p-4">
         <h4 className="font-medium text-green-800 mb-3 flex items-center">
           <span className="mr-2">🌱</span>
@@ -287,6 +330,7 @@ export const PracticalGuidance = ({ product }: { product: ProductInfo }) => {
           ))}
         </ul>
       </div>
+      )}
 
       {guidance.seasonalTips.length > 0 && (
         <div className="bg-purple-50 rounded-lg p-4">
@@ -357,8 +401,12 @@ export const HelpfulContact = ({ className = '' }: { className?: string }) => (
     </p>
     <div className="space-y-2 text-sm">
       <div className="flex items-center gap-2">
+        <span className="text-blue-600">📞</span>
+        <a href="tel:+12525607390" className="text-blue-800 underline">(252) 560-7390</a>
+      </div>
+      <div className="flex items-center gap-2">
         <span className="text-blue-600">📧</span>
-        <span className="text-blue-800">support@natureswaysoil.com</span>
+        <a href="mailto:support@natureswaysoil.com" className="text-blue-800 underline">support@natureswaysoil.com</a>
       </div>
     </div>
   </div>

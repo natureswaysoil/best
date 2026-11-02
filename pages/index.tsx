@@ -16,7 +16,7 @@ interface Product {
   category: string;
 }
 
-interface HomeProps { featuredProducts: Product[] }
+interface HomeProps { featuredProducts: Product[]; boneMealSizes: Array<{ name: string; price: number }> }
 
 const problems = [
   { title: 'Dog urine spots or lawn odor?', text: 'Start with the lawn-repair system built for pet areas.', href: '/dog-urine-lawn-repair', cta: 'Fix pet lawn problems', icon: Dog },
@@ -35,7 +35,7 @@ function productAction(name: string) {
   return 'See Product';
 }
 
-export default function Home({ featuredProducts }: HomeProps) {
+export default function Home({ featuredProducts, boneMealSizes }: HomeProps) {
   return <>
     <SEO
       title="Nature's Way Soil | Lawn, Soil, Garden & Pasture Solutions"
@@ -49,8 +49,8 @@ export default function Home({ featuredProducts }: HomeProps) {
       <section className="bg-amber-50 border-y border-amber-200">
         <div className="max-w-7xl mx-auto container-padding py-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-center">
           <Tag className="w-5 h-5 text-amber-700 flex-none" />
-          <p className="font-bold text-amber-950">Save 15% at checkout</p>
-          <p className="text-sm text-amber-900">Apply your 15% coupon in the promotion-code box before payment.</p>
+          <p className="font-bold text-amber-950">15% off your first order: code <span className="font-mono tracking-wider bg-white border border-amber-300 rounded px-1.5 py-0.5">SAVE15</span></p>
+          <p className="text-sm text-amber-900">Applied automatically when you check out from the cart or with Buy Now.</p>
         </div>
       </section>
 
@@ -70,6 +70,39 @@ export default function Home({ featuredProducts }: HomeProps) {
                 <span className="font-semibold text-nature-green-700 flex items-center gap-2">{cta}<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></span>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 bg-gradient-to-br from-amber-50 via-white to-nature-green-50 border-b" aria-labelledby="bone-meal-spotlight">
+        <div className="max-w-6xl mx-auto container-padding grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+          <div className="relative w-full max-w-[18rem] md:max-w-xs mx-auto">
+            <video
+              className="w-full aspect-[9/16] rounded-3xl border shadow-lg bg-black object-cover"
+              src="/media/NWS_012-liquid-bone-meal.mp4"
+              poster="/media/NWS_012-liquid-bone-meal.jpg"
+              controls
+              muted
+              playsInline
+              preload="metadata"
+              aria-label="Liquid Bone Meal Fertilizer product video"
+            />
+            <span className="absolute top-4 left-4 bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-full tracking-wide pointer-events-none">HARD TO FIND</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold tracking-widest text-amber-700 uppercase mb-3">Spotlight</p>
+            <h2 id="bone-meal-spotlight" className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Liquid Bone Meal Fertilizer</h2>
+            <p className="text-lg text-gray-700 mb-5">Most bone meal is sold as a dry powder that takes time to break down. Ours is <strong>liquid</strong>, which few sellers offer. Mix it with water and pour it right into the root zone.</p>
+            <ul className="space-y-2 mb-6 text-gray-700">
+              <li className="flex gap-2"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none mt-0.5" />25% hydrolyzed bone meal with 10% phosphorus and 5% calcium</li>
+              <li className="flex gap-2"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none mt-0.5" />Supports root development, flowering and fruit set</li>
+              <li className="flex gap-2"><BadgeCheck className="w-5 h-5 text-nature-green-700 flex-none mt-0.5" />For vegetables, flowers, fruit trees and shrubs: 3 oz per gallon of water</li>
+            </ul>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/product/NWS_012" className="btn-primary inline-flex items-center">Shop Liquid Bone Meal<ArrowRight className="w-4 h-4 ml-2" /></Link>
+              {boneMealSizes.length > 0 && <span className="text-gray-700">{boneMealSizes.map((size, i) => <span key={size.name}>{i > 0 && ' · '}{i === 0 ? <span className="text-2xl font-bold text-gray-900">${size.price.toFixed(2)}</span> : `$${size.price.toFixed(2)}`} {size.name}</span>)}</span>}
+            </div>
+            <p className="mt-3 text-sm font-semibold text-amber-800">15% off your first order with code SAVE15</p>
           </div>
         </div>
       </section>
@@ -99,7 +132,7 @@ export default function Home({ featuredProducts }: HomeProps) {
                     <div><span className="text-sm text-gray-500">From</span><div className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</div></div>
                     <Link href={`/product/${product.id}`} className="btn-primary text-sm px-4 py-2.5">{productAction(product.name)}</Link>
                   </div>
-                  <p className="mt-3 text-xs font-semibold text-amber-800">15% coupon can be applied at checkout.</p>
+                  <p className="mt-3 text-xs font-semibold text-amber-800">15% off first order with code SAVE15</p>
                 </div>
               </article>
             ))}
@@ -109,7 +142,7 @@ export default function Home({ featuredProducts }: HomeProps) {
 
       <section className="py-12 bg-white">
         <div className="max-w-6xl mx-auto container-padding grid md:grid-cols-4 gap-6">
-          <div className="rounded-2xl border p-6"><Tag className="w-7 h-7 text-amber-700 mb-3"/><h3 className="font-bold text-lg mb-2">15% checkout coupon</h3><p className="text-gray-600">Apply the coupon in the promotion-code box before payment.</p></div>
+          <div className="rounded-2xl border p-6"><Tag className="w-7 h-7 text-amber-700 mb-3"/><h3 className="font-bold text-lg mb-2">15% off your first order</h3><p className="text-gray-600">Code <span className="font-mono font-semibold">SAVE15</span> is applied automatically at checkout.</p></div>
           <div className="rounded-2xl border p-6"><BadgeCheck className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">Practical product guidance</h3><p className="text-gray-600">Clear application directions and product-specific use information.</p></div>
           <div className="rounded-2xl border p-6"><Truck className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">Free shipping over $50</h3><p className="text-gray-600">Build a complete solution and unlock free shipping on qualifying orders.</p></div>
           <div className="rounded-2xl border p-6"><Shield className="w-7 h-7 text-nature-green-700 mb-3"/><h3 className="font-bold text-lg mb-2">30-day returns</h3><p className="text-gray-600">Unused products in original packaging can be returned within 30 days.</p></div>
@@ -148,5 +181,8 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
     description: p.description,
     category: p.category
   }));
-  return { props: { featuredProducts } };
+  const boneMeal = allProducts.find(p => p.id === 'NWS_012');
+  const boneMealSizes = (boneMeal?.sizes?.length ? boneMeal.sizes : boneMeal ? [{ name: 'Standard', price: boneMeal.price }] : [])
+    .map(({ name, price }) => ({ name, price }));
+  return { props: { featuredProducts, boneMealSizes } };
 };

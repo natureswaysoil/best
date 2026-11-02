@@ -273,9 +273,8 @@ export const allProducts: ProductData[] = [
       '/images/products/NWS_012/main.jpg',
       '/images/products/NWS_012/thumb.jpg'
     ],
-  video: '/videos/NWS_012-catalog-v2.mp4',
-  videoWebm: '/videos/NWS_012.webm',
-  videoPoster: '/videos/NWS_012-catalog-v2.jpg',
+  video: '/media/NWS_012-liquid-bone-meal.mp4',
+  videoPoster: '/media/NWS_012-liquid-bone-meal.jpg',
     inStock: true,
     sizes: [
       { name: '32 oz', price: 29.99, sku: 'B5-G9JD-1K10' },

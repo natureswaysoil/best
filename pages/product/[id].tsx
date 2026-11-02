@@ -1,7 +1,7 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
 import fs from 'fs';
 import path from 'path';
-import Head from 'next/head';
+import ProductSEO from '../../components/ProductSEO';
 import ProductDetail from '../../components/ProductDetail';
 import { getProductById, getAllProductIds } from '../../data/products';
 
@@ -41,12 +41,7 @@ const productImageOverrides: Record<string, { image: string; images: string[] }>
 export default function ProductPage({ product }: ProductPageProps) {
   return (
     <>
-      <Head>
-        <title>{`${product.name} - Nature's Way Soil`}</title>
-        <meta name="description" content={product.description} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-      
+      <ProductSEO product={product} path={`/product/${encodeURIComponent(product.id)}`} />
       <ProductDetail product={product} />
     </>
   );
@@ -67,32 +62,13 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params }) => {
   const productId = params?.id as string;
-  
-  let productData = getProductById(productId);
 
-  // If product not found in detailed data, create basic product data
+  const productData = getProductById(productId);
+
+  // Unknown IDs must return a real 404 instead of a generic placeholder page,
+  // otherwise search engines index endless thin "Product XYZ" URLs.
   if (!productData) {
-    productData = {
-      id: productId,
-      name: `Nature's Way Soil Product ${productId}`,
-      price: 29.99,
-      image: 'https://images.unsplash.com/photo-1515165562835-c4c24b872fb4?auto=format&fit=crop&w=900&q=80',
-      description: 'Premium natural soil amendment with beneficial microbes, worm castings, and biochar. Part of our living soil product line.',
-      category: 'Soil Amendment',
-      tags: ['natural', 'microbes', 'living-soil'],
-      features: [
-        'Contains billions of beneficial living microbes',
-        'Made with natural, safe ingredients',
-        'Enhances soil structure and water retention',
-        'Improves plant health and yields',
-        'Safe for children, pets, and pollinators',
-        'Made fresh on our family farm',
-        'Easy to use and apply',
-        'Suitable for all garden types'
-      ],
-      images: ['https://images.unsplash.com/photo-1515165562835-c4c24b872fb4?auto=format&fit=crop&w=900&q=80'],
-      inStock: true
-    };
+    return { notFound: true, revalidate: 3600 };
   }
 
   const imageOverride = productImageOverrides[productData.id];
@@ -121,7 +97,8 @@ export const getStaticProps: GetStaticProps<ProductPageProps> = async ({ params 
     image: imageOverride?.image ?? productData.image,
     // Prefer configured catalog media so website videos can be versioned independently of social assets.
     ...((productData.video && { video: productData.video }) || (hasLocalVideo && { video: localVideoPath })),
-    ...(hasLocalWebm && { videoWebm: localWebmPath }),
+    // Only fall back to a local .webm when no catalog video is configured, so an updated video isn't paired with an old one.
+    ...(!productData.video && hasLocalWebm && { videoWebm: localWebmPath }),
     ...((productData.videoPoster && { videoPoster: productData.videoPoster }) || (hasLocalPoster && { videoPoster: localPosterPath })),
     inStock: productData.inStock,
     category: productData.category,
