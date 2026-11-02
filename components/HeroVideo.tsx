@@ -27,12 +27,9 @@ export default function HeroVideoOptimized() {
 
         {/* Content */}
         <div className="relative z-10 text-center text-white px-4 md:px-8">
-          <div className="mx-auto mb-4 w-fit text-white">
-            <p className="text-base tracking-[0.35em] uppercase text-white/80">Nature&apos;s Way Soil</p>
-            <p className="text-2xl md:text-4xl font-extrabold leading-tight">Living Soil Starts Here</p>
-          </div>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
-            Naturally Stronger Soil Starts Here
+          <p className="mx-auto mb-4 w-fit text-sm md:text-base tracking-[0.35em] uppercase text-white/85">Nature&apos;s Way Soil · Family Farm Since 1955</p>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight max-w-5xl mx-auto drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]">
+            Natural Fertilizer for Greener Lawns, Healthier Gardens &amp; Pastures
           </h1>
           <p className="mt-3 md:mt-4 text-base md:text-xl lg:text-2xl opacity-95 max-w-3xl mx-auto">
             Microbe-rich fertilizers, biochar, and compost from our family farm — safe for kids, pets, and pollinators.

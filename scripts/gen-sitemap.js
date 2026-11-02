@@ -21,6 +21,10 @@ const STATIC_ROUTES = [
   'home-garden-fertilizer', 'fruit-tree-fertilizer',
   'lawn-soil-recovery-system', 'living-compost', 'compacted-clay-soil',
   'soil-advisor', 'shipping', 'returns', 'privacy', 'terms',
+  // Dedicated product pages that are not in data/products.ts
+  'product/fruit-tree-fertilizer', 'product/liquid-biochar-soil-conditioner',
+  'product/liquid-kelp-fertilizer', 'product/organic-tomato-fertilizer',
+  'product/lawn-soil-recovery-system',
 ];
 
 // URLs in next.config.js that intentionally redirect. A redirect source must never

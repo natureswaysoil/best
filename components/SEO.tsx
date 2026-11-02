@@ -11,26 +11,34 @@ interface SEOProps {
     availability?: 'InStock' | 'OutOfStock';
     brand?: string;
     sku?: string;
+    name?: string;
+    images?: string[];
+    lowPrice?: number;
+    highPrice?: number;
+    offerCount?: number;
+    category?: string;
   };
+  noindex?: boolean;
 }
 
 export default function SEO({
   title = 'Nature\'s Way Soil - Premium Organic Fertilizer & Soil Amendments | Pet & Kid Safe',
   description = 'Premium organic liquid fertilizers, activated biochar, and living compost. Made fresh weekly on our family farm. Safe for kids, pets & pollinators. Free shipping on orders $50+.',
-  image = 'https://www.natureswaysoil.com/images/og-image.jpg',
+  image = 'https://www.natureswaysoil.com/images/hero-poster.jpg',
   url = 'https://www.natureswaysoil.com',
   type = 'website',
-  productData
+  productData,
+  noindex = false
 }: SEOProps) {
   const siteName = 'Nature\'s Way Soil';
+  const siteUrl = 'https://www.natureswaysoil.com';
 
   // Enhanced structured data
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: siteName,
-    url: url,
-    logo: `${url}/logo.png`,
+    url: siteUrl,
     description: 'Premium organic soil amendments and fertilizers made fresh weekly on our family farm',
     address: {
       '@type': 'PostalAddress',
@@ -48,30 +56,39 @@ export default function SEO({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: siteName,
-    url: url,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${url}/shop?q={search_term_string}`,
-      'query-input': 'required name=search_term_string'
-    }
+    url: siteUrl
   };
 
+  const hasPriceRange = productData?.lowPrice !== undefined && productData?.highPrice !== undefined
+    && productData.lowPrice !== productData.highPrice;
+  const availability = `https://schema.org/${productData?.availability || 'InStock'}`;
   const productSchema = productData ? {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: title,
+    name: productData.name || title,
     description: description,
-    image: image,
+    image: productData.images?.length ? productData.images : [image],
+    url: url,
+    ...(productData.category && { category: productData.category }),
     brand: {
       '@type': 'Brand',
       name: productData.brand || siteName
     },
-    sku: productData.sku,
-    offers: {
-      '@type': 'Offer',
-      price: productData.price,
+    ...(productData.sku && { sku: productData.sku }),
+    offers: hasPriceRange ? {
+      '@type': 'AggregateOffer',
+      lowPrice: productData.lowPrice,
+      highPrice: productData.highPrice,
+      offerCount: productData.offerCount,
       priceCurrency: 'USD',
-      availability: `https://schema.org/${productData.availability || 'InStock'}`,
+      availability,
+      url: url
+    } : {
+      '@type': 'Offer',
+      price: productData.lowPrice ?? productData.price,
+      priceCurrency: 'USD',
+      availability,
+      url: url,
       seller: {
         '@type': 'Organization',
         name: siteName
@@ -80,7 +97,6 @@ export default function SEO({
   } : null;
 
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const localBusinessSchema = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -116,7 +132,7 @@ export default function SEO({
       <meta name="description" content={description} />
       <meta name="keywords" content="organic fertilizer, liquid fertilizer, biochar, living compost, pet safe fertilizer, organic gardening, soil amendment, worm castings, microbes, natural fertilizer" />
       <meta name="author" content="Nature's Way Soil" />
-      <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+      <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'} />
       <link rel="canonical" href={url} />
 
       {/* Open Graph Meta Tags */}
@@ -125,8 +141,6 @@ export default function SEO({
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={image} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
       <meta property="og:url" content={url} />
       <meta property="og:locale" content="en_US" />
 
@@ -141,8 +155,6 @@ export default function SEO({
       {/* Additional SEO Meta Tags */}
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#16a34a" />
-      <link rel="icon" href="/favicon.ico" />
-      <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
       {/* Structured Data */}
       <script

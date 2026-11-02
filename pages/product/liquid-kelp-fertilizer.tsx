@@ -1,4 +1,4 @@
-import Head from 'next/head';
+import ProductSEO from '../../components/ProductSEO';
 import ProductDetail from '../../components/ProductDetail';
 
 const product = {
@@ -44,11 +44,7 @@ const product = {
 export default function LiquidKelpFertilizerProductPage() {
   return (
     <>
-      <Head>
-        <title>{`${product.name} - Nature's Way Soil`}</title>
-        <meta name="description" content={product.description} />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
+      <ProductSEO product={product} path="/product/liquid-kelp-fertilizer" />
       <ProductDetail product={product} />
     </>
   );

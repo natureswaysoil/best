@@ -19,7 +19,19 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif']
   },
   async headers() {
+    // Internal, transactional and test pages must never appear in search results.
+    const noindexPaths = [
+      '/admin', '/admin/:path*', '/api/:path*',
+      '/quickbooks-:slug', '/stripe-:slug', '/amazon-:slug',
+      '/product-analysis', '/packing-slip', '/packing-slip/:path*',
+      '/cart', '/checkout', '/enhanced-checkout', '/cart-success',
+      '/order-success', '/thank-you', '/upsell',
+    ];
     return [
+      ...noindexPaths.map((source) => ({
+        source,
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      })),
       {
         source: '/videos/:path*',
         headers: [
@@ -109,6 +121,11 @@ const nextConfig = {
       { source: '/policies/privacy', destination: '/privacy', permanent: true },
       { source: '/privacy-policy', destination: '/privacy', permanent: true },
       { source: '/refund-policy', destination: '/returns', permanent: true },
+
+      // Products promoted by the social automation that live on dedicated pages
+      // rather than in data/products.ts. Temporary so a future catalog entry can take over.
+      { source: '/product/NWS_027', destination: '/product/liquid-biochar-soil-conditioner', permanent: false },
+      { source: '/product/NWS_028', destination: '/product/fruit-tree-fertilizer', permanent: false },
 
       // Government page legacy typo
       { source: '/governement', destination: '/government', permanent: true },
