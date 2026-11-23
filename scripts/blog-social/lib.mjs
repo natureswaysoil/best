@@ -122,6 +122,11 @@ export function blogUrl(post, platform) {
   return `${SITE_URL}/blog/${post.slug}?${params}`;
 }
 
+export function assertPlatformsConfigured(requested, configured) {
+  const missing = requested.filter(platform => !configured.includes(platform));
+  if (missing.length) throw new Error(`Requested social platforms lack credentials: ${missing.join(', ')}`);
+}
+
 // Short, filesystem- and API-safe id for the video files of one post.
 export function videoIdForPost(post) {
   return `BLOG-${String(post.slug).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)}`;

@@ -27,6 +27,11 @@ A modern, responsive website for Nature's Way Soil featuring natural fertilizers
 - **Fallback System**: Graceful fallback to FFmpeg if needed
 - **Social Media Ready**: Videos optimized for all platforms
 
+### Blog-to-social publishing recovery
+- Twitter/X HTTP 402 requires checking API credits/billing in the X developer console; refreshing authorization does not resolve payment errors.
+- To explicitly exclude a blocked platform, set the `BLOG_SOCIAL_PLATFORMS` repository/environment variable (for example, `instagram,youtube,facebook,pinterest`) or use the workflow's `platforms` dispatch input. Blank defaults to all configured platforms. Selected-platform failures still fail the job; successful posts are skipped on retry.
+- Pinterest HTTP 401 triggers one refresh-and-retry attempt. Store `PINTEREST_CLIENT_ID`, `PINTEREST_CLIENT_SECRET`, and `PINTEREST_REFRESH_TOKEN` in Google Secret Manager; backup and tertiary refresh tokens are optional. The posting service account needs permission to add secret versions for the access token and any rotated refresh token. Reauthorize the app if refresh tokens are rejected.
+
 ### Components Built
 - `HeroVideo`: Your existing hero video component
 - `Header`: Responsive navigation with transparent mode for hero
